@@ -1,0 +1,116 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { api } from '../../api/client';
+	import Spinner from '$lib/Spinner.svelte';
+	import { selection } from '$lib/states/selection.svelte';
+	import { contact } from '$lib/states/contact.svelte';
+	import { gotoStep, nextStep } from '$lib/states/step.svelte';
+	import { ApiReturnStatus } from '../../api/types';
+	import { gotoError } from '$lib/states/error.svelte';
+	import { paymentIntent } from '$lib/states/paymentIntent.svelte';
+	import { reservation } from '$lib/states/reservation.svelte';
+	import { waitlist } from '$lib/states/waitlist.svelte';
+
+	let {
+		widget
+	}: {
+		widget: any;
+	} = $props();
+
+	let loading = $state(true);
+
+	const book = async () => {
+		loading = true;
+
+		const [res, err] = await api.book({
+			reservation: {
+				id: reservation?.id,
+				restaurantId: widget.restaurantId,
+				serviceId: selection.service.id,
+				pax: selection.pax,
+				date: selection.slot.date,
+				notes: contact.notes,
+				contact: {
+					firstName: contact.firstName,
+					lastName: contact.lastName,
+					phone: contact.phone,
+					email: contact.email
+				}
+			},
+			joiningWaitlist: waitlist.isWaitlist
+		});
+		if (err) {
+			return console.log(err);
+		}
+		if (res.status === 'OK') {
+			nextStep();
+		} else if (
+			res.status === ApiReturnStatus.REQUIRES_PAYMENT_INTENT &&
+			res.paymentIntent?.amount > 0 &&
+			res.paymentIntent?.clientSecret?.length > 0
+		) {
+			paymentIntent.id = res.paymentIntent.id;
+			paymentIntent.amount = res.paymentIntent.amount;
+			paymentIntent.clientSecret = res.paymentIntent.clientSecret;
+			paymentIntent.stripeAccountId = res.paymentIntent.stripeAccountId ?? null;
+			gotoStep('PAYMENT');
+		} else if (res.status === ApiReturnStatus.CUSTOMER_ALREADY_BOOKED_SERVICE) {
+			gotoError('Vous avez déjà réservé pour ce service.');
+		} else {
+			gotoError(res.message ?? null, res.status);
+		}
+	};
+
+	onMount(() => {
+		setTimeout(() => {
+			book();
+		}, 1000);
+	});
+</script>
+
+<div class="w-full h-full">
+	<!-- <div class="border-b w-full max-w-[100px] h-[1px] px-5"></div> -->
+	<!-- <form class="flex flex-col gap-5 flex-grow">
+		<div class="flex flex-col gap-5">
+			<div class="flex items-center gap-5 pt-3">
+				<button onclick={() => previousStep()}>
+					<CaretLeft size={28} />
+				</button>
+				<h2 class="text-md font-normal">Confirmation</h2>
+			</div>
+			<div class="flex flex-col gap-2">
+				<div>Réservation</div>
+				<hr />
+				<div class="grid grid-cols-2 gap-4">
+					<div class="flex flex-col gap-2">
+						<div class="text-surface-fg">Nom :</div>
+						<div>{contact.firstName} {contact.lastName}</div>
+					</div>
+					<div class="flex flex-col gap-2">
+						<div class="text-surface-fg">Email :</div>
+						<div>{contact.email}</div>
+					</div>
+					<div class="flex flex-col gap-2">
+						<div class="text-surface-fg">Téléphone :</div>
+						<div>{contact.phone}</div>
+					</div>
+				</div>
+				<div class="flex items-center gap-8">
+					<Button onclick={book} revert>Confirmer <Check size={24} /></Button>
+				</div>
+			</div>
+		</div>
+	</form> -->
+
+	<div class="flex flex-col gap-5 h-full">
+		<!-- <div class="flex items-center gap-5 pt-3">
+			<button onclick={() => previousStep()}>
+				<CaretLeft size={28} />
+			</button>
+			<h2 class="text-md font-normal">Confirmation</h2>
+		</div> -->
+		<div class="flex items-center justify-center w-full h-full">
+			<Spinner />
+		</div>
+	</div>
+</div>

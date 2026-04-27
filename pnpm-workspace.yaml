@@ -1,0 +1,10 @@
+packages:
+  - "web"
+  - "shared"
+  - "widget"
+  - "emailer"
+  - "worker"
+  - "marketting"
+  - "printer"
+  - "phone"
+  - "prisma-shared"

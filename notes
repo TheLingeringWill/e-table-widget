@@ -1,0 +1,6 @@
+1h = 2 pax
++1 pax = +30 min
+
+make sure server files are not imported in front (methods.ts)
+be carefull of selected columns in db returned to front
+

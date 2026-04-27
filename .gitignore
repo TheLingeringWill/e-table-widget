@@ -1,0 +1,16 @@
+.DS_Store
+node_modules
+/build
+/.svelte-kit
+/.vercel
+/package
+.env
+.env.*
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Sentry Config File
+.env.sentry-build-plugin
+
+# Test endpoints
+src/routes/test-api

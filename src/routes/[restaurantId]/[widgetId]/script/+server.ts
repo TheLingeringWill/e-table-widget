@@ -1,5 +1,6 @@
 import { dev } from '$app/environment';
 import type { RequestEvent } from '@sveltejs/kit';
+import { createWidgetApi } from '$lib/server/api/widget-api';
 
 /**
  * Generate GTM detection and dataLayer initialization code
@@ -51,19 +52,19 @@ function generateGtmDetectionScript(restaurantId: string, widgetId: string): str
 export const GET = async (event: RequestEvent): Promise<Response> => {
 	const { restaurantId, widgetId } = event.params;
 
-	// Load widget config to check if GTM tracking is enabled
-	const widget = await event.locals.prisma.widget.findUnique({
-		where: {
-			id: widgetId,
-			restaurantId
-		},
-		select: {
-			gtmEnabled: true
-		}
-	});
+	// Load widget config to check if GTM tracking is enabled. The REST API
+	// keys `widget` by restaurant only (one-to-one) — `widgetId` from the path
+	// is no longer used to scope the lookup. Per PRD §5 the route eventually
+	// loses the `[widgetId]` segment entirely; for now the param is preserved
+	// so existing embed scripts keep working.
+	const numericRestaurantId = Number(restaurantId);
+	const widgetResult = Number.isFinite(numericRestaurantId)
+		? await createWidgetApi(numericRestaurantId).getWidget()
+		: ({ ok: false, error: { code: 'invalid_restaurant_id', message: '' } } as const);
+	const gtmEnabled = widgetResult.ok ? widgetResult.data.gtmEnabled : false;
 
 	// Only generate GTM detection script if tracking is enabled
-	const gtmScript = widget?.gtmEnabled ? generateGtmDetectionScript(restaurantId!, widgetId!) : '';
+	const gtmScript = gtmEnabled ? generateGtmDetectionScript(restaurantId!, widgetId!) : '';
 
 	const iframeSrc = dev
 		? `"http://localhost:8987/${restaurantId}/${widgetId}?embedded=true"`

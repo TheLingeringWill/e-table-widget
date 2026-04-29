@@ -49,9 +49,19 @@
 
 	let error = $state('');
 
-	let reservationId = $derived($page.params.reservationId || undefined);
+	// PRD §10.2 step 3: edit-existing-booking pre-fill is keyed on
+	// `?reservationId=…`. The legacy code only checked path params, but
+	// the standalone widget URL has no `[reservationId]` segment, so query
+	// is the canonical surface. Same for paymentIntentId.
+	let reservationId = $derived(
+		$page.params.reservationId || $page.url.searchParams.get('reservationId') || undefined
+	);
 
-	let paymentIntentId = $derived($page.params.paymentIntentId || undefined);
+	let paymentIntentId = $derived(
+		$page.params.paymentIntentId ||
+			$page.url.searchParams.get('paymentIntentId') ||
+			undefined
+	);
 
 	let loading = $state(!(!reservationId && !paymentIntentId));
 	let mounted = $state(!(!reservationId && !paymentIntentId));

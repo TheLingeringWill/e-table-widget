@@ -9,6 +9,8 @@ import {
 	type GenericSchema,
 	type InferOutput
 } from 'valibot';
+import { createWidgetApi } from '$lib/server/api/widget-api';
+import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
 
 type TranslationArray = {
 	language: LANGUAGE_CODE;
@@ -109,7 +111,23 @@ export const router = {
 		}
 	),
 	loadReservation: procedure(string(), async ({ input, event }) => {
-		return event.locals.reservator.loadReservationToUpdate(input);
+		// REST replacement for the legacy `reservator.loadReservationToUpdate`.
+		// The booking id is numeric in the new schema (PRD §10.1: rid=1).
+		// Restaurant scoping comes from event.locals.restaurantId which the
+		// hooks.server.ts middleware extracts from the URL.
+		const numericId = Number(input);
+		if (!Number.isFinite(numericId)) {
+			throw new Error(`loadReservation: invalid booking id ${input}`);
+		}
+		const rid = Number(event.locals.restaurantId);
+		if (!Number.isFinite(rid)) {
+			throw new Error('loadReservation: restaurantId missing from event.locals');
+		}
+		const result = await createWidgetApi(rid).getBooking(numericId);
+		if (!result.ok) {
+			throw new Error(`loadReservation: ${result.error.code} ${result.error.message}`);
+		}
+		return bookingToLegacyReservation(result.data);
 	}),
 	loadPaymentIntent: procedure(string(), async ({ input, event }) => {
 			try {

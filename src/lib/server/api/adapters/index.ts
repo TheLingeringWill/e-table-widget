@@ -7,3 +7,4 @@
 
 export * from './slot-state.js';
 export * from './datetime.js';
+export * from './booking.js';

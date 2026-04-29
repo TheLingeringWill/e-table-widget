@@ -9,6 +9,9 @@ node_modules
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# Cloudflare Workers / Wrangler local cache
+.wrangler/
+
 # Sentry Config File
 .env.sentry-build-plugin
 

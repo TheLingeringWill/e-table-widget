@@ -5,7 +5,7 @@
 	import { selection } from '$lib/states/selection.svelte';
 	import { contact } from '$lib/states/contact.svelte';
 	import { gotoStep, nextStep } from '$lib/states/step.svelte';
-	import { ApiReturnStatus } from '../../api/types';
+	import { ApiReturnStatus } from '$lib/api-types';
 	import { gotoError } from '$lib/states/error.svelte';
 	import { paymentIntent } from '$lib/states/paymentIntent.svelte';
 	import { reservation } from '$lib/states/reservation.svelte';

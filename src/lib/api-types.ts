@@ -161,6 +161,18 @@ export type ApiErrorResult = {
 	error: { code: string; message: string };
 };
 
+// Legacy ApiReturnStatus enum used by the booking step machine. The new REST
+// API surfaces these distinctions either via `BookingStatus` (e.g.
+// `requires_payment_intent`) or via structured error codes (PRD §9.6, still
+// open). Until those land, Booking.svelte continues to compare against this
+// enum; the values match the legacy RPC's status field exactly.
+export const ApiReturnStatus = {
+	OK: 'OK',
+	RESERVATION_DATE_MISMATCH_SERVICE_TIME: 'RESERVATION_DATE_MISMATCH_SERVICE_TIME',
+	CUSTOMER_ALREADY_BOOKED_SERVICE: 'CUSTOMER_ALREADY_BOOKED_SERVICE',
+	REQUIRES_PAYMENT_INTENT: 'REQUIRES_PAYMENT_INTENT'
+} as const;
+
 // UI-facing slot type with the derived semantic state attached. The adapter
 // (lib/server/api/adapters/slot-state.ts) computes `state` and ships this shape
 // to the client via the BFF.

@@ -12,6 +12,7 @@ import { createWidgetApi } from '$lib/server/api/widget-api';
 import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
 import { serviceToLegacyService } from '$lib/server/api/adapters/service';
 import { formatDateForApi } from '$lib/server/api/adapters/datetime';
+import { filterByPax, slotToLegacySlot } from '$lib/server/api/adapters/slot-state';
 
 // Local procedure builder. Drop-in replacement for `procedure().input(schema).handle(fn)`
 // from svelte-rpc — kept narrow so the hand-rolled dispatcher in hooks.server.ts has a
@@ -55,17 +56,37 @@ export const router = {
 	),
 	getServiceSlots: procedure(
 		object({ restaurantId: string(), serviceId: string(), pax: number(), date: date() }),
-		async ({ input, event }) => {
-			return event.locals.reservator.getServiceSlots({
-				restaurantId: input.restaurantId,
-				serviceId: input.serviceId,
-				pax: input.pax,
-				date: input.date,
-				options: {
-					includeTableCount: true,
-					almostFullThreshold: 1
-				}
+		async ({ input }) => {
+			// REST replacement for `reservator.getServiceSlots`. The new endpoint
+			// takes a date range with no service or pax filter — we send a
+			// single-day range and filter client-side per PRD §6.2 ("the
+			// adapter filters slots client-side by `slot.possibleGuests.includes(pax)`").
+			//
+			// `serviceId` is unused in this call: the REST availabilities
+			// endpoint already returns all slots for the restaurant on the
+			// given day; the legacy procedure pre-scoped by service via the
+			// Reservator's internal model. Selection.svelte still keys
+			// rendering off the slot list it gets back, so dropping the
+			// service-scope here is benign for the smoke path. The eventual
+			// SvelteKit loader will scope properly when the BFF surface
+			// gains a service-aware availabilities endpoint.
+			const rid = Number(input.restaurantId);
+			if (!Number.isFinite(rid)) {
+				throw new Error(`getServiceSlots: invalid restaurant id ${input.restaurantId}`);
+			}
+			const day = formatDateForApi(input.date);
+			const result = await createWidgetApi(rid).getAvailabilities({
+				startDate: day,
+				endDate: day
 			});
+			if (!result.ok) {
+				throw new Error(
+					`getServiceSlots: ${result.error.code} ${result.error.message}`
+				);
+			}
+			return filterByPax(result.data, input.pax).map((s) =>
+				slotToLegacySlot(s, input.pax)
+			);
 		}
 	),
 	book: procedure(

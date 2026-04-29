@@ -10,6 +10,8 @@ import {
 } from 'valibot';
 import { createWidgetApi } from '$lib/server/api/widget-api';
 import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
+import { serviceToLegacyService } from '$lib/server/api/adapters/service';
+import { formatDateForApi } from '$lib/server/api/adapters/datetime';
 
 // Local procedure builder. Drop-in replacement for `procedure().input(schema).handle(fn)`
 // from svelte-rpc — kept narrow so the hand-rolled dispatcher in hooks.server.ts has a
@@ -29,14 +31,28 @@ const procedure = <S extends GenericSchema, R>(
 export const router = {
 	getServices: procedure(
 		object({ restaurantId: string(), date: date() }),
-		async ({ input, event }) => {
-			const services = await event.locals.reservator.getAvailableServicesWithExceptions(
-				input.restaurantId,
-				input.date
-			);
-			// Hide services where reservations are disabled (bookable: false)
-			return services.filter((service) => service.bookable !== false);
-		}),
+		async ({ input }) => {
+			// REST replacement for `reservator.getAvailableServicesWithExceptions`.
+			// The REST endpoint takes a date range; the legacy procedure was
+			// single-day, so we send the same day on both ends.
+			const rid = Number(input.restaurantId);
+			if (!Number.isFinite(rid)) {
+				throw new Error(`getServices: invalid restaurant id ${input.restaurantId}`);
+			}
+			const day = formatDateForApi(input.date);
+			const result = await createWidgetApi(rid).getServices({
+				startDate: day,
+				endDate: day
+			});
+			if (!result.ok) {
+				throw new Error(`getServices: ${result.error.code} ${result.error.message}`);
+			}
+			// Hide services where reservations are disabled (bookable: false).
+			return result.data
+				.filter((s) => s.bookable !== false)
+				.map(serviceToLegacyService);
+		}
+	),
 	getServiceSlots: procedure(
 		object({ restaurantId: string(), serviceId: string(), pax: number(), date: date() }),
 		async ({ input, event }) => {

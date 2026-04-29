@@ -161,43 +161,51 @@ export const router = {
 		return bookingToLegacyReservation(result.data);
 	}),
 	loadPaymentIntent: procedure(string(), async ({ input, event }) => {
-			try {
-				const stripePaymentIntent = await event.locals.reservator.loadStripePaymentIntent(
-					input,
-					event.locals.restaurant?.stripeAccountId ?? undefined
-				);
-				const metadata = event.locals.reservator.parsePaymentIntentMetadata(stripePaymentIntent);
-
-				let reservation = metadata.reservationId
-					? await event.locals.reservator.loadReservationToUpdate(metadata.reservationId)
-					: undefined;
-
-				if (!reservation) {
-					reservation = {
-						serviceId: metadata.serviceId,
-						startDate: metadata.date,
-						pax: metadata.pax,
-						notes: metadata.notes,
-						contact: {
-							firstName: metadata.contactFirstName,
-							lastName: metadata.contactLastName,
-							phone: metadata.contactPhone,
-							email: metadata.contactEmail
-						}
-					};
-				}
-
-				return {
-					paymentIntent: stripePaymentIntent,
-					reservation,
-					stripeAccountId: event.locals.restaurant?.stripeAccountId ?? null
-				};
-			} catch (error) {
-				console.error(error);
-				return { error: 'Failed to load payment intent' };
+		// REST replacement for the legacy reservator-driven payment-intent
+		// load. Per PRD §9.2 the live API does not yet expose
+		// `GET /restaurants/{rid}/payment-intents/{id}` or surface a
+		// `client_secret` on bookings — the BFF mock under
+		// src/lib/server/api/mocks/payment-intent.ts intercepts the
+		// adapter call when `WIDGET_PAYMENT_MOCK_MODE` is set. When the
+		// API ships §9.2 (a)/(b)/(c), the mock module is deleted and
+		// this procedure body is unaffected.
+		try {
+			const rid = Number(event.locals.restaurantId);
+			if (!Number.isFinite(rid)) {
+				throw new Error('loadPaymentIntent: restaurantId missing from event.locals');
 			}
+			const api = createWidgetApi(rid);
+			const piResult = await api.getPaymentIntent(input);
+			if (!piResult.ok) {
+				throw new Error(`loadPaymentIntent: ${piResult.error.code} ${piResult.error.message}`);
+			}
+			const pi = piResult.data;
+
+			const bookingResult = await api.getBooking(pi.bookingId);
+			const reservation = bookingResult.ok
+				? bookingToLegacyReservation(bookingResult.data)
+				: undefined;
+
+			// Reshape the BFF payment-intent record into the legacy Stripe-style
+			// payload Widget.svelte still consumes
+			// (`paymentIntent.{id, client_secret, amount, status}`).
+			const stripePaymentIntent = {
+				id: input,
+				client_secret: pi.clientSecret,
+				amount: pi.amountCents,
+				status: pi.status
+			};
+
+			return {
+				paymentIntent: stripePaymentIntent,
+				reservation,
+				stripeAccountId: event.locals.restaurant?.stripeAccountId ?? null
+			};
+		} catch (error) {
+			console.error(error);
+			return { error: 'Failed to load payment intent' };
 		}
-	),
+	}),
 	getAlternativeRestaurant: procedure(
 		object({
 			restaurantId: string(),

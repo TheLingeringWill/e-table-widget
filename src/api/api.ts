@@ -1,4 +1,3 @@
-import type { LANGUAGE_CODE } from 'prisma-shared';
 import {
 	boolean,
 	date,
@@ -11,11 +10,6 @@ import {
 } from 'valibot';
 import { createWidgetApi } from '$lib/server/api/widget-api';
 import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
-
-type TranslationArray = {
-	language: LANGUAGE_CODE;
-	value: string;
-}[];
 
 // Local procedure builder. Drop-in replacement for `procedure().input(schema).handle(fn)`
 // from svelte-rpc — kept narrow so the hand-rolled dispatcher in hooks.server.ts has a
@@ -175,140 +169,26 @@ export const router = {
 			pax: number(),
 			requestedTime: number() // milliseconds from midnight
 		}),
-		async ({ input, event }) => {
-			const ONE_HOUR_MS = 3600000;
-			const minTime = input.requestedTime - ONE_HOUR_MS;
-			const maxTime = input.requestedTime + ONE_HOUR_MS;
-
-			// Step 1: Get owner userIds for current restaurant
-			const ownerships = await event.locals.prisma.membership.findMany({
-				where: {
-					restaurantId: input.restaurantId,
-					role: 'OWNER'
-				},
-				select: {
-					userId: true
-				}
-			});
-
-			const ownerUserIds = ownerships.map((m) => m.userId);
-
-			if (ownerUserIds.length === 0) {
-				return { found: false as const };
-			}
-
-			// Step 2: Find alternative restaurants owned by the same user(s)
-			const alternatives = await event.locals.prisma.membership.findMany({
-				where: {
-					userId: { in: ownerUserIds },
-					role: 'OWNER',
-					restaurant: {
-						id: { not: input.restaurantId },
-						deletedAt: null
-					}
-				},
-				select: {
-					restaurant: {
-						select: {
-							id: true,
-							name: true,
-							addressLine1: true,
-							addressLine2: true,
-							city: true,
-							timezone: true,
-							widgets: {
-								take: 1,
-								select: { id: true }
-							}
-						}
-					}
-				},
-				distinct: ['restaurantId']
-			});
-
-			// Helper to get French translation or first available
-			const getTranslationValue = (
-				translations: { language: LANGUAGE_CODE; value: string | undefined }[]
-			): string => {
-				return translations.find((t) => t.language === 'FR')?.value || translations[0]?.value || '';
-			};
-
-			// Step 3: Check each alternative restaurant sequentially (exit on first match)
-			for (const { restaurant } of alternatives) {
-				// Skip restaurants without widgets
-				if (!restaurant.widgets.length) {
-					continue;
-				}
-
-				// Get services for this restaurant on the selected date
-				const services = await event.locals.reservator.getAvailableServicesWithExceptions(
-					restaurant.id,
-					input.date
-				);
-
-				// Filter services whose time range overlaps with our ±1 hour window
-				// Use <= and >= to include services that start/end exactly at window boundaries
-				const overlappingServices = services.filter(
-					(service) => service.startTime <= maxTime && service.endTime >= minTime
-				);
-
-				for (const service of overlappingServices) {
-					// Check pax constraints
-					if (input.pax < service.minPaxPerReservation || input.pax > service.maxPaxPerReservation) {
-						continue;
-					}
-
-					// Get slots for this service
-					const slots = await event.locals.reservator.getServiceSlots({
-						restaurantId: restaurant.id,
-						serviceId: service.id,
-						pax: input.pax,
-						date: input.date,
-						options: {
-							includeTableCount: true,
-							almostFullThreshold: 1
-						}
-					});
-
-					// Find first AVAILABLE or ALMOST_FULL slot within time window
-					const validSlot = slots.find((slot) => {
-						const slotTime = event.locals.reservator.zonedDateUtils.dateToTime(slot.date);
-						return (
-							slotTime >= minTime &&
-							slotTime <= maxTime &&
-							(slot.state === 'AVAILABLE' || slot.state === 'ALMOST_FULL')
-						);
-					});
-
-					if (validSlot) {
-
-						// Format address
-						const addressParts = [restaurant.addressLine1, restaurant.addressLine2, restaurant.city].filter(
-							Boolean
-						);
-
-						return {
-							found: true as const,
-							restaurant: {
-								id: restaurant.id,
-								name: restaurant.name,
-								address: addressParts.join(', '),
-								widgetId: restaurant.widgets[0].id
-							},
-							service: {
-								id: service.id,
-								name: getTranslationValue(service.name)
-							},
-							slot: {
-								date: validSlot.date,
-								state: validSlot.state as 'AVAILABLE' | 'ALMOST_FULL'
-							}
-						};
-					}
-				}
-			}
-
-			return { found: false as const };
+		async () => {
+			// Dropped for v1 per PRD §3 non-goals: the previous implementation
+			// did an owner-graph traversal across restaurants via Prisma which
+			// has no REST equivalent. The Selection.svelte UI keeps its
+			// alternative-restaurant branch gated on `found: true`, so a
+			// constant `false` cleanly disables the feature without any UI
+			// edit. If product wants the feature back, re-introduce it as a
+			// follow-up with a dedicated public REST endpoint.
+			//
+			// Return type widened to include the found-true variant so the
+			// API export's inferred type stays compatible with Selection's
+			// `Awaited<ReturnType<typeof api.getAlternativeRestaurant>>` lookup.
+			return { found: false as const } as
+				| { found: false }
+				| {
+						found: true;
+						restaurant: { id: string; name: string; address: string; widgetId: string };
+						service: { id: string; name: string };
+						slot: { date: Date; state: 'AVAILABLE' | 'ALMOST_FULL' };
+				  };
 		}
 	)
 };

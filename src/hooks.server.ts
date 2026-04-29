@@ -127,7 +127,7 @@ export const handle: Handle = sequence(
 
 		Object.assign(event.locals, locals);
 
-		if (!locals.restaurantId || (!locals.restaurant && !event.url.pathname.startsWith('/tests') && !event.url.pathname.startsWith('/test-api'))) {
+		if (!locals.restaurantId || (!locals.restaurant && !event.url.pathname.startsWith('/tests'))) {
 			throw error(404, 'Restaurant not found');
 		}
 

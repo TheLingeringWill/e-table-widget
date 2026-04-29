@@ -171,3 +171,42 @@ export interface UiSlot extends SlotAvailabilityResponseDTO {
 // UI-facing service type — alias of the DTO until/unless the adapter starts
 // adding derived fields.
 export type UiService = ServiceResponseDTO;
+
+// -----------------------------------------------------------------------------
+// Legacy in-flight types (delete in Phase 4 once Widget.svelte and friends move
+// off the RPC return shapes). These mirror what InferApiTypes<API> resolved to
+// before the migration: services carry translated name arrays, slots are JS
+// Date objects with the extended state vocabulary that includes 'OPEN'.
+// They exist solely so files like src/lib/states/{selection,waitlist}.svelte.ts
+// can stop importing `InferApiTypes` from `svelte-rpc` while the runtime call
+// sites remain on the legacy RPC path.
+// -----------------------------------------------------------------------------
+
+export type LegacySlotState = 'AVAILABLE' | 'ALMOST_FULL' | 'FULL' | 'CLOSED' | 'OPEN';
+
+export type LegacyTranslationArray = {
+	id: string;
+	language: string;
+	value: string;
+	entity_id: string;
+}[];
+
+export interface LegacyService {
+	id: string;
+	bookable?: boolean;
+	name: LegacyTranslationArray;
+	description?: LegacyTranslationArray;
+	startTime: number;
+	endTime: number;
+	minPaxPerReservation: number;
+	maxPaxPerReservation: number;
+	[k: string]: unknown;
+}
+
+export interface LegacySlot {
+	date: Date;
+	pax: number;
+	state: LegacySlotState;
+	possibleGuests?: number[];
+	[k: string]: unknown;
+}

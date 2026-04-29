@@ -47,7 +47,7 @@
 	import { CaretLeft } from 'phosphor-svelte';
 	import { slide } from 'svelte/transition';
 	import Button from './Button.svelte';
-	import { api } from '../../api/client';
+	import { api } from '$lib/widget-rpc-client';
 	import Separator from 'maket/Separator';
 	import { browser, dev } from '$app/environment';
 	import { selection } from '$lib/states/selection.svelte';

@@ -13,10 +13,8 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"test:integration": "playwright test",
-		"update:flarepc": "pnpm add flarepc@latest",
 		"test:unit": "vitest",
-		"load-test": "tsx scripts/load-test-reservations.ts",
-		"load-test:worker": "tsx scripts/load-test-reservations-worker.ts"
+		"load-test": "tsx scripts/load-test-reservations.ts"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20250109.0",
@@ -45,27 +43,21 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@internationalized/date": "^3.7.0",
-		"@jill64/sentry-sveltekit-cloudflare": "^2.0.6",
-		"@prisma/client": "^6.8.2",
-		"@sentry/sveltekit": "^9",
+		"@floating-ui/dom": "^1.6.13",
 		"@stripe/stripe-js": "^3.5.0",
 		"@sveltejs/adapter-cloudflare": "^5.0.1",
 		"@sveltejs/adapter-vercel": "^5.7.2",
-		"bits-ui": "^0.21.16",
+		"cobe": "^0.6.3",
+		"color2k": "^2.0.3",
 		"dayjs": "^1.11.13",
-		"flarepc": "^0.0.55",
+		"devalue": "^5.1.1",
+		"file-selector": "^0.6.0",
+		"highlight.js": "^11.9.0",
 		"intl-tel-input": "^24.8.2",
+		"libphonenumber-js": "^1.11.10",
 		"maket": "^0.0.203",
-		"postgres": "^3.4.5",
-		"prisma-shared": "workspace:*",
-		"shared": "workspace:*",
-		"stripe": "^15.12.0",
-		"svelte-rpc": "^1.0.1",
+		"tailwind-merge": "^2.3.0",
 		"tailwind-scrollbar": "^3.1.0",
-		"ulidx": "^2.4.1",
-		"valibot": "1.0.0-beta.15",
-		"worker": "workspace:*",
-		"zod": "^3.24.1"
+		"valibot": "1.0.0-beta.15"
 	}
 }

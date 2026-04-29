@@ -1,5 +1,4 @@
-import type { API } from '../../api/api';
-import type { InferApiTypes } from 'svelte-rpc';
+import type { LegacyService, LegacySlot } from '$lib/api-types';
 import { gotoStep } from './step.svelte';
 
 export let openedAccordion: {
@@ -14,10 +13,10 @@ export let accordionToOpen: {
 });
 
 export let selection: {
-	service: InferApiTypes<API>['getServices']['output'][number] | null;
+	service: LegacyService | null;
 	pax: number | null;
 	date: Date | null;
-	slot: InferApiTypes<API>['getServiceSlots']['output'][number] | null;
+	slot: LegacySlot | null;
 } = $state({
 	service: null,
 	pax: null,

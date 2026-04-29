@@ -1,7 +1,6 @@
-import type { InferApiTypes } from 'svelte-rpc';
-import type { API } from '../../api/api';
+import type { LegacySlot } from '$lib/api-types';
 
-export type Slot = InferApiTypes<API>['getServiceSlots']['output'][number];
+export type Slot = LegacySlot;
 
 export let waitlist: {
 	isWaitlist: boolean;

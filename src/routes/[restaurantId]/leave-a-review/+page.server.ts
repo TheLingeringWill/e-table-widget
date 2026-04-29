@@ -1,26 +1,39 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import { createWidgetApi } from '$lib/server/api/widget-api';
 
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: PageServerLoad = async ({ params, url }) => {
 	const rating = url.searchParams.get('rating');
 	const reservationId = url.searchParams.get('reservationId');
+	const rid = Number(params.restaurantId);
+	if (!Number.isFinite(rid)) {
+		return {
+			restaurantName: '',
+			rating: rating ? parseFloat(rating) : null,
+			reservationId,
+			reservation: null
+		};
+	}
 
-	const restaurant = locals.restaurant;
+	const api = createWidgetApi(rid);
+	const aggregate = await api.getAggregate();
+	const restaurantName = aggregate.ok ? aggregate.data.restaurant.name : '';
 
 	let reservation = null;
-	if (reservationId) {
-		reservation = await locals.prisma.reservation.findUnique({
-			where: { id: reservationId },
-			select: {
-				id: true,
-				startDate: true,
-				pax: true
-			}
-		});
+	const numericId = Number(reservationId);
+	if (Number.isFinite(numericId)) {
+		const result = await api.getBooking(numericId);
+		if (result.ok) {
+			reservation = {
+				id: String(result.data.id),
+				startDate: combineDateAndTime(result.data.date, result.data.time),
+				pax: result.data.pax
+			};
+		}
 	}
 
 	return {
-		restaurantName: restaurant?.name ?? '',
+		restaurantName,
 		rating: rating ? parseFloat(rating) : null,
 		reservationId,
 		reservation
@@ -28,7 +41,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, locals }) => {
+	default: async ({ request, params }) => {
 		const formData = await request.formData();
 		const rating = parseFloat(formData.get('rating') as string);
 		const comment = (formData.get('comment') as string) || undefined;
@@ -37,52 +50,34 @@ export const actions: Actions = {
 		if (!rating || rating < 1 || rating > 5) {
 			return fail(400, { error: 'Note invalide' });
 		}
+		const rid = Number(params.restaurantId);
+		if (!Number.isFinite(rid)) {
+			return fail(400, { error: 'Restaurant introuvable' });
+		}
 
-		const reservation = reservationId
-			? await locals.prisma.reservation.findUnique({
-					where: { id: reservationId },
-					select: {
-						id: true,
-						restaurantId: true,
-						customerId: true,
-						review: true
-					}
-				})
-			: undefined;
-
-		const data = {
+		// PRD §6.6: `POST /restaurants/{rid}/reviews/upsert` is idempotent
+		// — no need to look up an existing review or to wire customerId
+		// from a separate Prisma read; the API resolves the customer
+		// from the booking server-side.
+		const numericBookingId = reservationId ? Number(reservationId) : NaN;
+		const upsertResult = await createWidgetApi(rid).upsertReview({
 			rating,
-			comment: comment && comment.length > 0 ? comment : undefined
-		};
-
-		if (reservation?.review) {
-			await locals.prisma.review.update({
-				where: { id: reservation.review.id },
-				data
-			});
-		} else {
-			await locals.prisma.review.create({
-				data: {
-					...data,
-					reservation: reservation
-						? { connect: { id: reservation.id } }
-						: undefined,
-					restaurant: {
-						connect: {
-							id: locals.restaurant?.id ?? reservation?.restaurantId
-						}
-					},
-					customer: reservation?.customerId
-						? { connect: { id: reservation.customerId } }
-						: undefined
-				}
-			});
+			bookingId: Number.isFinite(numericBookingId) ? numericBookingId : null,
+			comment: comment && comment.length > 0 ? comment : null
+		});
+		if (!upsertResult.ok) {
+			return fail(500, { error: upsertResult.error.message });
 		}
 
-		if (reservation?.id) {
-			await locals.logger.logReservationReviewed(reservation.id);
-		}
+		// Logger plumbing dropped — the API records the audit event
+		// server-side when the upsert lands.
 
 		return { success: true };
 	}
 };
+
+function combineDateAndTime(date: string, time: string): Date {
+	const [y, m, d] = date.split('-').map(Number);
+	const [h, mn] = time.split(':').map(Number);
+	return new Date(y, (m ?? 1) - 1, d ?? 1, h ?? 0, mn ?? 0);
+}

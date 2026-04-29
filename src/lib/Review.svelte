@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatTime } from 'shared/utils/time.js';
+	import { formatTime } from '$lib/utils/time';
 	import { useZonedDateUtils } from '$lib/context.svelte';
 
 	const zonedDateUtils = useZonedDateUtils();

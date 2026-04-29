@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Widget iframe parent harness (PRD §10.4)</title>
+		<style>
+			body {
+				font-family: system-ui;
+				max-width: 800px;
+				margin: 2rem auto;
+				padding: 0 1rem;
+			}
+			main {
+				min-height: 600px;
+				border: 1px solid #ccc;
+				margin-top: 1rem;
+			}
+			#log {
+				font-family: monospace;
+				font-size: 12px;
+				white-space: pre-wrap;
+				background: #f5f5f5;
+				padding: 1rem;
+				margin-top: 1rem;
+				max-height: 300px;
+				overflow: auto;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Widget iframe parent harness</h1>
+		<p>
+			This page exists for PRD §10.4 verification: it embeds the widget via the embeddable
+			<code>/&lt;rid&gt;/script</code> tag and logs every <code>postMessage</code> event the
+			widget iframe sends so Chrome MCP can read them via
+			<code>read_console_messages({pattern: 'resize|gtm_event'})</code>.
+		</p>
+		<main></main>
+		<div id="log"></div>
+		<script>
+			// Mirror every message from the widget iframe to console.log so
+			// Chrome MCP's read_console_messages can pick them up.
+			const log = document.getElementById('log');
+			window.addEventListener('message', (event) => {
+				if (!event.data || typeof event.data !== 'object') return;
+				const line = `[parent] postMessage type=${event.data.type} payload=${JSON.stringify(event.data).slice(0, 200)}`;
+				console.log(line);
+				if (log) {
+					log.textContent += line + '\n';
+				}
+			});
+		</script>
+		<script
+			id="cooking"
+			data-element="main"
+			src="http://localhost:8987/1/script"
+		></script>
+	</body>
+</html>

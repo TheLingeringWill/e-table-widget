@@ -4,14 +4,14 @@
 	import Button from './Button.svelte';
 	import Spinner from '../Spinner.svelte';
 	import { onMount } from 'svelte';
-	import { api } from '../../api/client';
+	import { api } from '$lib/widget-rpc-client';
 	import { accordionToOpen, openedAccordion, selection } from '$lib/states/selection.svelte';
 	import { nextStep } from '$lib/states/step.svelte';
 	import { waitlist, resetWaitlist, joinWaitlist, type Slot } from '$lib/states/waitlist.svelte';
-	import { formatTime, getTimeFromDate, hours, minutes } from 'shared/utils/time';
+	import { formatTime, getTimeFromDate, hours, minutes } from '$lib/utils/time';
 	import { reservation, reservationTemp } from '$lib/states/reservation.svelte';
 	import { getTranslation, useZonedDateUtils } from '$lib/context.svelte';
-	import ZonedCalendarInput from '../../../../shared/utils/ZonedCalendarInput.svelte';
+	import ZonedCalendarInput from '$lib/utils/ZonedCalendarInput.svelte';
 	import { pushGtmEvent } from '../gtm.svelte';
 
 	let {
@@ -43,7 +43,10 @@
 		loadingServices = true;
 		const [res, error] = await api.getServices({ restaurantId, date: selection.date });
 		if (error) {
-			return console.log(error);
+			console.log(error);
+			services = [];
+			loadingServices = false;
+			return;
 		}
 		services = res;
 		if (reservationTemp.serviceId) {
@@ -79,7 +82,10 @@
 			date: selection.date
 		});
 		if (error) {
-			return console.log(error);
+			console.log(error);
+			slots = [];
+			loadingSlots = false;
+			return;
 		}
 		slots = res;
 		if (reservationTemp.startDate) {

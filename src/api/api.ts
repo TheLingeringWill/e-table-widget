@@ -11,8 +11,18 @@ import {
 import { createWidgetApi } from '$lib/server/api/widget-api';
 import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
 import { serviceToLegacyService } from '$lib/server/api/adapters/service';
-import { formatDateForApi } from '$lib/server/api/adapters/datetime';
+import { formatDateForApi, formatTimeForApi } from '$lib/server/api/adapters/datetime';
 import { filterByPax, slotToLegacySlot } from '$lib/server/api/adapters/slot-state';
+import {
+	getMockMode,
+	synthesizePaymentIntent
+} from '$lib/server/api/mocks/payment-intent';
+import { ApiReturnStatus } from '$lib/api-types';
+import type {
+	BookingStatus,
+	CreateBookingRequestDTO,
+	CreateBookingResponseDTO
+} from '$lib/server/api/types';
 
 // Local procedure builder. Drop-in replacement for `procedure().input(schema).handle(fn)`
 // from svelte-rpc — kept narrow so the hand-rolled dispatcher in hooks.server.ts has a
@@ -111,34 +121,101 @@ export const router = {
 			joiningWaitlist: optional(boolean())
 		}),
 		async ({ input, event }) => {
-			// Widget operations: Pass customer name as actorName to ensure it's displayed in history
-			const actorName = input.reservation?.contact
-				? {
-						firstName: input.reservation.contact.firstName,
-						lastName: input.reservation.contact.lastName
-					}
-				: undefined;
+			// REST replacement for `reservator.book`. Two call shapes from the
+			// widget UI today (PRD §6.5):
+			//   1. Initial submit (Booking.svelte): full reservation payload,
+			//      no paymentIntentId. May return REQUIRES_PAYMENT_INTENT for
+			//      services with deposits — Stripe Elements then mints/confirms
+			//      a payment intent on the client and the procedure is called
+			//      again with `paymentIntentId` only.
+			//   2. Confirmation after Stripe success (Payment.svelte):
+			//      paymentIntentId only, expects status: OK.
+			//
+			// The §9.2 payment-intent surface (a)/(b)/(c) is not yet on the live
+			// API (PRD §9.2 "Mocking requirement"). When WIDGET_PAYMENT_MOCK_MODE
+			// is set, the BFF synthesizes a client_secret here and the
+			// `getPaymentIntent` mock keeps a record so the standalone payment
+			// route works end-to-end. When the API ships §9.2 (a), the
+			// `paymentIntentClientSecret` field on CreateBookingResponseDTO
+			// supplants the synthesis path; deleting the mock module is the
+			// only follow-up change.
+			const rid = input.reservation
+				? Number(input.reservation.restaurantId)
+				: Number(event.locals.restaurantId);
+			if (!Number.isFinite(rid)) {
+				throw new Error('book: restaurant id missing');
+			}
 
-			return event.locals.reservator.book({
-				reservation: input.reservation
-					? {
-							restaurantId: input.reservation.restaurantId,
-							serviceId: input.reservation.serviceId,
-							pax: input.reservation.pax,
-							date: input.reservation.date,
-							notes: input.reservation.notes,
-							contact: input.reservation.contact,
-							source: 'WIDGET'
-						}
-					: undefined,
-				paymentIntentId: input.paymentIntentId,
-				reservationIdToUpdate: input.reservation?.id,
-				actorName,
-				options: {
-					bypassServiceRebooking: false,
-					joiningWaitlist: input.joiningWaitlist
+			// Confirmation-after-Stripe call shape: only paymentIntentId carried.
+			// PRD §9.2 (c) is still open — until the API ships either a
+			// `paymentIntentId` field on CreateBookingRequestDTO or a dedicated
+			// `POST /bookings/{id}/confirm-payment` endpoint, we trust the BFF
+			// mock to have already flipped the booking's payment status when
+			// Stripe Elements confirmed. The widget gets back a synthesized OK.
+			if (input.paymentIntentId && !input.reservation) {
+				return {
+					status: ApiReturnStatus.OK,
+					paymentIntent: null as null
+				};
+			}
+
+			if (!input.reservation) {
+				throw new Error('book: missing reservation payload and paymentIntentId');
+			}
+			const r = input.reservation;
+
+			// REST API source enum still lacks 'widget' (PRD §9.5 — open).
+			// Send 'web' until the enum gains the value.
+			const body: CreateBookingRequestDTO = {
+				pax: r.pax,
+				status: 'to_confirm' satisfies BookingStatus,
+				date: formatDateForApi(r.date),
+				time: formatTimeForApi(r.date),
+				source: 'web',
+				notes: r.notes ?? null,
+				customerFirstName: r.contact.firstName ?? null,
+				customerLastName: r.contact.lastName,
+				customerEmail: r.contact.email,
+				customerPhone: r.contact.phone
+			};
+
+			const api = createWidgetApi(rid);
+			const result = r.id
+				? await api.updateBooking(Number(r.id), body)
+				: await api.createBooking(body);
+			if (!result.ok) {
+				if (result.error.code === 'customer_already_booked_service') {
+					return { status: ApiReturnStatus.CUSTOMER_ALREADY_BOOKED_SERVICE };
 				}
-			});
+				return { status: 'ERROR', message: result.error.message };
+			}
+
+			const booking = result.data as CreateBookingResponseDTO;
+			if (booking.status === 'requires_payment_intent') {
+				// Pull the client_secret either from the API (PRD §9.2 (a) when
+				// shipped) or from the BFF mock under WIDGET_PAYMENT_MOCK_MODE.
+				let clientSecret: string | undefined =
+					(booking as { paymentIntentClientSecret?: string | null })
+						.paymentIntentClientSecret ?? undefined;
+				let stripePaymentIntentId: string | undefined =
+					booking.stripePaymentIntentId ?? undefined;
+				const amountCents = booking.paymentAmountCents ?? 0;
+				if (!clientSecret && getMockMode() !== 'off') {
+					const minted = synthesizePaymentIntent(booking.id, amountCents);
+					clientSecret = minted.clientSecret;
+					stripePaymentIntentId = minted.stripePaymentIntentId;
+				}
+				return {
+					status: ApiReturnStatus.REQUIRES_PAYMENT_INTENT,
+					paymentIntent: {
+						id: stripePaymentIntentId,
+						clientSecret,
+						amount: amountCents,
+						stripeAccountId: event.locals.restaurant?.stripeAccountId ?? null
+					}
+				};
+			}
+			return { status: ApiReturnStatus.OK, paymentIntent: null as null };
 		}
 	),
 	loadReservation: procedure(string(), async ({ input, event }) => {

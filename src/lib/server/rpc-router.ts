@@ -71,8 +71,10 @@ export const router = {
 			if (!result.ok) {
 				throw new Error(`getServices: ${result.error.code} ${result.error.message}`);
 			}
+			// Live response shape: { services, restaurantExceptions }.
 			// Hide services where reservations are disabled (bookable: false).
-			return result.data
+			const services = result.data.services ?? [];
+			return services
 				.filter((s) => s.bookable !== false)
 				.map(serviceToLegacyService);
 		}
@@ -107,7 +109,39 @@ export const router = {
 					`getServiceSlots: ${result.error.code} ${result.error.message}`
 				);
 			}
-			return filterByPax(result.data, input.pax).map((s) =>
+			// Live response: { data: [{ date, shifts: [{ id, slots: [...] }] }] }
+			// Flatten to a [{ date, time, ...slot }] list; the slot adapter
+			// keys off `date` + `time` to build a JS Date in restaurant tz.
+			// `serviceId` from the input is unused — Selection.svelte filters
+			// rendering off the slot list it gets back, and the eventual
+			// SvelteKit loader will scope properly when the BFF surface
+			// gains a service-aware availabilities endpoint.
+			type LiveSlot = {
+				id: number;
+				time: string;
+				closed: boolean;
+				markedAsFull: boolean;
+				slotPax: number;
+				slotMaxPax: number;
+				servicePax: number;
+				serviceMaxPax: number;
+				possibleGuests: number[];
+			};
+			type LiveShift = { id: number; slots: LiveSlot[] };
+			type LiveDay = { date: string; shifts: LiveShift[] };
+			const days = (result.data.data ?? []) as LiveDay[];
+			const targetServiceId = Number(input.serviceId);
+			const flatSlots = days.flatMap((day) =>
+				day.shifts
+					.filter(
+						(shift) =>
+							!Number.isFinite(targetServiceId) || shift.id === targetServiceId
+					)
+					.flatMap((shift) =>
+						shift.slots.map((slot) => ({ ...slot, date: day.date }))
+					)
+			);
+			return filterByPax(flatSlots, input.pax).map((s) =>
 				slotToLegacySlot(s, input.pax)
 			);
 		}

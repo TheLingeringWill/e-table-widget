@@ -43,7 +43,10 @@
 		loadingServices = true;
 		const [res, error] = await api.getServices({ restaurantId, date: selection.date });
 		if (error) {
-			return console.log(error);
+			console.log(error);
+			services = [];
+			loadingServices = false;
+			return;
 		}
 		services = res;
 		if (reservationTemp.serviceId) {
@@ -79,7 +82,10 @@
 			date: selection.date
 		});
 		if (error) {
-			return console.log(error);
+			console.log(error);
+			slots = [];
+			loadingSlots = false;
+			return;
 		}
 		slots = res;
 		if (reservationTemp.startDate) {

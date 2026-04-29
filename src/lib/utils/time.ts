@@ -1,15 +1,31 @@
-// Widget-local replacement for the time helpers from `shared/utils/time`.
+// Widget-local copy of `shared/utils/time` — ported verbatim during PRD §7
+// Phase 4 so the widget no longer depends on the `shared` workspace package.
+//
+// `formatTime` takes milliseconds-from-midnight (NOT a Date or epoch ms).
+// Constructing `new Date(ms)` would interpret it as a UTC epoch and skew
+// the display by the local timezone offset (e.g. 12:00 → 13:00 in CET).
 
-export function formatTime(date: Date | string | number): string {
-	const d = date instanceof Date ? date : new Date(date);
-	const h = d.getHours().toString().padStart(2, '0');
-	const m = d.getMinutes().toString().padStart(2, '0');
-	return `${h}:${m}`;
-}
+export const hours = (n: number, zeroPadding = false, miliseconds = true) => {
+	const totalHours = Math.floor(n / (miliseconds ? 1000 * 60 * 60 : 60));
+	return zeroPadding ? (totalHours < 10 ? '0' + totalHours : totalHours) : totalHours;
+};
 
-export function getTimeFromDate(date: Date): { hour: number; minute: number } {
-	return { hour: date.getHours(), minute: date.getMinutes() };
-}
+export const minutes = (n: number, zeroPadding = false, miliseconds = true) => {
+	const totalMinutes = Math.floor(n / (miliseconds ? 1000 * 60 : 60)) % 60;
+	return zeroPadding ? (totalMinutes < 10 ? '0' + totalMinutes : totalMinutes) : totalMinutes;
+};
 
-export const hours: number[] = Array.from({ length: 24 }, (_, i) => i);
-export const minutes: number[] = Array.from({ length: 60 }, (_, i) => i);
+export const formatTime = (milliseconds: number): string => {
+	const h = Math.floor(milliseconds / (1000 * 60 * 60));
+	const m = Math.floor((milliseconds / (1000 * 60)) % 60);
+	const fh = h < 10 ? `0${h}` : `${h}`;
+	const fm = m < 10 ? `0${m}` : `${m}`;
+	return `${fh}:${fm}`;
+};
+
+export const getTimeFromDate = (date: Date): number => {
+	// Legacy callers pass a `Date` and use the result with `formatTime`
+	// (so it must be milliseconds-from-midnight). Compute it from local
+	// hours/minutes — the shared/utils/time helpers used the same shape.
+	return date.getHours() * 60 * 60 * 1000 + date.getMinutes() * 60 * 1000;
+};

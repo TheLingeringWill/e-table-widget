@@ -1,16 +1,39 @@
 import type { LANGUAGE_CODE } from 'prisma-shared';
-import { procedure } from 'svelte-rpc';
-import { boolean, date, number, object, optional, string } from 'valibot';
+import {
+	boolean,
+	date,
+	number,
+	object,
+	optional,
+	string,
+	type GenericSchema,
+	type InferOutput
+} from 'valibot';
 
 type TranslationArray = {
 	language: LANGUAGE_CODE;
 	value: string;
 }[];
 
+// Local procedure builder. Drop-in replacement for `procedure().input(schema).handle(fn)`
+// from svelte-rpc — kept narrow so the hand-rolled dispatcher in hooks.server.ts has a
+// stable contract (schema + call) without depending on the library. See PRD §0.4 item a.
+type RpcProc<S extends GenericSchema, R> = {
+	schema: S;
+	call: (event: import('@sveltejs/kit').RequestEvent, input: InferOutput<S>) => Promise<R>;
+};
+const procedure = <S extends GenericSchema, R>(
+	schema: S,
+	fn: (args: { input: InferOutput<S>; event: import('@sveltejs/kit').RequestEvent }) => Promise<R>
+): RpcProc<S, R> => ({
+	schema,
+	call: (event, input) => fn({ input, event })
+});
+
 export const router = {
-	getServices: procedure()
-		.input(object({ restaurantId: string(), date: date() }))
-		.handle(async ({ input, event }) => {
+	getServices: procedure(
+		object({ restaurantId: string(), date: date() }),
+		async ({ input, event }) => {
 			const services = await event.locals.reservator.getAvailableServicesWithExceptions(
 				input.restaurantId,
 				input.date
@@ -18,9 +41,9 @@ export const router = {
 			// Hide services where reservations are disabled (bookable: false)
 			return services.filter((service) => service.bookable !== false);
 		}),
-	getServiceSlots: procedure()
-		.input(object({ restaurantId: string(), serviceId: string(), pax: number(), date: date() }))
-		.handle(async ({ input, event }) => {
+	getServiceSlots: procedure(
+		object({ restaurantId: string(), serviceId: string(), pax: number(), date: date() }),
+		async ({ input, event }) => {
 			return event.locals.reservator.getServiceSlots({
 				restaurantId: input.restaurantId,
 				serviceId: input.serviceId,
@@ -31,31 +54,30 @@ export const router = {
 					almostFullThreshold: 1
 				}
 			});
-		}),
-	book: procedure()
-		.input(
-			object({
-				reservation: optional(
-					object({
-						id: optional(string()),
-						restaurantId: string(),
-						serviceId: string(),
-						pax: number(),
-						date: date(),
-						notes: optional(string()),
-						contact: object({
-							firstName: optional(string()),
-							lastName: string(),
-							phone: string(),
-							email: string()
-						})
+		}
+	),
+	book: procedure(
+		object({
+			reservation: optional(
+				object({
+					id: optional(string()),
+					restaurantId: string(),
+					serviceId: string(),
+					pax: number(),
+					date: date(),
+					notes: optional(string()),
+					contact: object({
+						firstName: optional(string()),
+						lastName: string(),
+						phone: string(),
+						email: string()
 					})
-				),
-				paymentIntentId: optional(string()),
-				joiningWaitlist: optional(boolean())
-			})
-		)
-		.handle(async ({ input, event }) => {
+				})
+			),
+			paymentIntentId: optional(string()),
+			joiningWaitlist: optional(boolean())
+		}),
+		async ({ input, event }) => {
 			// Widget operations: Pass customer name as actorName to ensure it's displayed in history
 			const actorName = input.reservation?.contact
 				? {
@@ -84,15 +106,12 @@ export const router = {
 					joiningWaitlist: input.joiningWaitlist
 				}
 			});
-		}),
-	loadReservation: procedure()
-		.input(string())
-		.handle(async ({ input, event }) => {
-			return event.locals.reservator.loadReservationToUpdate(input);
-		}),
-	loadPaymentIntent: procedure()
-		.input(string())
-		.handle(async ({ input, event }) => {
+		}
+	),
+	loadReservation: procedure(string(), async ({ input, event }) => {
+		return event.locals.reservator.loadReservationToUpdate(input);
+	}),
+	loadPaymentIntent: procedure(string(), async ({ input, event }) => {
 			try {
 				const stripePaymentIntent = await event.locals.reservator.loadStripePaymentIntent(
 					input,
@@ -128,18 +147,17 @@ export const router = {
 				console.error(error);
 				return { error: 'Failed to load payment intent' };
 			}
+		}
+	),
+	getAlternativeRestaurant: procedure(
+		object({
+			restaurantId: string(),
+			date: date(),
+			serviceId: string(),
+			pax: number(),
+			requestedTime: number() // milliseconds from midnight
 		}),
-	getAlternativeRestaurant: procedure()
-		.input(
-			object({
-				restaurantId: string(),
-				date: date(),
-				serviceId: string(),
-				pax: number(),
-				requestedTime: number() // milliseconds from midnight
-			})
-		)
-		.handle(async ({ input, event }) => {
+		async ({ input, event }) => {
 			const ONE_HOUR_MS = 3600000;
 			const minTime = input.requestedTime - ONE_HOUR_MS;
 			const maxTime = input.requestedTime + ONE_HOUR_MS;
@@ -273,7 +291,8 @@ export const router = {
 			}
 
 			return { found: false as const };
-		})
+		}
+	)
 };
 
 export type API = typeof router;

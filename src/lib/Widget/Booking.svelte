@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { api } from '../../api/client';
+	import { api } from '$lib/widget-rpc-client';
 	import Spinner from '$lib/Spinner.svelte';
 	import { selection } from '$lib/states/selection.svelte';
 	import { contact } from '$lib/states/contact.svelte';

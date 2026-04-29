@@ -16,7 +16,7 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
-	import { api } from '../api/client';
+	import { api } from '$lib/widget-rpc-client';
 	import { autoHeight } from './autoHeight.svelte';
 	import Spinner from './Spinner.svelte';
 	import Booking from './Widget/Booking.svelte';

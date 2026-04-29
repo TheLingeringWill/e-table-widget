@@ -3,7 +3,7 @@ import * as vars from '$env/static/private';
 import type { Handle, RequestEvent } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { stringify as devalueStringify, parse as devalueParse } from 'devalue';
-import { router } from './api/api';
+import { router } from '$lib/server/rpc-router';
 import { dev } from '$app/environment';
 import { error } from '@sveltejs/kit';
 import { createLocals } from 'shared/locals';

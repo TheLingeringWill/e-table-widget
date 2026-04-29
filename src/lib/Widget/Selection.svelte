@@ -4,7 +4,7 @@
 	import Button from './Button.svelte';
 	import Spinner from '../Spinner.svelte';
 	import { onMount } from 'svelte';
-	import { api } from '../../api/client';
+	import { api } from '$lib/widget-rpc-client';
 	import { accordionToOpen, openedAccordion, selection } from '$lib/states/selection.svelte';
 	import { nextStep } from '$lib/states/step.svelte';
 	import { waitlist, resetWaitlist, joinWaitlist, type Slot } from '$lib/states/waitlist.svelte';

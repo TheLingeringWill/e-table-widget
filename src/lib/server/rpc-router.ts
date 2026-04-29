@@ -10,7 +10,7 @@ import {
 } from 'valibot';
 import { createWidgetApi } from '$lib/server/api/widget-api';
 import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
-import { serviceToLegacyService } from '$lib/server/api/adapters/service';
+import { shiftToLegacyService, type LiveDay } from '$lib/server/api/adapters/service';
 import { formatDateForApi, formatTimeForApi } from '$lib/server/api/adapters/datetime';
 import { filterByPax, slotToLegacySlot } from '$lib/server/api/adapters/slot-state';
 import {
@@ -56,45 +56,41 @@ export const router = {
 	getServices: procedure(
 		object({ restaurantId: string(), date: date() }),
 		async ({ input }) => {
-			// REST replacement for `reservator.getAvailableServicesWithExceptions`.
-			// The REST endpoint takes a date range; the legacy procedure was
-			// single-day, so we send the same day on both ends.
+			// Source the per-date service tile list from /availabilities, not
+			// /services. The API resolves service exceptions (overrides /
+			// closures) at the shift level — see resolve_shifts_for_day in
+			// api/src/domain/service/availability.rs — and emits one shift per
+			// effective service for the date, with id = parent service id on
+			// regular days or id = exception id on overridden days. Sourcing
+			// the tile list from this same call keeps the BFF aligned with
+			// what the user will see in the slots panel: when /availabilities
+			// returns the override shift, the tile carries the override's id,
+			// name, hours, and pax bounds, and the subsequent getServiceSlots
+			// call (which filters by shift.id === selection.service.id) hits.
 			const rid = Number(input.restaurantId);
 			if (!Number.isFinite(rid)) {
 				throw new Error(`getServices: invalid restaurant id ${input.restaurantId}`);
 			}
 			const day = formatDateForApi(input.date);
-			const result = await createWidgetApi(rid).getServices({
+			const result = await createWidgetApi(rid).getAvailabilities({
 				startDate: day,
 				endDate: day
 			});
 			if (!result.ok) {
 				throw new Error(`getServices: ${result.error.code} ${result.error.message}`);
 			}
-			// Live response shape: { services, restaurantExceptions }.
-			// Hide services where reservations are disabled (bookable: false).
-			const services = result.data.services ?? [];
-			return services
-				.filter((s) => s.bookable !== false)
-				.map(serviceToLegacyService);
+			const days = result.data.data as LiveDay[];
+			const shifts = days.flatMap((d) => d.shifts);
+			return shifts.filter((s) => s.bookable === true).map(shiftToLegacyService);
 		}
 	),
 	getServiceSlots: procedure(
 		object({ restaurantId: string(), serviceId: string(), pax: number(), date: date() }),
 		async ({ input }) => {
 			// REST replacement for `reservator.getServiceSlots`. The new endpoint
-			// takes a date range with no service or pax filter — we send a
-			// single-day range and filter client-side per PRD §6.2 ("the
-			// adapter filters slots client-side by `slot.possibleGuests.includes(pax)`").
-			//
-			// `serviceId` is unused in this call: the REST availabilities
-			// endpoint already returns all slots for the restaurant on the
-			// given day; the legacy procedure pre-scoped by service via the
-			// Reservator's internal model. Selection.svelte still keys
-			// rendering off the slot list it gets back, so dropping the
-			// service-scope here is benign for the smoke path. The eventual
-			// SvelteKit loader will scope properly when the BFF surface
-			// gains a service-aware availabilities endpoint.
+			// takes a date range with no pax filter — we send a single-day
+			// range and filter client-side per PRD §6.2 ("the adapter filters
+			// slots client-side by `slot.possibleGuests.includes(pax)`").
 			const rid = Number(input.restaurantId);
 			if (!Number.isFinite(rid)) {
 				throw new Error(`getServiceSlots: invalid restaurant id ${input.restaurantId}`);
@@ -109,34 +105,17 @@ export const router = {
 					`getServiceSlots: ${result.error.code} ${result.error.message}`
 				);
 			}
-			// Live response: { data: [{ date, shifts: [{ id, slots: [...] }] }] }
-			// Flatten to a [{ date, time, ...slot }] list; the slot adapter
-			// keys off `date` + `time` to build a JS Date in restaurant tz.
-			// `serviceId` from the input is unused — Selection.svelte filters
-			// rendering off the slot list it gets back, and the eventual
-			// SvelteKit loader will scope properly when the BFF surface
-			// gains a service-aware availabilities endpoint.
-			type LiveSlot = {
-				id: number;
-				time: string;
-				closed: boolean;
-				markedAsFull: boolean;
-				slotPax: number;
-				slotMaxPax: number;
-				servicePax: number;
-				serviceMaxPax: number;
-				possibleGuests: number[];
-			};
-			type LiveShift = { id: number; slots: LiveSlot[] };
-			type LiveDay = { date: string; shifts: LiveShift[] };
-			const days = (result.data.data ?? []) as LiveDay[];
+			// Filtering by `shift.id === selection.service.id` works because
+			// getServices now sources the tile id from the same /availabilities
+			// shifts — overrides flow through with their exception id intact.
 			const targetServiceId = Number(input.serviceId);
+			if (!Number.isFinite(targetServiceId)) {
+				throw new Error(`getServiceSlots: invalid service id ${input.serviceId}`);
+			}
+			const days = result.data.data as LiveDay[];
 			const flatSlots = days.flatMap((day) =>
 				day.shifts
-					.filter(
-						(shift) =>
-							!Number.isFinite(targetServiceId) || shift.id === targetServiceId
-					)
+					.filter((shift) => shift.id === targetServiceId)
 					.flatMap((shift) =>
 						shift.slots.map((slot) => ({ ...slot, date: day.date }))
 					)

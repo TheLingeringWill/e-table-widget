@@ -509,8 +509,15 @@
 						</div>
 					{:else if slots.length > 0}
 						<!-- Regular slot list (all clickable, no color dots) -->
+						{@const visibleSlots = slots.filter((s) => {
+							if (s.state === 'CLOSED') return false;
+							if (s.state === 'FULL') {
+								return !!(selection.service?.waitlistEnabled || s.waitlistEnabled);
+							}
+							return true;
+						})}
 						<div class="flex flex-col gap-2 px-5 py-2">
-							{#each slots as slot}
+							{#each visibleSlots as slot}
 								{@const isUnavailable = slot.state === 'FULL' || slot.state === 'CLOSED'}
 								{#key slot.date}
 									<button

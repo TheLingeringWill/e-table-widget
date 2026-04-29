@@ -11,8 +11,6 @@ import type {
 	PaymentIntentResponseDTO,
 	RestaurantAggregateResponseDTO,
 	ReviewSettingsResponseDTO,
-	ServiceResponseDTO,
-	SlotAvailabilityResponseDTO,
 	UpsertReviewRequestDTO,
 	WidgetResponseDTO
 } from './types';
@@ -26,22 +24,6 @@ export function createWidgetApi(restaurantId: number) {
 		},
 		getWidget(): Promise<RestResult<WidgetResponseDTO>> {
 			return restCall(`/restaurants/${restaurantId}/widget`, { restaurantId });
-		},
-		getServices(params: {
-			startDate: string;
-			endDate: string;
-		}): Promise<RestResult<{ services: ServiceResponseDTO[]; restaurantExceptions?: unknown[] }>> {
-			// Live API contract differs from the OpenAPI spec: no trailing
-			// slash, camelCase startDate/endDate, and the response is an
-			// object `{ services, restaurantExceptions }` not a bare array.
-			// PRD §9.7 originally tracked the snake_case `start_date`
-			// documented for /services/; the live route is camelCase like
-			// /availabilities. The 404 with empty body returned for the
-			// trailing-slash + snake_case form is route-not-found.
-			return restCall(`/restaurants/${restaurantId}/services`, {
-				restaurantId,
-				query: { startDate: params.startDate, endDate: params.endDate }
-			});
 		},
 		getAvailabilities(params: {
 			startDate: string;

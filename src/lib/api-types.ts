@@ -79,6 +79,7 @@ export interface ServiceResponseDTO {
 	minPaxPerReservation: number;
 	maxPaxPerReservation: number;
 	bookable: boolean;
+	waitlistEnabled: boolean;
 	captureEnabled?: boolean;
 	captureAmountPerPax?: number | null;
 }
@@ -88,6 +89,7 @@ export interface SlotAvailabilityResponseDTO {
 	time: string;
 	closed: boolean;
 	markedAsFull: boolean;
+	waitlistEnabled?: boolean;
 	possibleGuests: number[];
 	slotPax: number;
 	slotMaxPax: number;
@@ -206,6 +208,7 @@ export type LegacyTranslationArray = {
 export interface LegacyService {
 	id: string;
 	bookable?: boolean;
+	waitlistEnabled?: boolean;
 	name: LegacyTranslationArray;
 	description?: LegacyTranslationArray;
 	startTime: number;
@@ -219,6 +222,7 @@ export interface LegacySlot {
 	date: Date;
 	pax: number;
 	state: LegacySlotState;
+	waitlistEnabled?: boolean;
 	possibleGuests?: number[];
 	[k: string]: unknown;
 }

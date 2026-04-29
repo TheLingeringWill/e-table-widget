@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { useZonedDateUtils } from '$lib/context.svelte';
-	import { formatTime } from 'shared/utils/time.js';
+	import { formatTime } from '$lib/utils/time';
 	import { Check } from 'phosphor-svelte';
 
 	let { data, form } = $props();

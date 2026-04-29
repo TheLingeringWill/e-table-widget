@@ -1,11 +1,28 @@
 import { getContext, hasContext, setContext } from 'svelte';
-import type { LANGUAGE_CODE, Translation, Widget } from 'prisma/node';
-import type { ZonedDateUtils } from 'shared/utils/zonedDateUtils';
+import type { ZonedDateUtils } from '$lib/utils/zonedDateUtils';
 
-type WidgetContextData = Widget & {
+// Widget context shape — mirrors what +layout.server.ts assembles from the
+// REST aggregate (PRD §6.4): plain string `title`/`description` (or empty
+// arrays in the legacy translation shape the components still consume).
+export type Translation = {
+	id: string;
+	language: string;
+	value: string;
+	entity_id: string;
+};
+
+export type WidgetContextData = {
+	id: string;
+	restaurantId: string;
 	title: Translation[];
 	description: Translation[];
-	summaryText: Translation[];
+	summaryText?: Translation[];
+	name: string;
+	theme: Record<string, unknown>;
+	whitelist: unknown[];
+	restaurant: { timezone: string };
+	gtmEnabled: boolean;
+	gtmId: string | null;
 };
 
 export const useWidget = (widget?: WidgetContextData): WidgetContextData => {
@@ -34,7 +51,7 @@ export const useZonedDateUtils = (zonedDateUtils?: ZonedDateUtils): ZonedDateUti
 	return stateZonedDateUtils;
 };
 
-export const getTranslation = (translations?: Translation[], language?: LANGUAGE_CODE) => {
+export const getTranslation = (translations?: Translation[], language?: string) => {
 	return (
 		translations?.find?.((t) => t.language === (language || 'FR'))?.value ||
 		translations?.[0]?.value ||

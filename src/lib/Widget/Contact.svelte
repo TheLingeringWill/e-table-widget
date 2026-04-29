@@ -15,7 +15,7 @@
 	convertToE164,
 	formatPhoneNumberForDisplay,
 	getPhoneValidationError
-} from 'shared/utils/phone';
+} from '$lib/utils/phone';
 	import { page } from '$app/state';
 	import type { CountryCode } from 'libphonenumber-js';
 

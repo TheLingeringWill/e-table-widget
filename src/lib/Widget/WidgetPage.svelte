@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { useWidget, useZonedDateUtils } from '$lib/context.svelte.js';
 	import Widget from '$lib/Widget.svelte';
-	import { tz } from 'shared/utils/tz';
-	import { ZonedDateUtils } from 'shared/utils/zonedDateUtils';
+	import { tz } from '$lib/utils/tz';
+	import { ZonedDateUtils } from '$lib/utils/zonedDateUtils';
 
 	const { data, builder } = $props();
 

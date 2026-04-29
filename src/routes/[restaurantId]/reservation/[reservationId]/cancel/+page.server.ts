@@ -2,7 +2,7 @@ import type { Actions } from '@sveltejs/kit';
 import { error } from '@sveltejs/kit';
 import { createWidgetApi } from '$lib/server/api/widget-api';
 
-export const load = async ({ locals, params, url }) => {
+export const load = async ({ params, url }) => {
 	const { reservationId, restaurantId } = params;
 	const rid = Number(restaurantId);
 	const numericId = Number(reservationId);
@@ -28,10 +28,6 @@ export const load = async ({ locals, params, url }) => {
 	}
 
 	const aggregate = await api.getAggregate();
-
-	locals.tinybird?.ingest('cancel_reservation', {
-		restaurantId: rid
-	});
 
 	return {
 		// Mirror the legacy reservation shape the +page.svelte template reads.

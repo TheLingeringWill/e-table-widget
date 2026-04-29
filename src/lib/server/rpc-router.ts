@@ -24,6 +24,19 @@ import type {
 	CreateBookingResponseDTO
 } from '$lib/server/api/types';
 
+// PRD §7 Phase 4: the rpc dispatcher runs at /api/<method> so it has no
+// :restaurantId path param. The browser client sets `X-RESTO` (see
+// widget-rpc-client.ts) carrying `params.restaurantId` from the page store,
+// and we read it back here. The previous path went through createLocals →
+// event.locals.restaurantId; that plumbing is gone with the shared package.
+function ridFromEvent(event: import('@sveltejs/kit').RequestEvent): number {
+	const header = event.request.headers.get('x-resto');
+	const fromHeader = header ? Number(header) : NaN;
+	if (Number.isFinite(fromHeader)) return fromHeader;
+	const fromParam = event.params.restaurantId ? Number(event.params.restaurantId) : NaN;
+	return fromParam;
+}
+
 // Local procedure builder. Drop-in replacement for `procedure().input(schema).handle(fn)`
 // from svelte-rpc — kept narrow so the hand-rolled dispatcher in hooks.server.ts has a
 // stable contract (schema + call) without depending on the library. See PRD §0.4 item a.
@@ -141,7 +154,7 @@ export const router = {
 			// only follow-up change.
 			const rid = input.reservation
 				? Number(input.reservation.restaurantId)
-				: Number(event.locals.restaurantId);
+				: ridFromEvent(event);
 			if (!Number.isFinite(rid)) {
 				throw new Error('book: restaurant id missing');
 			}
@@ -205,13 +218,16 @@ export const router = {
 					clientSecret = minted.clientSecret;
 					stripePaymentIntentId = minted.stripePaymentIntentId;
 				}
+				// PRD §6.4 risk row 3: stripeAccountId is no longer exposed by the
+				// REST API. The payment intent is minted server-side, so Stripe
+				// Elements only needs PUBLIC_STRIPE_KEY + the intent's clientSecret.
 				return {
 					status: ApiReturnStatus.REQUIRES_PAYMENT_INTENT,
 					paymentIntent: {
 						id: stripePaymentIntentId,
 						clientSecret,
 						amount: amountCents,
-						stripeAccountId: event.locals.restaurant?.stripeAccountId ?? null
+						stripeAccountId: null as string | null
 					}
 				};
 			}
@@ -221,15 +237,17 @@ export const router = {
 	loadReservation: procedure(string(), async ({ input, event }) => {
 		// REST replacement for the legacy `reservator.loadReservationToUpdate`.
 		// The booking id is numeric in the new schema (PRD §10.1: rid=1).
-		// Restaurant scoping comes from event.locals.restaurantId which the
-		// hooks.server.ts middleware extracts from the URL.
+		// Restaurant scoping is derived from the URL (X-RESTO header that the
+		// browser client sets, surfaced as event.params.restaurantId by the
+		// route — but the rpc dispatcher runs at /api/<method> with no
+		// :restaurantId in the path, so we read X-RESTO directly).
 		const numericId = Number(input);
 		if (!Number.isFinite(numericId)) {
 			throw new Error(`loadReservation: invalid booking id ${input}`);
 		}
-		const rid = Number(event.locals.restaurantId);
+		const rid = ridFromEvent(event);
 		if (!Number.isFinite(rid)) {
-			throw new Error('loadReservation: restaurantId missing from event.locals');
+			throw new Error('loadReservation: restaurantId missing');
 		}
 		const result = await createWidgetApi(rid).getBooking(numericId);
 		if (!result.ok) {
@@ -247,9 +265,9 @@ export const router = {
 		// API ships §9.2 (a)/(b)/(c), the mock module is deleted and
 		// this procedure body is unaffected.
 		try {
-			const rid = Number(event.locals.restaurantId);
+			const rid = ridFromEvent(event);
 			if (!Number.isFinite(rid)) {
-				throw new Error('loadPaymentIntent: restaurantId missing from event.locals');
+				throw new Error('loadPaymentIntent: restaurantId missing');
 			}
 			const api = createWidgetApi(rid);
 			const piResult = await api.getPaymentIntent(input);
@@ -276,7 +294,8 @@ export const router = {
 			return {
 				paymentIntent: stripePaymentIntent,
 				reservation,
-				stripeAccountId: event.locals.restaurant?.stripeAccountId ?? null
+				// PRD §6.4 risk row 3: stripeAccountId no longer flows from the API.
+				stripeAccountId: null as string | null
 			};
 		} catch (error) {
 			console.error(error);

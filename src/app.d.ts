@@ -14,9 +14,6 @@ declare global {
 		interface Locals {
 			restaurantId?: string;
 			countryCode?: string;
-			tinybird?: {
-				ingest: (event: string, payload: Record<string, unknown>) => void;
-			};
 		}
 	}
 }

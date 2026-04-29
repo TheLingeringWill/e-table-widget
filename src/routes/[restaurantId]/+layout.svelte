@@ -1,5 +1,5 @@
 <script>
-	import { ZonedDateUtils } from 'shared/utils/zonedDateUtils';
+	import { ZonedDateUtils } from '$lib/utils/zonedDateUtils';
 	import { setContext } from 'svelte';
 
 	let { children, data } = $props();

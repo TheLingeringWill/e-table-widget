@@ -1,19 +1,7 @@
-// import * as Sentry from '@sentry/sveltekit';
-import * as vars from '$env/static/private';
 import type { Handle, RequestEvent } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { stringify as devalueStringify, parse as devalueParse } from 'devalue';
 import { router } from '$lib/server/rpc-router';
-import { dev } from '$app/environment';
-import { error } from '@sveltejs/kit';
-import { createLocals } from 'shared/locals';
-import type { IncomingRequestCfProperties } from '@cloudflare/workers-types';
-import { createPrismaProxy } from 'prisma-shared/proxy';
-
-// Sentry.init({
-// 	dsn: 'https://c23af62b6c8f53b05af288bf5b08ac52@o4508850900893696.ingest.de.sentry.io/4508850921865296',
-// 	tracesSampleRate: 1
-// });
 
 const corsHandle: Handle = async ({ event, resolve }) => {
 	if (event.url.pathname.startsWith('/')) {
@@ -37,8 +25,8 @@ const corsHandle: Handle = async ({ event, resolve }) => {
 
 // Hand-rolled dispatcher that replaces the legacy createRPCHandle. The
 // wire format (POST /api/<method>, multipart/form-data with a devalue-encoded
-// `value` field) is preserved so the existing client.ts (still using the
-// /client subpath) keeps working without modification. PRD §0.4 item a
+// `value` field) is preserved so widget-rpc-client.ts can speak the same
+// protocol without a runtime dependency on svelte-rpc. PRD §0.4 item a
 // requires no svelte-rpc import in widget source.
 const RPC_ENDPOINT = '/api';
 
@@ -109,34 +97,17 @@ const rpcHandle: Handle = async ({ event, resolve }) => {
 	}
 };
 
-export const handle: Handle = sequence(
-	// Sentry.sentryHandle(),
-	corsHandle,
-	async ({ event, resolve }) => {
-		const prisma = createPrismaProxy(dev);
-		const localsParams = {
-			dev,
-			vars,
-			platform: event.platform,
-			request: event.request,
-			params: event.params,
-			origin: 'WIDGET'
-		} as const;
+// PRD §7 Phase 4: drop createLocals + createPrismaProxy. The widget no
+// longer reaches into Reservator/Prisma, so the per-request locals injection
+// has nothing to inject. Routes that need restaurant data fetch it via the
+// REST adapter (createWidgetApi). The countryCode field used to come from
+// Cloudflare's `cf` object — preserve a minimal version inline so the
+// remaining +layout.server.ts can still expose it if a downstream consumer
+// reappears.
+const localsHandle: Handle = async ({ event, resolve }) => {
+	const cfCountry = (event.request as Request & { cf?: { country?: string } })?.cf?.country;
+	(event.locals as { countryCode?: string }).countryCode = cfCountry || 'FR';
+	return resolve(event);
+};
 
-		const { locals } = await createLocals(localsParams, prisma);
-
-		Object.assign(event.locals, locals);
-
-		if (!locals.restaurantId || (!locals.restaurant && !event.url.pathname.startsWith('/tests'))) {
-			throw error(404, 'Restaurant not found');
-		}
-
-		event.locals.countryCode =
-			(event.request as Request & { cf: IncomingRequestCfProperties })?.cf?.country || 'FR';
-
-		return resolve(event);
-	},
-	rpcHandle
-);
-
-// export const handleError = Sentry.handleErrorWithSentry();
+export const handle: Handle = sequence(corsHandle, localsHandle, rpcHandle);

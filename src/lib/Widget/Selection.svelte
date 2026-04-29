@@ -8,10 +8,10 @@
 	import { accordionToOpen, openedAccordion, selection } from '$lib/states/selection.svelte';
 	import { nextStep } from '$lib/states/step.svelte';
 	import { waitlist, resetWaitlist, joinWaitlist, type Slot } from '$lib/states/waitlist.svelte';
-	import { formatTime, getTimeFromDate, hours, minutes } from 'shared/utils/time';
+	import { formatTime, getTimeFromDate, hours, minutes } from '$lib/utils/time';
 	import { reservation, reservationTemp } from '$lib/states/reservation.svelte';
 	import { getTranslation, useZonedDateUtils } from '$lib/context.svelte';
-	import ZonedCalendarInput from '../../../../shared/utils/ZonedCalendarInput.svelte';
+	import ZonedCalendarInput from '$lib/utils/ZonedCalendarInput.svelte';
 	import { pushGtmEvent } from '../gtm.svelte';
 
 	let {

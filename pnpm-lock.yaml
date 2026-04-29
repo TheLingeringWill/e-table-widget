@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@floating-ui/dom':
+        specifier: ^1.6.13
+        version: 1.7.6
       '@stripe/stripe-js':
         specifier: ^3.5.0
         version: 3.5.0
@@ -17,18 +20,24 @@ importers:
       '@sveltejs/adapter-vercel':
         specifier: ^5.7.2
         version: 5.10.3(@sveltejs/kit@2.58.0(@sveltejs/vite-plugin-svelte@5.0.3(svelte@5.33.1)(vite@6.4.2(jiti@1.21.7)))(svelte@5.33.1)(typescript@5.9.3)(vite@6.4.2(jiti@1.21.7)))(rollup@4.60.2)
-      date-fns:
-        specifier: ^4.1.0
-        version: 4.1.0
-      date-fns-tz:
-        specifier: ^3.2.0
-        version: 3.2.0(date-fns@4.1.0)
+      cobe:
+        specifier: ^0.6.3
+        version: 0.6.5
+      color2k:
+        specifier: ^2.0.3
+        version: 2.0.3
       dayjs:
         specifier: ^1.11.13
         version: 1.11.20
       devalue:
         specifier: ^5.1.1
         version: 5.7.1
+      file-selector:
+        specifier: ^0.6.0
+        version: 0.6.0
+      highlight.js:
+        specifier: ^11.9.0
+        version: 11.11.1
       intl-tel-input:
         specifier: ^24.8.2
         version: 24.8.2
@@ -38,6 +47,12 @@ importers:
       maket:
         specifier: ^0.0.203
         version: 0.0.203(cobe@0.6.5)(color2k@2.0.3)(file-selector@0.6.0)(highlight.js@11.11.1)(svelte@5.33.1)(tailwind-merge@2.6.1)(tailwind-scrollbar@3.1.0(tailwindcss@3.4.19))(typescript@5.9.3)
+      tailwind-merge:
+        specifier: ^2.3.0
+        version: 2.6.1
+      tailwind-scrollbar:
+        specifier: ^3.1.0
+        version: 3.1.0(tailwindcss@3.4.19)
       valibot:
         specifier: 1.0.0-beta.15
         version: 1.0.0-beta.15(typescript@5.9.3)
@@ -810,6 +825,15 @@ packages:
     resolution: {integrity: sha512-XQ3cU+Q8Uqmrbf2e0cIC/QN43sTBSC8KF12u29Mb47tWrt2hAgBXSgpZMj4Ao8Uk0iJcU99QsOCaIL8934obCg==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0, npm: '>=6.14.13'}
 
+  '@floating-ui/core@1.7.5':
+    resolution: {integrity: sha512-1Ih4WTWyw0+lKyFMcBHGbb5U5FtuHJuujoyyr5zTaWS5EYMeT6Jb2AuDeftsCsEuchO+mM2ij5+q9crhydzLhQ==}
+
+  '@floating-ui/dom@1.7.6':
+    resolution: {integrity: sha512-9gZSAI5XM36880PPMm//9dfiEngYoC6Am2izES1FF406YFsjvyBMmeJ2g4SAju3xWwtuynNRFL2s9hgxpLI5SQ==}
+
+  '@floating-ui/utils@0.2.11':
+    resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
   '@humanwhocodes/config-array@0.13.0':
     resolution: {integrity: sha512-DZLEEqFWQFiyK6h5YIeynKx7JlvCYWL0cImfSRXZ9l4Sg2efkFGTuFf6vzXjK1cq6IYkU+Eg/JizXw+TD2vRNw==}
     engines: {node: '>=10.10.0'}
@@ -1552,16 +1576,8 @@ packages:
     engines: {node: '>=4'}
     hasBin: true
 
-  date-fns-tz@3.2.0:
-    resolution: {integrity: sha512-sg8HqoTEulcbbbVXeg84u5UnlsQa8GS5QXMqjjYIhS4abEVVKIUwe0/l/UhrZdKaL/W5eWZNlbTeEIiOXTcsBQ==}
-    peerDependencies:
-      date-fns: ^3.0.0 || ^4.0.0
-
   date-fns@3.6.0:
     resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
-
-  date-fns@4.1.0:
-    resolution: {integrity: sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg==}
 
   dayjs@1.11.20:
     resolution: {integrity: sha512-YbwwqR/uYpeoP4pu043q+LTDLFBLApUP6VxRihdfNTqu4ubqMlGDLd6ErXhEgsyvY0K6nCs7nggYumAN+9uEuQ==}
@@ -3258,6 +3274,17 @@ snapshots:
 
   '@faker-js/faker@8.4.1': {}
 
+  '@floating-ui/core@1.7.5':
+    dependencies:
+      '@floating-ui/utils': 0.2.11
+
+  '@floating-ui/dom@1.7.6':
+    dependencies:
+      '@floating-ui/core': 1.7.5
+      '@floating-ui/utils': 0.2.11
+
+  '@floating-ui/utils@0.2.11': {}
+
   '@humanwhocodes/config-array@0.13.0':
     dependencies:
       '@humanwhocodes/object-schema': 2.0.3
@@ -3950,13 +3977,7 @@ snapshots:
 
   cssesc@3.0.0: {}
 
-  date-fns-tz@3.2.0(date-fns@4.1.0):
-    dependencies:
-      date-fns: 4.1.0
-
   date-fns@3.6.0: {}
-
-  date-fns@4.1.0: {}
 
   dayjs@1.11.20: {}
 

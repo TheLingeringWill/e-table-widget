@@ -27,14 +27,17 @@ export const load = async ({ params, url, setHeaders }) => {
 	}
 	const { restaurant, widget: widgetDto } = result.data;
 
-	// PRD §6.4: simplified widget-config theming. Hardcode white surfaces;
-	// `widget.color` drives both font and button-text colors.
+	// PRD §6.4 (rev 7): widget.color drives the dark surface (matches the
+	// live design at restaurant-japonais-ao.com/reservation/ — the brand
+	// color is the widget identity). Fonts + buttons + borders are
+	// hardcoded white for legibility on the brand surface; buttonTextColor
+	// is widget.color so the dark text reads on the white button.
 	const theme = {
 		...defaultTheme,
-		fontColor: widgetDto.color,
-		buttonTextColor: widgetDto.color,
-		backgroundColor: '#ffffff',
+		backgroundColor: widgetDto.color,
+		fontColor: '#ffffff',
 		buttonColor: '#ffffff',
+		buttonTextColor: widgetDto.color,
 		borderColor: '#ffffff'
 	};
 

@@ -1,53 +1,41 @@
-<script lang="ts">
-	// Widget-local minimal replacement for the shared ZonedCalendarInput.
-	// The shared component was a styled bits-ui calendar — for the migration
-	// we ship a native `<input type="date">` that round-trips dates in the
-	// restaurant timezone via the existing ZonedDateUtils helper. Functionally
-	// equivalent for selecting a booking date; visually leaner than the
-	// previous component (PRD §6.4 hardcodes the white surface anyway).
+<script lang="ts" generics="T extends 'calendar' | 'calendar-range'">
+	// Widget-local copy of the legacy `shared/utils/ZonedCalendarInput.svelte`.
+	// Thin tz-conversion wrapper around `maket/CalendarInput` — preserves the
+	// styled inline calendar grid the original Selection.svelte design relies
+	// on (Mon-Sun header, day buttons with `data-in-month` / `data-disabled` /
+	// `data-selected` attributes the call site styles via Tailwind).
 
+	import CalendarInput from 'maket/CalendarInput';
 	import type { ZonedDateUtils } from '$lib/utils/zonedDateUtils';
 
-	type Props = {
-		zonedDateUtils: ZonedDateUtils;
-		value: Date | null;
-		minDate?: Date | null;
-		onChange: (date: Date | null) => void;
-		// Accept the rest of the styling props the call site passes so the
-		// existing markup keeps compiling. Most are no-ops in the native input.
-		type?: string;
-		view?: string;
-		headerClass?: string;
-		weekdayClass?: string;
-		gridClass?: string;
-		dayClass?: string;
-		class?: string;
-		buttons?: unknown;
-		containerClass?: string;
-	};
+	type ComponentProps<C> = C extends new (...args: infer Args) => unknown
+		? Args[0] extends { props: infer P }
+			? P
+			: never
+		: C extends (...args: infer Args) => unknown
+			? Args[0] extends infer P
+				? P
+				: never
+			: Record<string, unknown>;
 
-	let { zonedDateUtils, value, minDate, onChange, ...rest }: Props = $props();
-	void rest; // styling props intentionally unused in the native input
+	let {
+		value: v = $bindable(),
+		zonedDateUtils,
+		...props
+	}: ComponentProps<typeof CalendarInput<T>> & { zonedDateUtils: ZonedDateUtils } = $props();
 
-	const toInputValue = (d: Date | null | undefined) =>
-		d ? zonedDateUtils.format('yyyy-MM-dd', d) : '';
-
-	const handleInput = (event: Event) => {
-		const target = event.currentTarget as HTMLInputElement;
-		if (!target.value) {
-			onChange(null);
-			return;
-		}
-		// Build a Date in the local clock that matches the picked YYYY-MM-DD.
-		const [y, m, d] = target.value.split('-').map(Number);
-		onChange(new Date(y, (m ?? 1) - 1, d ?? 1));
-	};
+	const value = $derived.by(() => {
+		if (!props.value) return props.value;
+		return zonedDateUtils.convertToInternalDate(props.value);
+	});
+	const minDate = $derived.by(() => {
+		if (!props.minDate) return props.minDate;
+		return zonedDateUtils.convertToInternalDate(props.minDate);
+	});
+	const onChange = $derived((date: Date) => {
+		v = zonedDateUtils.inferDateToZone(date);
+		return props.onChange(v);
+	});
 </script>
 
-<input
-	type="date"
-	value={toInputValue(value)}
-	min={toInputValue(minDate ?? undefined)}
-	oninput={handleInput}
-	class="border rounded px-3 py-2 w-full"
-/>
+<CalendarInput {value} {...props} {minDate} {onChange} />

@@ -219,11 +219,11 @@ export const router = {
 				date: formatDateForApi(r.date),
 				time: formatTimeForApi(r.date),
 				source: 'web',
-				notes: r.notes ?? null,
-				customerFirstName: r.contact.firstName ?? null,
-				customerLastName: r.contact.lastName,
-				customerEmail: r.contact.email,
-				customerPhone: r.contact.phone
+				note: r.notes ?? null,
+				firstName: r.contact.firstName ?? null,
+				lastName: r.contact.lastName,
+				email: r.contact.email,
+				phone: r.contact.phone
 			};
 
 			const api = createWidgetApi(rid);

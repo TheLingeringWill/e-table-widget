@@ -1,279 +1,113 @@
-# widget/CLAUDE.md
+# CLAUDE.md
 
-Embeddable SvelteKit booking widget for customer reservations.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Package Overview
+## Project
 
-- **Purpose**: Customer-facing booking widget embedded on restaurant websites
-- **Framework**: SvelteKit 2 + Svelte 5 runes
-- **Deployment**: Cloudflare Pages
-- **Database**: Neon PostgreSQL via Prisma
-- **RPC**: svelte-rpc (widget API) + FlarePC (worker communication)
-- **Embedding**: iframe with auto-height via postMessage
+Embeddable SvelteKit booking widget for restaurant customer reservations. SvelteKit 2 + Svelte 5 runes, deployed to Cloudflare Pages (`wrangler.toml` → `e-table-widget`). The widget runs in an iframe on restaurant websites; the parent loads `/<restaurantId>/script` which injects the iframe and brokers `postMessage` events (`resize`, `gtm_event`).
 
-## Essential Commands
+## Commands
+
+Package manager is **pnpm** and the dev server runs on **port 8987** (vite.config.ts).
 
 ```bash
-# Development
-pnpm --filter widget dev          # Port 8987
-
-# Build
-pnpm --filter widget build
-
-# Testing
-pnpm --dir widget run test:unit
-pnpm --dir widget run test:integration
+pnpm dev                    # Dev server on http://localhost:8987
+pnpm build                  # Cloudflare-adapter build
+pnpm preview                # Preview built bundle on :4173
+pnpm check                  # svelte-kit sync + svelte-check (typecheck Svelte)
+pnpm lint                   # prettier --check + eslint
+pnpm format                 # prettier --write
+pnpm test:unit              # Vitest (src/**/*.{test,spec}.{js,ts})
+pnpm test:integration       # Playwright (tests/, builds + previews on :4173)
+pnpm load-test              # scripts/load-test-reservations.ts (see scripts/README.md)
 ```
 
-## Embedding Pattern
+**Verification note:** the unit + Playwright suites were already broken before the in-progress REST migration began. Do not rely on `pnpm test:unit` / `test:integration` as a pass/fail signal — verify behavior with Chrome MCP against the running dev server (parent harness at `test-fixtures/parent.html` mirrors widget→parent `postMessage` traffic to console for `read_console_messages`).
 
-### Restaurant adds to their website:
-```html
-<script
-  id="cooking"
-  data-element="main"
-  src="https://widget.e-table.co/[restaurantId]/[widgetId]/script">
-</script>
-```
+## Architecture
 
-**Script behavior** (`script/+server.ts`):
-1. Finds target element via `data-element` attribute
-2. Creates iframe to `widget.e-table.co/[restaurantId]/[widgetId]?builder=true`
-3. Listens for `postMessage` to adjust iframe height (auto-height)
-4. Receives booking confirmation events
+### REST migration (in progress)
 
-## Booking Flow (6-Step State Machine)
+The widget previously called shared package internals (Reservator/Prisma) directly. It now talks **only** to the e-table REST API at `PUBLIC_API_URL` via a server-only BFF.
 
-### State Management (Svelte 5 Runes)
+- **`src/lib/server/api/rest-client.ts`** — thin `fetch` wrapper. Auth header is `X-API-Key: WIDGET_API_SECRET` (read from `$env/static/private` — never importable from client code). Returns a `RestResult<T>` discriminated union (`{ ok: true, data } | { ok: false, error: { code, message } }`) for 4xx; throws on 5xx.
+- **`src/lib/server/api/widget-api.ts`** — typed `createWidgetApi(restaurantId)` factory. **The only entry point server code should use to talk to the API.** Methods: `getAggregate`, `getWidget`, `getServices`, `getAvailabilities`, `getBooking`, `createBooking`, `updateBooking`, `setBookingStatus`, `upsertReview`, `getReviewSettings`, `getPaymentIntent`.
+- **`src/lib/server/api/types.ts`** re-exports DTOs from `src/lib/api-types.ts` (the canonical, client-safe DTO copy of the OpenAPI shapes — refresh from `${PUBLIC_API_URL}/api-docs/openapi.json` when adapter touches a new field).
+- **`src/lib/server/api/adapters/`** — DTO ↔ legacy widget-state shapes. Date/time normalization, slot semantic-state derivation (`AVAILABLE | ALMOST_FULL | FULL | CLOSED`), pax filtering (REST has no pax filter — applied client-side).
+- **`src/lib/server/api/mocks/payment-intent.ts`** — payment-intent endpoints (PRD §9.2) are not yet on the live API. When `WIDGET_PAYMENT_MOCK_MODE` is set (`stripe-test` | `full`), the BFF synthesizes the payment-intent record. Hard rule: **mocks live ONLY in this file**, no per-component `if (mock)` branches.
 
-```typescript
-// States in src/lib/states/*.svelte.ts
-let step = $state({ step: 'SELECTION' })  // Current step
-let selection = $state({ service, pax, date, slot })  // Booking selections
-let contact = $state({ firstName, lastName, email, phone, notes })  // Customer info
-let paymentIntent = $state({ id, clientSecret, amount })  // Payment (if required)
-let error = $state({ message, code })  // Error handling
-```
+### Hand-rolled RPC dispatcher (replaces svelte-rpc)
 
-### Flow:
-1. **SELECTION**: Date → Service → Pax → Time Slot (color-coded availability)
-2. **CONTACT**: Phone (intl-tel-input), email, name, notes (persisted to localStorage)
-3. **BOOKING**: Auto-submits `api.book()` after 1s
-4. **PAYMENT** (conditional): Stripe Elements if `REQUIRES_PAYMENT_INTENT` response
-5. **DONE**: Confirmation + postMessage to parent window
-6. **ERROR**: Fallback with retry
+The widget UI calls a handful of named methods over a `POST /api/<method>` endpoint with devalue-encoded multipart bodies. There is **no `svelte-rpc` dependency** anywhere in widget source (PRD §0.4 item a) — both ends speak the wire format directly.
 
-### Key Transitions:
-- `OK` response → DONE
-- `REQUIRES_PAYMENT_INTENT` → PAYMENT step
-- `CUSTOMER_ALREADY_BOOKED_SERVICE` → ERROR
-- Other errors → ERROR step
+- **`src/hooks.server.ts`** — `rpcHandle` is the dispatcher. Dispatches to `router[method].call(event, validated_input)`, encodes the result back as multipart with a single `value` field. Also installs `corsHandle` (open CORS for `/api/*`) and `localsHandle` (sets `event.locals.countryCode` from Cloudflare's `cf.country`).
+- **`src/lib/server/rpc-router.ts`** — defines the methods (`getServices`, `getServiceSlots`, `book`, `loadReservation`, `loadPaymentIntent`, `getAlternativeRestaurant`). Each calls into `createWidgetApi(...)` and runs the response through an adapter to produce the shape the existing UI components expect. Restaurant id is read from the `X-RESTO` header (the dispatcher path has no `:restaurantId` segment).
+- **`src/lib/widget-rpc-client.ts`** — browser-side `Proxy` that mirrors the legacy `[result, error]` tuple-returning API. Statically typed against `import type { router as Router }` from the server module — never imports server code at runtime, only types.
 
-## API Integration
+### Booking flow (state machine)
 
-### Widget-Specific API (`src/api/api.ts`)
-
-Uses **svelte-rpc** for type-safe server communication:
-
-```typescript
-import { api } from '$api/client'
-
-// Get available services
-const services = await api.getServices({ date: '2025-12-02' })
-
-// Get time slots (color-coded: green/orange/red)
-const slots = await api.getServiceSlots({ serviceId, pax, date })
-
-// Create booking
-const result = await api.book({
-  serviceId, date, slot, pax,
-  firstName, lastName, email, phone, notes,
-  paymentIntentId  // Optional, if payment flow
-})
-```
-
-**Integration**: API procedures call `event.locals.reservator` methods (from shared package).
-
-### Worker Communication (FlarePC)
-
-```typescript
-import { worker } from '$api/client'
-
-// For admin operations (rare)
-const worker = createClient<Servers, 'admin'>({
-  server: 'admin',
-  endpoint: 'https://worker.e-table.co'
-})
-```
-
-## Theme Customization
-
-**Widget themes** stored in database (`widget.theme` JSON):
-
-```typescript
-{
-  base_radius: '0.5rem',
-  radius_sm: '0.375rem',
-  // Background, foreground, button colors...
-}
-```
-
-Injected as CSS variables in `Widget.svelte`.
-
-**Builder mode**: `?builder=true` enables live theme editing via postMessage.
-
-## Shared Package Integration
-
-```typescript
-// hooks.server.ts
-const { locals } = await createLocals({
-  dev, vars, platform, request, params,
-  origin: 'WIDGET'
-}, prisma)
-
-// Provides:
-locals.reservator  // Core booking engine
-locals.tinybird    // Analytics
-locals.logger      // Event logging
-locals.prisma      // Database
-```
-
-**CRITICAL**: Widget uses Reservator for ALL booking logic (availability, slots, booking creation).
-
-## Form Validation
-
-- **Valibot**: Email schema validation
-- **Phone**: `validatePhoneNumber()` from shared/utils (French + international)
-- **Required**: lastName, email, phone
-- **Real-time**: Error state arrays for immediate feedback
-
-## Environment Variables
-
-Create `.env` from `.env.example`:
-
-```bash
-# Database
-DATABASE_URL                    # Neon PostgreSQL
-
-# Stripe
-PRIVATE_STRIPE_SECRET_KEY
-PUBLIC_STRIPE_KEY               # For Stripe Elements
-
-# Services
-PRIVATE_TINYBIRD_TOKEN
-PRIVATE_ADMIN_API_KEY           # Worker API access
-PRIVATE_EMAILER_KEY
-```
-
-## Timezone Awareness
-
-**CRITICAL**: Widget operates in restaurant timezone:
-
-```typescript
-const { zonedDateUtils } = useZonedDateUtils()
-
-// Format dates in restaurant timezone
-zonedDateUtils.format(date, 'PPP')
-
-// Parse dates in restaurant timezone
-zonedDateUtils.parse(dateString)
-```
-
-## Routes Structure
+State lives in `src/lib/states/*.svelte.ts` as Svelte 5 `$state` runes. Step transitions in `step.svelte.ts`:
 
 ```
-routes/
-├── [restaurantId]/[widgetId]/
-│   ├── +layout.server.ts            # Widget config loader
-│   ├── +page.svelte                 # Main booking widget
-│   ├── script/+server.ts            # Embeddable script
-│   ├── payment/[paymentIntentId]/   # Standalone payment
-│   └── reservation/[reservationId]/
-│       ├── cancel/+page.server.ts   # Cancellation
-│       └── review/+page.svelte      # Review submission
+SELECTION → CONTACT → BOOKING → (PAYMENT →) DONE
+                                   ↓
+                                ERROR (terminal until reset)
 ```
 
-## Critical Patterns
+`book` returns one of `OK | REQUIRES_PAYMENT_INTENT | CUSTOMER_ALREADY_BOOKED_SERVICE | ERROR` (`ApiReturnStatus` in `src/lib/api-types.ts`). On `REQUIRES_PAYMENT_INTENT`, Stripe Elements (PUBLIC_STRIPE_KEY) confirms the intent, then `book` is called again with `paymentIntentId` only.
 
-### Loading Widget Configuration
+UI components live in `src/lib/Widget/` (`Selection.svelte`, `Contact.svelte`, `Booking.svelte`, `Payment.svelte`, `Done.svelte`, `Error.svelte`, `Header.svelte`, `Summary.svelte`).
 
-```typescript
-// +layout.server.ts
-const widget = await event.locals.prisma.widget.findUnique({
-  where: { id: params.widgetId, restaurantId: params.restaurantId },
-  include: { restaurant: true }
-})
+### Routes
 
-if (!widget) error(404, 'Widget not found')
-return { widget }
+```
+src/routes/
+├── +layout.{server.ts,svelte}           # Currently no-op layout
+└── [restaurantId]/
+    ├── +layout.server.ts                # Loads aggregate (restaurant + widget + theme), 'no-store' cache
+    ├── +page.svelte                     # Mounts <Widget>
+    ├── script/+server.ts                # Returns the embeddable JS that injects the iframe + GTM detection
+    ├── pay/[paymentIntentId]/           # Standalone payment route
+    ├── reservation/[reservationId]/     # Edit-existing-booking entry
+    ├── review/                          # Customer review submission
+    └── leave-a-review/                  # Variant entry from email links
 ```
 
-### Calling Reservator
+Note: the legacy `[widgetId]` URL segment is gone — widgets are 1:1 with restaurants in the new schema (PRD §5).
 
-```typescript
-// api.ts procedure
-export const book = procedure.input(schema).handler(async (input, event) => {
-  return await event.locals.reservator.book({
-    serviceId: input.serviceId,
-    date: input.date,
-    slot: input.slot,
-    pax: input.pax,
-    customer: { firstName, lastName, email, phone },
-    notes: input.notes,
-    paymentIntentId: input.paymentIntentId,
-    origin: 'WIDGET'
-  })
-})
-```
+### Theme assembly (PRD §6.4)
 
-### Auto-Height iframe
+`+layout.server.ts` builds the theme from the REST aggregate. Convention (corrected 2026-04-29):
 
-```typescript
-// autoHeight.svelte.ts
-const observer = new MutationObserver(() => {
-  const height = document.body.scrollHeight
-  window.parent.postMessage({ type: 'resize', height }, '*')
-})
+- `backgroundColor` = `widget.color` (dark brand surface)
+- `buttonTextColor` = `widget.color` (dark text on white button)
+- `fontColor` / `buttonColor` / `borderColor` = hardcoded `#ffffff`
 
-observer.observe(document.body, { childList: true, subtree: true })
-```
+`widget.color` is the brand surface, not a font color. Inverting this is the most common mistake.
 
-## Common Gotchas
+### Timezone handling
 
-### "Widget not loading"
-Check `restaurantId` and `widgetId` are valid in database.
+`src/lib/utils/zonedDateUtils.ts` is a widget-local copy of the legacy shared util (the `shared` workspace package was removed). Provided to components via context (`useZonedDateUtils()` in `src/lib/context.svelte.ts`).
 
-### "Payment not working"
-- Verify `PUBLIC_STRIPE_KEY` is set
-- Check Stripe Connect account connection
-- Ensure payment intent creation succeeds
+**Critical:** slot timestamps from `/restaurants/{id}/availabilities` are **already timezone-aware** — combine `date: 'YYYY-MM-DD'` + `time: 'HH:MM'` into a JS `Date` directly (see `adapters/slot-state.ts` and `adapters/booking.ts:combineDateAndTime`). Running them through `ZonedDateUtils.inferDateToZone` adds a spurious offset and shifts displayed times by hours. Other date fields (e.g. user-selected calendar dates) still need ZonedDateUtils.
 
-### "Timezone issues"
-- All date operations MUST use `zonedDateUtils` from context
-- Check `restaurant.timezone` is set (e.g., "Europe/Paris")
+## Environment
 
-### "iframe height wrong"
-- Ensure `autoHeight.svelte.ts` is imported
-- Check postMessage listener in parent script
+Copy `.env.example` to `.env`. Server-only secrets (read via `$env/static/private`):
 
-### "API errors"
-- Verify `PRIVATE_ADMIN_API_KEY` matches worker
-- Check `DATABASE_URL` connection
-- Ensure Prisma client is regenerated: `pnpm generate:db`
+- `WIDGET_API_SECRET` — `X-API-Key` for the REST API. Generate with `openssl rand -hex 32`.
+- `PRIVATE_STRIPE_KEY`, `PRIVATE_STRIPE_WEBHOOKS`, `PRIVATE_RESEND_KEY`, etc.
+- `WIDGET_PAYMENT_MOCK_MODE` — empty / `off` / `stripe-test` / `full` (see mock module above).
 
-## Integration with Other Packages
+Public (`$env/static/public`):
 
-**shared**: All booking logic via Reservator, timezone via ZonedDateUtils
-**worker**: Admin operations via FlarePC (rare)
-**prisma-shared**: Widget, Restaurant, Reservation models
-**emailer**: Email confirmations sent via Messenger in Reservator
+- `PUBLIC_API_URL` — REST API base (e.g. `https://jonathan-api-local.e-table.co`).
+- `PUBLIC_STRIPE_KEY` — for Stripe Elements on the client.
 
-## Summary
+## Conventions / gotchas
 
-Widget is a **production-ready embeddable booking system** that:
-- ✅ Provides complete customer reservation flow with payment
-- ✅ Uses Svelte 5 runes for reactive state
-- ✅ Integrates with shared Reservator for booking logic
-- ✅ Supports theme customization per restaurant
-- ✅ Handles timezone-aware operations
-- ✅ Auto-resizes via postMessage for seamless iframe embedding
+- **Server boundary:** anything under `src/lib/server/` and `*.server.ts` is server-only. Never import these from `.svelte` components or non-`.server.ts` files; the REST secret would leak.
+- **Cloudflare adapter:** `vite.config.ts` externalizes `cloudflare:sockets`; the `.prisma/client/default → @prisma/client` alias is a leftover and currently unused (no Prisma client at runtime).
+- **Build target:** `cargo`/Rust does not apply here despite the parent monorepo's `api/` workspace — this directory is a standalone SvelteKit project.
+- **Adding a new RPC method:** add to `router` in `rpc-router.ts` (with a Valibot input schema), then call `api.<methodName>(input)` from any `.svelte` component. The `Proxy`-based client picks it up automatically; types flow from `typeof router`.
+- **Adding a new REST endpoint:** add a method to `createWidgetApi` in `widget-api.ts`, declare the DTOs in `src/lib/api-types.ts`, then wire the RPC method through an adapter. Don't call `restCall` from anywhere except `widget-api.ts`.

@@ -44,12 +44,12 @@ export function bookingToLegacyReservation(
 		serviceId: dto.shiftSlot?.shift.id ? String(dto.shiftSlot.shift.id) : null,
 		startDate: combineDateAndTime(dto.date, dto.time),
 		pax: dto.pax,
-		notes: dto.notes ?? null,
+		notes: dto.note ?? null,
 		contact: {
-			firstName: dto.customerFirstName ?? null,
-			lastName: dto.customerLastName ?? null,
-			email: dto.customerEmail ?? null,
-			phone: dto.customerPhone ?? null
+			firstName: dto.firstName ?? null,
+			lastName: dto.lastName ?? null,
+			email: dto.email ?? null,
+			phone: dto.phone ?? null
 		}
 	};
 }

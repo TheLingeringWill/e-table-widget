@@ -50,8 +50,8 @@ export const load = async ({ params }) => {
 				name: aggregate.ok ? aggregate.data.restaurant.name : ''
 			},
 			customer: {
-				firstName: after.data.customerFirstName ?? '',
-				lastName: after.data.customerLastName ?? ''
+				firstName: after.data.firstName ?? '',
+				lastName: after.data.lastName ?? ''
 			}
 		}
 	};

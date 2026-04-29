@@ -108,11 +108,11 @@ export interface BookingDetailResponseDTO {
 	time: string;
 	status: BookingStatus;
 	source: BookingSource;
-	notes?: string | null;
-	customerFirstName?: string | null;
-	customerLastName?: string | null;
-	customerEmail?: string | null;
-	customerPhone?: string | null;
+	note?: string | null;
+	firstName?: string | null;
+	lastName?: string | null;
+	email?: string | null;
+	phone?: string | null;
 	availableTransitions: BookingStatus[];
 	shiftSlot?: BookingShiftSlotResponseDTO | null;
 	stripePaymentIntentId?: string | null;
@@ -127,11 +127,11 @@ export interface CreateBookingRequestDTO {
 	date: string;
 	time: string;
 	source: BookingSource;
-	notes?: string | null;
-	customerFirstName?: string | null;
-	customerLastName?: string | null;
-	customerEmail?: string | null;
-	customerPhone?: string | null;
+	note?: string | null;
+	firstName?: string | null;
+	lastName?: string | null;
+	email?: string | null;
+	phone?: string | null;
 	paymentIntentId?: string | null;
 }
 

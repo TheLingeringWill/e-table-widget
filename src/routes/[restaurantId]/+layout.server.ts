@@ -77,6 +77,12 @@ export const load = async ({ params, url, setHeaders }) => {
 	return {
 		builder,
 		isEmbedded,
-		widget
+		widget,
+		// +layout.svelte sets the zonedDateUtils context off `data.restaurant.timezone`
+		// — expose it at the top level so the layout doesn't have to reach into widget.
+		restaurant: {
+			name: restaurant.name,
+			timezone: restaurant.timezone || 'Europe/Paris'
+		}
 	};
 };

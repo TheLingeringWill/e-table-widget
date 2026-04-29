@@ -6,7 +6,7 @@ import { createWidgetApi } from '$lib/server/api/widget-api';
  * Generate GTM detection and dataLayer initialization code
  * SDK no longer injects GTM - it detects parent GTM and forwards events
  */
-function generateGtmDetectionScript(restaurantId: string, widgetId: string): string {
+function generateGtmDetectionScript(restaurantId: string): string {
 	return /*javascript*/ `
     // E-table GTM Detection (SDK does NOT inject GTM)
     (function() {
@@ -24,8 +24,7 @@ function generateGtmDetectionScript(restaurantId: string, widgetId: string): str
       // Store detection result for debugging
       window.__etableGtmConfig = {
         parentHasGTM: parentHasGTM,
-        restaurantId: '${restaurantId}',
-        widgetId: '${widgetId}'
+        restaurantId: '${restaurantId}'
       };
 
       // Initialize dataLayer if not exists (for event capture)
@@ -40,7 +39,6 @@ function generateGtmDetectionScript(restaurantId: string, widgetId: string): str
       // Push initial widget load event
       window.dataLayer.push({
         'event': 'etable_widget_loaded',
-        'widget_id': '${widgetId}',
         'restaurant_id': '${restaurantId}',
         'gtm_detected': parentHasGTM,
         'timestamp': new Date().toISOString()
@@ -50,13 +48,12 @@ function generateGtmDetectionScript(restaurantId: string, widgetId: string): str
 }
 
 export const GET = async (event: RequestEvent): Promise<Response> => {
-	const { restaurantId, widgetId } = event.params;
+	const { restaurantId } = event.params;
 
-	// Load widget config to check if GTM tracking is enabled. The REST API
-	// keys `widget` by restaurant only (one-to-one) — `widgetId` from the path
-	// is no longer used to scope the lookup. Per PRD §5 the route eventually
-	// loses the `[widgetId]` segment entirely; for now the param is preserved
-	// so existing embed scripts keep working.
+	// PRD §5: widget is now keyed by restaurant only (one-to-one). The
+	// `[widgetId]` URL segment is gone; the embed script emits an iframe
+	// pointing at `/{restaurantId}` directly. Backward compatibility for
+	// already-deployed embed scripts is explicitly out of scope.
 	const numericRestaurantId = Number(restaurantId);
 	const widgetResult = Number.isFinite(numericRestaurantId)
 		? await createWidgetApi(numericRestaurantId).getWidget()
@@ -64,11 +61,11 @@ export const GET = async (event: RequestEvent): Promise<Response> => {
 	const gtmEnabled = widgetResult.ok ? widgetResult.data.gtmEnabled : false;
 
 	// Only generate GTM detection script if tracking is enabled
-	const gtmScript = gtmEnabled ? generateGtmDetectionScript(restaurantId!, widgetId!) : '';
+	const gtmScript = gtmEnabled ? generateGtmDetectionScript(restaurantId!) : '';
 
 	const iframeSrc = dev
-		? `"http://localhost:8987/${restaurantId}/${widgetId}?embedded=true"`
-		: `"https://widget.e-table.co/${restaurantId}/${widgetId}?embedded=true"`;
+		? `"http://localhost:8987/${restaurantId}?embedded=true"`
+		: `"https://widget.e-table.co/${restaurantId}?embedded=true"`;
 
 	const script = /*javascript*/ `
   (function() {

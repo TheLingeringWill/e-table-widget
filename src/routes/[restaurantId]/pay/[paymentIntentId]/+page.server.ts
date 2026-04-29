@@ -11,11 +11,6 @@ export const load = async ({ params }) => {
 
 	const api = createWidgetApi(rid);
 
-	// PRD §9.2 mocking requirement: when WIDGET_PAYMENT_MOCK_MODE is set,
-	// the BFF mock under src/lib/server/api/mocks/payment-intent.ts intercepts
-	// this call and serves the synthesized record. When the API ships the
-	// real `GET /restaurants/{rid}/payment-intents/{id}`, the call site does
-	// not change — only the mock module is deleted.
 	const piResult = await api.getPaymentIntent(paymentIntentId!);
 	if (!piResult.ok) {
 		return {

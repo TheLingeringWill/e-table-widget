@@ -97,16 +97,18 @@ const rpcHandle: Handle = async ({ event, resolve }) => {
 	}
 };
 
-// PRD §7 Phase 4: drop createLocals + createPrismaProxy. The widget no
-// longer reaches into Reservator/Prisma, so the per-request locals injection
-// has nothing to inject. Routes that need restaurant data fetch it via the
-// REST adapter (createWidgetApi). The countryCode field used to come from
-// Cloudflare's `cf` object — preserve a minimal version inline so the
-// remaining +layout.server.ts can still expose it if a downstream consumer
-// reappears.
+// Country code lookup: previously sourced from Cloudflare's `cf.country` (only
+// available under adapter-cloudflare). On ECS+ALB, neither is present, so we
+// fall back to common upstream geo headers (CloudFront and a custom override).
+// ALB does not inject geo headers itself — `locals.countryCode` will be null
+// in staging/prod until/unless we put CloudFront (or another geo-aware edge)
+// in front of the widget.
 const localsHandle: Handle = async ({ event, resolve }) => {
-	const cfCountry = (event.request as Request & { cf?: { country?: string } })?.cf?.country;
-	(event.locals as { countryCode?: string }).countryCode = cfCountry || 'FR';
+	const country =
+		event.request.headers.get('cloudfront-viewer-country') ??
+		event.request.headers.get('x-country') ??
+		null;
+	(event.locals as { countryCode: string | null }).countryCode = country;
 	return resolve(event);
 };
 

@@ -5,6 +5,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
+		"start": "HOST=0.0.0.0 PORT=3002 node build",
 		"update:maket": "pnpm remove maket && pnpm add maket@latest",
 		"preview": "vite preview",
 		"test": "npm run test:integration && npm run test:unit",
@@ -17,9 +18,9 @@
 		"load-test": "tsx scripts/load-test-reservations.ts"
 	},
 	"devDependencies": {
-		"@cloudflare/workers-types": "^4.20250109.0",
 		"@faker-js/faker": "^8.4.1",
 		"@playwright/test": "^1.49.1",
+		"@sveltejs/adapter-node": "^5.2.12",
 		"@sveltejs/kit": "^2.21.1",
 		"@sveltejs/vite-plugin-svelte": "5.0.3",
 		"@types/eslint": "^8.56.12",
@@ -45,8 +46,6 @@
 	"dependencies": {
 		"@floating-ui/dom": "^1.6.13",
 		"@stripe/stripe-js": "^3.5.0",
-		"@sveltejs/adapter-cloudflare": "^5.0.1",
-		"@sveltejs/adapter-vercel": "^5.7.2",
 		"cobe": "^0.6.3",
 		"color2k": "^2.0.3",
 		"dayjs": "^1.11.13",

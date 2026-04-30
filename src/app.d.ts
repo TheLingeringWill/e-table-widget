@@ -3,17 +3,13 @@ declare global {
 		// interface Error {}
 
 		interface PageData {
-			countryCode?: string;
+			countryCode?: string | null;
 		}
 		// interface PageState {}
 
-		interface Platform {
-			env?: Record<string, string | undefined>;
-		}
-
 		interface Locals {
 			restaurantId?: string;
-			countryCode?: string;
+			countryCode?: string | null;
 		}
 	}
 }

@@ -7,19 +7,10 @@ WORKDIR /app
 
 RUN corepack enable
 
-# Build-time public env (baked into the bundle by $env/static/public)
-ARG PUBLIC_API_URL
-ARG PUBLIC_STRIPE_KEY
-ENV PUBLIC_API_URL=${PUBLIC_API_URL} \
-  PUBLIC_STRIPE_KEY=${PUBLIC_STRIPE_KEY}
-
-# $env/static/private is read at build time too. The values baked here are
-# placeholders so the build doesn't fail on missing-env validation; the real
-# values come from Secrets Manager at runtime via process.env.
-ENV WIDGET_API_SECRET=build-time-placeholder \
-  PRIVATE_STRIPE_KEY=build-time-placeholder \
-  PRIVATE_STRIPE_WEBHOOKS=build-time-placeholder \
-  PRIVATE_RESEND_KEY=build-time-placeholder
+# All app config (API_URL, WIDGET_API_SECRET, PUBLIC_STRIPE_KEY) is read at
+# runtime via $env/dynamic/{private,public} from process.env. The image is
+# env-agnostic and reusable across staging/prod — values come from the ECS
+# task definition (environment[] + secrets[]).
 
 COPY package.json pnpm-lock.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \

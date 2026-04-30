@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { PUBLIC_STRIPE_KEY } from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 	import {
 		loadStripe,
 		type Stripe,
@@ -29,7 +29,7 @@
 		onMount(async () => {
 			// For Stripe Connect, pass the connected account ID
 			const stripeOptions = stripeAccountId ? { stripeAccount: stripeAccountId } : undefined;
-			const stripe = await loadStripe(PUBLIC_STRIPE_KEY, stripeOptions);
+			const stripe = await loadStripe(env.PUBLIC_STRIPE_KEY, stripeOptions);
 
 			if (stripe) {
 				stripeState.stripe = stripe;

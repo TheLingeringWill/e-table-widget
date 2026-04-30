@@ -32,24 +32,19 @@
 				{ "name": "HOST", "value": "0.0.0.0" },
 				{ "name": "PORT", "value": "3002" },
 				{ "name": "NODE_ENV", "value": "production" },
-				{ "name": "WIDGET_PAYMENT_MOCK_MODE", "value": "" }
+				{
+					"name": "PUBLIC_STRIPE_KEY",
+					"value": "pk_test_51SWzFZArUKFeBawSJeilzblBg31BkYP4kNvWN0q99wr1pntaSyKDMoAPHBOIafCOGgQNufOrhPfhZrj4s79FpywC00qSxTc9Zf"
+				}
 			],
 			"secrets": [
 				{
+					"name": "API_URL",
+					"valueFrom": "arn:aws:secretsmanager:eu-west-3:138029549325:secret:e-table/staging/widget-O19xd3:API_URL::"
+				},
+				{
 					"name": "WIDGET_API_SECRET",
 					"valueFrom": "arn:aws:secretsmanager:eu-west-3:138029549325:secret:e-table/staging/widget-O19xd3:WIDGET_API_SECRET::"
-				},
-				{
-					"name": "PRIVATE_STRIPE_KEY",
-					"valueFrom": "arn:aws:secretsmanager:eu-west-3:138029549325:secret:e-table/staging/widget-O19xd3:PRIVATE_STRIPE_KEY::"
-				},
-				{
-					"name": "PRIVATE_STRIPE_WEBHOOKS",
-					"valueFrom": "arn:aws:secretsmanager:eu-west-3:138029549325:secret:e-table/staging/widget-O19xd3:PRIVATE_STRIPE_WEBHOOKS::"
-				},
-				{
-					"name": "PRIVATE_RESEND_KEY",
-					"valueFrom": "arn:aws:secretsmanager:eu-west-3:138029549325:secret:e-table/staging/widget-O19xd3:PRIVATE_RESEND_KEY::"
 				}
 			],
 			"logConfiguration": {

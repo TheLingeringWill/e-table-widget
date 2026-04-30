@@ -1,9 +1,9 @@
-// Server-only. Thin fetch wrapper for the REST API at PUBLIC_API_URL.
-// Auth: X-API-Key carrying WIDGET_API_SECRET (PRD §6.1).
-// Read in widget/src/lib/server/** only — $env/static/private enforces the boundary.
+// Server-only. Thin fetch wrapper for the REST API at env.API_URL.
+// Auth: X-API-Key carrying env.WIDGET_API_SECRET (PRD §6.1).
+// Read from $env/dynamic/private at runtime so ECS Secrets Manager values take
+// effect. The /server/** path enforces the server-only boundary.
 
-import { WIDGET_API_SECRET } from '$env/static/private';
-import { PUBLIC_API_URL } from '$env/static/public';
+import { env } from '$env/dynamic/private';
 import type { ApiErrorResult } from './types';
 
 export type RestClientOptions = {
@@ -15,16 +15,16 @@ export type RestClientOptions = {
 
 export type RestResult<T> = { ok: true; data: T } | ({ ok: false } & ApiErrorResult);
 
-const baseUrl = (() => {
-	const raw = PUBLIC_API_URL?.replace(/\/+$/, '') ?? '';
+function getBaseUrl(): string {
+	const raw = env.API_URL?.replace(/\/+$/, '') ?? '';
 	if (!raw) {
-		throw new Error('PUBLIC_API_URL is not set');
+		throw new Error('API_URL is not set');
 	}
 	return raw;
-})();
+}
 
 function buildUrl(path: string, query?: Record<string, string | number | undefined>): string {
-	const url = new URL(`${baseUrl}${path}`);
+	const url = new URL(`${getBaseUrl()}${path}`);
 	if (query) {
 		for (const [k, v] of Object.entries(query)) {
 			if (v === undefined) continue;
@@ -37,7 +37,7 @@ function buildUrl(path: string, query?: Record<string, string | number | undefin
 export async function restCall<T>(path: string, opts: RestClientOptions): Promise<RestResult<T>> {
 	const method = opts.method ?? 'GET';
 	const headers: Record<string, string> = {
-		'X-API-Key': WIDGET_API_SECRET,
+		'X-API-Key': env.WIDGET_API_SECRET ?? '',
 		'X-Restaurant-Id': String(opts.restaurantId)
 	};
 	if (opts.body !== undefined) {

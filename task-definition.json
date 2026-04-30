@@ -15,9 +15,9 @@
 		{
 			"name": "widget",
 			"image": "138029549325.dkr.ecr.eu-west-3.amazonaws.com/e-table-widget:latest",
-			"portMappings": [{ "containerPort": 3002, "protocol": "tcp" }],
+			"portMappings": [{ "containerPort": 3000, "protocol": "tcp" }],
 			"healthCheck": {
-				"command": ["CMD-SHELL", "curl -f http://localhost:3002/health || exit 1"],
+				"command": ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"],
 				"interval": 30,
 				"timeout": 5,
 				"retries": 3,
@@ -30,7 +30,7 @@
 			"mountPoints": [{ "sourceVolume": "tmp", "containerPath": "/tmp", "readOnly": false }],
 			"environment": [
 				{ "name": "HOST", "value": "0.0.0.0" },
-				{ "name": "PORT", "value": "3002" },
+				{ "name": "PORT", "value": "3000" },
 				{ "name": "NODE_ENV", "value": "production" },
 				{
 					"name": "PUBLIC_STRIPE_KEY",

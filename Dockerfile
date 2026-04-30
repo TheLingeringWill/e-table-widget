@@ -36,9 +36,9 @@ COPY --from=builder --chown=appuser:appgroup /app/package.json ./package.json
 USER appuser
 
 ENV HOST=0.0.0.0 \
-  PORT=3002 \
+  PORT=3000 \
   NODE_ENV=production
 
-EXPOSE 3002
+EXPOSE 3000
 
 CMD ["node", "build"]

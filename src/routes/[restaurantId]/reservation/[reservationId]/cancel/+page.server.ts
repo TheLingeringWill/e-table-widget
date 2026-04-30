@@ -20,10 +20,7 @@ export const load = async ({ params, url }) => {
 	// PRD §6.6: cancellation deadline + permission is encoded in
 	// `availableTransitions`. If 'canceled' isn't in the list, the booking
 	// is past its cancellation window or already terminal.
-	if (
-		!booking.availableTransitions?.includes('canceled') &&
-		booking.status !== 'canceled'
-	) {
+	if (!booking.availableTransitions?.includes('canceled') && booking.status !== 'canceled') {
 		error(403, 'Cette réservation ne peut pas être annulée.');
 	}
 

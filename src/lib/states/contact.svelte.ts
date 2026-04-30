@@ -20,6 +20,12 @@ export const contact: {
 export const rememberMe: { checked: boolean } = $state({ checked: false });
 export const prefilled: { value: boolean } = $state({ value: false });
 
+export function isForeign(): boolean {
+	const phone = contact.phone;
+	if (!phone) return false;
+	return !phone.startsWith('+33');
+}
+
 // $effect(() => {
 // 	console.log('contact', contact);
 

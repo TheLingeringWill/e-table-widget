@@ -123,7 +123,11 @@ export function trackInteraction(action: string, data: Record<string, any> = {})
 /**
  * Track errors
  */
-export function trackError(errorCode: string, errorMessage: string, context: Record<string, any> = {}) {
+export function trackError(
+	errorCode: string,
+	errorMessage: string,
+	context: Record<string, any> = {}
+) {
 	pushGtmEvent('booking_error', {
 		error_code: errorCode,
 		error_message: errorMessage,

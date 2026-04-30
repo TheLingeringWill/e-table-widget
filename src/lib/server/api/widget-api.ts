@@ -28,9 +28,7 @@ export function createWidgetApi(restaurantId: number) {
 		getAvailabilities(params: {
 			startDate: string;
 			endDate: string;
-		}): Promise<
-			RestResult<{ data: Array<{ date: string; shifts: unknown[] }> }>
-		> {
+		}): Promise<RestResult<{ data: Array<{ date: string; shifts: unknown[] }> }>> {
 			// Live response is `{ data: [{ date, shifts: [{ slots: [] }] }] }`.
 			return restCall(`/restaurants/${restaurantId}/availabilities`, {
 				restaurantId,
@@ -40,9 +38,7 @@ export function createWidgetApi(restaurantId: number) {
 		getBooking(id: number): Promise<RestResult<BookingDetailResponseDTO>> {
 			return restCall(`/restaurants/${restaurantId}/bookings/${id}`, { restaurantId });
 		},
-		createBooking(
-			body: CreateBookingRequestDTO
-		): Promise<RestResult<CreateBookingResponseDTO>> {
+		createBooking(body: CreateBookingRequestDTO): Promise<RestResult<CreateBookingResponseDTO>> {
 			return restCall(`/restaurants/${restaurantId}/bookings`, {
 				restaurantId,
 				method: 'POST',
@@ -79,9 +75,6 @@ export function createWidgetApi(restaurantId: number) {
 		getReviewSettings(): Promise<RestResult<ReviewSettingsResponseDTO>> {
 			return restCall(`/restaurants/${restaurantId}/review-settings`, { restaurantId });
 		},
-		// PRD §9.2: not yet implemented in the live API. The mock under
-		// src/lib/server/api/mocks/payment-intent.ts intercepts this when
-		// WIDGET_PAYMENT_MOCK_MODE is set.
 		getPaymentIntent(id: string): Promise<RestResult<PaymentIntentResponseDTO>> {
 			return restCall(`/restaurants/${restaurantId}/payment-intents/${id}`, { restaurantId });
 		}

@@ -31,8 +31,8 @@
 		<h1>Widget iframe parent harness</h1>
 		<p>
 			This page exists for PRD §10.4 verification: it embeds the widget via the embeddable
-			<code>/&lt;rid&gt;/script</code> tag and logs every <code>postMessage</code> event the
-			widget iframe sends so Chrome MCP can read them via
+			<code>/&lt;rid&gt;/script</code> tag and logs every <code>postMessage</code> event the widget
+			iframe sends so Chrome MCP can read them via
 			<code>read_console_messages({pattern: 'resize|gtm_event'})</code>.
 		</p>
 		<main></main>
@@ -50,10 +50,6 @@
 				}
 			});
 		</script>
-		<script
-			id="cooking"
-			data-element="main"
-			src="http://localhost:8987/1/script"
-		></script>
+		<script id="cooking" data-element="main" src="http://localhost:8987/1/script"></script>
 	</body>
 </html>

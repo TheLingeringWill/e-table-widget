@@ -77,10 +77,12 @@ Results:
 ### Tips
 
 **Before running:**
+
 - Make sure the widget dev server is running: `pnpm --filter widget dev`
 - Make sure the database is seeded: `pnpm seed:db`
 
 **If reservations fail:**
+
 - Clear existing reservations:
   ```bash
   echo "DELETE FROM \"Reservation\" WHERE \"restaurantId\" = 'TEST' AND \"startDate\" >= '2026-01-28';" | \
@@ -90,6 +92,7 @@ Results:
 - Use a future `--date` to avoid conflicts with existing reservations
 
 **Verify results:**
+
 ```bash
 # Check total count
 echo "SELECT COUNT(*) FROM \"Reservation\" WHERE \"restaurantId\" = 'TEST';" | \

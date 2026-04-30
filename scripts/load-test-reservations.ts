@@ -372,7 +372,10 @@ async function processBatch(config: LoadTestConfig, batchSize: number): Promise<
 			if (res.reservationId) {
 				result.reservationIds.push(res.reservationId);
 			}
-		} else if (res.error?.includes('No available slots') || res.error?.includes('No table available')) {
+		} else if (
+			res.error?.includes('No available slots') ||
+			res.error?.includes('No table available')
+		) {
 			result.skipped++;
 			const errorKey = res.error || 'Unknown error';
 			errorCounts.set(errorKey, (errorCounts.get(errorKey) || 0) + 1);

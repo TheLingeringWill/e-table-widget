@@ -13,10 +13,7 @@ import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
 import { shiftToLegacyService, type LiveDay } from '$lib/server/api/adapters/service';
 import { formatDateForApi, formatTimeForApi } from '$lib/server/api/adapters/datetime';
 import { filterByPax, slotToLegacySlot } from '$lib/server/api/adapters/slot-state';
-import {
-	getMockMode,
-	synthesizePaymentIntent
-} from '$lib/server/api/mocks/payment-intent';
+import { isForeignPhone } from '$lib/server/api/adapters/deposit-policy';
 import { ApiReturnStatus } from '$lib/api-types';
 import type {
 	BookingStatus,
@@ -53,37 +50,34 @@ const procedure = <S extends GenericSchema, R>(
 });
 
 export const router = {
-	getServices: procedure(
-		object({ restaurantId: string(), date: date() }),
-		async ({ input }) => {
-			// Source the per-date service tile list from /availabilities, not
-			// /services. The API resolves service exceptions (overrides /
-			// closures) at the shift level — see resolve_shifts_for_day in
-			// api/src/domain/service/availability.rs — and emits one shift per
-			// effective service for the date, with id = parent service id on
-			// regular days or id = exception id on overridden days. Sourcing
-			// the tile list from this same call keeps the BFF aligned with
-			// what the user will see in the slots panel: when /availabilities
-			// returns the override shift, the tile carries the override's id,
-			// name, hours, and pax bounds, and the subsequent getServiceSlots
-			// call (which filters by shift.id === selection.service.id) hits.
-			const rid = Number(input.restaurantId);
-			if (!Number.isFinite(rid)) {
-				throw new Error(`getServices: invalid restaurant id ${input.restaurantId}`);
-			}
-			const day = formatDateForApi(input.date);
-			const result = await createWidgetApi(rid).getAvailabilities({
-				startDate: day,
-				endDate: day
-			});
-			if (!result.ok) {
-				throw new Error(`getServices: ${result.error.code} ${result.error.message}`);
-			}
-			const days = result.data.data as LiveDay[];
-			const shifts = days.flatMap((d) => d.shifts);
-			return shifts.filter((s) => s.bookable === true).map(shiftToLegacyService);
+	getServices: procedure(object({ restaurantId: string(), date: date() }), async ({ input }) => {
+		// Source the per-date service tile list from /availabilities, not
+		// /services. The API resolves service exceptions (overrides /
+		// closures) at the shift level — see resolve_shifts_for_day in
+		// api/src/domain/service/availability.rs — and emits one shift per
+		// effective service for the date, with id = parent service id on
+		// regular days or id = exception id on overridden days. Sourcing
+		// the tile list from this same call keeps the BFF aligned with
+		// what the user will see in the slots panel: when /availabilities
+		// returns the override shift, the tile carries the override's id,
+		// name, hours, and pax bounds, and the subsequent getServiceSlots
+		// call (which filters by shift.id === selection.service.id) hits.
+		const rid = Number(input.restaurantId);
+		if (!Number.isFinite(rid)) {
+			throw new Error(`getServices: invalid restaurant id ${input.restaurantId}`);
 		}
-	),
+		const day = formatDateForApi(input.date);
+		const result = await createWidgetApi(rid).getAvailabilities({
+			startDate: day,
+			endDate: day
+		});
+		if (!result.ok) {
+			throw new Error(`getServices: ${result.error.code} ${result.error.message}`);
+		}
+		const days = result.data.data as LiveDay[];
+		const shifts = days.flatMap((d) => d.shifts);
+		return shifts.filter((s) => s.bookable === true).map(shiftToLegacyService);
+	}),
 	getServiceSlots: procedure(
 		object({ restaurantId: string(), serviceId: string(), pax: number(), date: date() }),
 		async ({ input }) => {
@@ -101,9 +95,7 @@ export const router = {
 				endDate: day
 			});
 			if (!result.ok) {
-				throw new Error(
-					`getServiceSlots: ${result.error.code} ${result.error.message}`
-				);
+				throw new Error(`getServiceSlots: ${result.error.code} ${result.error.message}`);
 			}
 			// Filtering by `shift.id === selection.service.id` works because
 			// getServices now sources the tile id from the same /availabilities
@@ -116,13 +108,9 @@ export const router = {
 			const flatSlots = days.flatMap((day) =>
 				day.shifts
 					.filter((shift) => shift.id === targetServiceId)
-					.flatMap((shift) =>
-						shift.slots.map((slot) => ({ ...slot, date: day.date }))
-					)
+					.flatMap((shift) => shift.slots.map((slot) => ({ ...slot, date: day.date })))
 			);
-			return filterByPax(flatSlots, input.pax).map((s) =>
-				slotToLegacySlot(s, input.pax)
-			);
+			return filterByPax(flatSlots, input.pax).map((s) => slotToLegacySlot(s, input.pax));
 		}
 	),
 	book: procedure(
@@ -148,36 +136,25 @@ export const router = {
 		}),
 		async ({ input, event }) => {
 			// REST replacement for `reservator.book`. Two call shapes from the
-			// widget UI today (PRD §6.5):
+			// widget UI today:
 			//   1. Initial submit (Booking.svelte): full reservation payload,
 			//      no paymentIntentId. May return REQUIRES_PAYMENT_INTENT for
 			//      services with deposits — Stripe Elements then mints/confirms
-			//      a payment intent on the client and the procedure is called
-			//      again with `paymentIntentId` only.
+			//      a payment intent on the client.
 			//   2. Confirmation after Stripe success (Payment.svelte):
-			//      paymentIntentId only, expects status: OK.
-			//
-			// The §9.2 payment-intent surface (a)/(b)/(c) is not yet on the live
-			// API (PRD §9.2 "Mocking requirement"). When WIDGET_PAYMENT_MOCK_MODE
-			// is set, the BFF synthesizes a client_secret here and the
-			// `getPaymentIntent` mock keeps a record so the standalone payment
-			// route works end-to-end. When the API ships §9.2 (a), the
-			// `paymentIntentClientSecret` field on CreateBookingResponseDTO
-			// supplants the synthesis path; deleting the mock module is the
-			// only follow-up change.
-			const rid = input.reservation
-				? Number(input.reservation.restaurantId)
-				: ridFromEvent(event);
+			//      paymentIntentId only, expects status: OK (legacy shape).
+			// The webhook is now the source of truth; the second call shape is
+			// vestigial.
+			const rid = input.reservation ? Number(input.reservation.restaurantId) : ridFromEvent(event);
 			if (!Number.isFinite(rid)) {
 				throw new Error('book: restaurant id missing');
 			}
 
 			// Confirmation-after-Stripe call shape: only paymentIntentId carried.
-			// PRD §9.2 (c) is still open — until the API ships either a
-			// `paymentIntentId` field on CreateBookingRequestDTO or a dedicated
-			// `POST /bookings/{id}/confirm-payment` endpoint, we trust the BFF
-			// mock to have already flipped the booking's payment status when
-			// Stripe Elements confirmed. The widget gets back a synthesized OK.
+			// With the live PaymentIntent API on, the webhook is the sole
+			// confirmation path — the widget no longer needs to round-trip with
+			// `paymentIntentId` after Stripe.confirmCardPayment. Returning OK
+			// keeps the legacy call sites compatible during the transition.
 			if (input.paymentIntentId && !input.reservation) {
 				return {
 					status: ApiReturnStatus.OK,
@@ -190,8 +167,6 @@ export const router = {
 			}
 			const r = input.reservation;
 
-			// REST API source enum still lacks 'widget' (PRD §9.5 — open).
-			// Send 'web' until the enum gains the value.
 			const body: CreateBookingRequestDTO = {
 				pax: r.pax,
 				status: 'to_confirm' satisfies BookingStatus,
@@ -202,7 +177,8 @@ export const router = {
 				firstName: r.contact.firstName ?? null,
 				lastName: r.contact.lastName,
 				email: r.contact.email,
-				phone: r.contact.phone
+				phone: r.contact.phone,
+				isForeign: isForeignPhone(r.contact.phone)
 			};
 
 			const api = createWidgetApi(rid);
@@ -218,22 +194,11 @@ export const router = {
 
 			const booking = result.data as CreateBookingResponseDTO;
 			if (booking.status === 'requires_payment_intent') {
-				// Pull the client_secret either from the API (PRD §9.2 (a) when
-				// shipped) or from the BFF mock under WIDGET_PAYMENT_MOCK_MODE.
-				let clientSecret: string | undefined =
-					(booking as { paymentIntentClientSecret?: string | null })
-						.paymentIntentClientSecret ?? undefined;
-				let stripePaymentIntentId: string | undefined =
-					booking.stripePaymentIntentId ?? undefined;
+				const clientSecret =
+					(booking as { paymentIntentClientSecret?: string | null }).paymentIntentClientSecret ??
+					undefined;
+				const stripePaymentIntentId = booking.stripePaymentIntentId ?? undefined;
 				const amountCents = booking.paymentAmountCents ?? 0;
-				if (!clientSecret && getMockMode() !== 'off') {
-					const minted = synthesizePaymentIntent(booking.id, amountCents);
-					clientSecret = minted.clientSecret;
-					stripePaymentIntentId = minted.stripePaymentIntentId;
-				}
-				// PRD §6.4 risk row 3: stripeAccountId is no longer exposed by the
-				// REST API. The payment intent is minted server-side, so Stripe
-				// Elements only needs PUBLIC_STRIPE_KEY + the intent's clientSecret.
 				return {
 					status: ApiReturnStatus.REQUIRES_PAYMENT_INTENT,
 					paymentIntent: {
@@ -270,13 +235,7 @@ export const router = {
 	}),
 	loadPaymentIntent: procedure(string(), async ({ input, event }) => {
 		// REST replacement for the legacy reservator-driven payment-intent
-		// load. Per PRD §9.2 the live API does not yet expose
-		// `GET /restaurants/{rid}/payment-intents/{id}` or surface a
-		// `client_secret` on bookings — the BFF mock under
-		// src/lib/server/api/mocks/payment-intent.ts intercepts the
-		// adapter call when `WIDGET_PAYMENT_MOCK_MODE` is set. When the
-		// API ships §9.2 (a)/(b)/(c), the mock module is deleted and
-		// this procedure body is unaffected.
+		// load. Hits the live PaymentIntent GET endpoint.
 		try {
 			const rid = ridFromEvent(event);
 			if (!Number.isFinite(rid)) {

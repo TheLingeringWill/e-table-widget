@@ -11,11 +11,11 @@
 	import { waitlist } from '$lib/states/waitlist.svelte';
 	import { ClockCounterClockwise } from 'phosphor-svelte';
 	import {
-	formatPhoneAsYouType,
-	convertToE164,
-	formatPhoneNumberForDisplay,
-	getPhoneValidationError
-} from '$lib/utils/phone';
+		formatPhoneAsYouType,
+		convertToE164,
+		formatPhoneNumberForDisplay,
+		getPhoneValidationError
+	} from '$lib/utils/phone';
 	import { page } from '$app/state';
 	import type { CountryCode } from 'libphonenumber-js';
 
@@ -152,13 +152,17 @@
 				<h2 class="text-md font-normal">Informations de contact</h2>
 			</div>
 			{#if prefilled.value}
-				<div class="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded text-green-800 text-sm">
+				<div
+					class="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded text-green-800 text-sm"
+				>
 					<Check size={16} weight="bold" />
 					<span>Vos informations ont été pré-remplies</span>
 				</div>
 			{/if}
 			{#if waitlist.isWaitlist}
-				<div class="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded text-orange-800 text-base font-bold">
+				<div
+					class="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded text-orange-800 text-base font-bold"
+				>
 					<ClockCounterClockwise size={20} weight="bold" />
 					<span>Vous serez ajouté à la liste d'attente pour ce créneau</span>
 				</div>

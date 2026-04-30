@@ -16,14 +16,7 @@ export type BookingStatus =
 	| 'seated'
 	| 'finished';
 
-export type BookingSource =
-	| 'web'
-	| 'messenger'
-	| 'thefork'
-	| 'api'
-	| 'phone'
-	| 'walk_in'
-	| 'other';
+export type BookingSource = 'web' | 'messenger' | 'thefork' | 'api' | 'phone' | 'walk_in' | 'other';
 
 export type SlotSemanticState = 'AVAILABLE' | 'ALMOST_FULL' | 'FULL' | 'CLOSED';
 
@@ -37,7 +30,7 @@ export interface RestaurantResponseDTO {
 }
 
 export interface PaymentResponseDTO {
-	status: 'connected' | 'pending' | 'disconnected';
+	status: 'connected' | 'pending' | 'not_connected';
 	accountIdLast4?: string | null;
 }
 
@@ -82,6 +75,9 @@ export interface ServiceResponseDTO {
 	waitlistEnabled: boolean;
 	captureEnabled?: boolean;
 	captureAmountPerPax?: number | null;
+	captureThreshold?: number | null;
+	foreignCaptureEnabled?: boolean;
+	foreignCaptureAmountPerPax?: number | null;
 }
 
 export interface SlotAvailabilityResponseDTO {
@@ -95,6 +91,11 @@ export interface SlotAvailabilityResponseDTO {
 	slotMaxPax: number;
 	servicePax: number;
 	serviceMaxPax: number;
+	captureEnabled?: boolean | null;
+	captureAmountPerPax?: number | null;
+	captureThreshold?: number | null;
+	foreignCaptureEnabled?: boolean | null;
+	foreignCaptureAmountPerPax?: number | null;
 }
 
 export interface BookingShiftSlotResponseDTO {
@@ -135,6 +136,7 @@ export interface CreateBookingRequestDTO {
 	email?: string | null;
 	phone?: string | null;
 	paymentIntentId?: string | null;
+	isForeign?: boolean;
 }
 
 export interface CreateBookingResponseDTO extends BookingDetailResponseDTO {
@@ -156,7 +158,13 @@ export interface PaymentIntentResponseDTO {
 	clientSecret: string;
 	amountCents: number;
 	bookingId: number;
-	status: 'requires_payment_method' | 'requires_confirmation' | 'succeeded' | 'canceled';
+	status:
+		| 'requires_payment_method'
+		| 'requires_confirmation'
+		| 'requires_action'
+		| 'requires_capture'
+		| 'succeeded'
+		| 'canceled';
 }
 
 export type ApiErrorResult = {

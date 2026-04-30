@@ -13,12 +13,7 @@
 			<div class="flex flex-col items-center text-center gap-6">
 				<!-- Error Icon -->
 				<div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-					<svg
-						class="w-8 h-8 text-red-600"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
+					<svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"

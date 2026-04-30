@@ -77,7 +77,12 @@ const rpcHandle: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 	const method = event.url.pathname.slice(RPC_ENDPOINT.length + 1).split('/')[0];
-	const handler = (router as Record<string, { schema?: unknown; call: (e: RequestEvent, input: unknown) => Promise<unknown> }>)[method];
+	const handler = (
+		router as Record<
+			string,
+			{ schema?: unknown; call: (e: RequestEvent, input: unknown) => Promise<unknown> }
+		>
+	)[method];
 	if (!handler) {
 		return new Response('NOT_FOUND', { status: 404 });
 	}

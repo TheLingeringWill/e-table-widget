@@ -4,11 +4,7 @@
 // The intl-tel-input UI in Contact.svelte gives us a CountryCode at all
 // times; we still defensively default to 'FR' when missing.
 
-import {
-	parsePhoneNumberFromString,
-	AsYouType,
-	type CountryCode
-} from 'libphonenumber-js';
+import { parsePhoneNumberFromString, AsYouType, type CountryCode } from 'libphonenumber-js';
 
 export function formatPhoneAsYouType(value: string, country: CountryCode = 'FR'): string {
 	return new AsYouType(country).input(value);

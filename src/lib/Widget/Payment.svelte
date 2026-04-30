@@ -182,31 +182,23 @@
 			gotoError(null, result.error.message);
 		} else {
 			paymentIntentClientSecret = paymentIntent.clientSecret;
-			const [res, error] = await api.book({
-				paymentIntentId: paymentIntent.id
-			});
-			if (error) {
-				return console.log(error);
-			}
-			if (res?.status === 'OK') {
-				window.parent?.postMessage(
-					{
-						type: 'confirmation',
-						data: {
-							firstName: contact.firstName || '',
-							lastName: contact.lastName || '',
-							phone: contact.phone || '',
-							pax: selection.pax || '',
-							date: selection.date || ''
-						}
-					},
-					'*'
-				);
-
-				nextStep();
-			} else {
-				gotoError(null, 'Payment failed');
-			}
+			// The webhook is the sole confirmation channel — no round-trip
+			// needed. Optimistically transition to DONE; the booking
+			// confirmation email is the real source of truth.
+			window.parent?.postMessage(
+				{
+					type: 'confirmation',
+					data: {
+						firstName: contact.firstName || '',
+						lastName: contact.lastName || '',
+						phone: contact.phone || '',
+						pax: selection.pax || '',
+						date: selection.date || ''
+					}
+				},
+				'*'
+			);
+			nextStep();
 		}
 	};
 
@@ -229,7 +221,9 @@
 	</div>
 	<div class="flex flex-col gap-2">
 		<div>
-			Pour confirmer votre réservation, nous procédons à une simple pré-autorisation de <b>{paymentIntent.amount / 100}€</b>. Aucun débit ne sera effectué, votre carte sera juste validée.
+			Pour confirmer votre réservation, nous procédons à une simple pré-autorisation de <b
+				>{paymentIntent.amount / 100}€</b
+			>. Aucun débit ne sera effectué, votre carte sera juste validée.
 		</div>
 	</div>
 	<div class="relative w-full h-full">

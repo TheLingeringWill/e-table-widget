@@ -45,7 +45,9 @@
 			{/if}
 		{:else}
 			{#if error}
-				<div class="text-red-600 font-semibold">Une erreur s'est produite lors de l'annulation.</div>
+				<div class="text-red-600 font-semibold">
+					Une erreur s'est produite lors de l'annulation.
+				</div>
 			{/if}
 			<form
 				method="POST"

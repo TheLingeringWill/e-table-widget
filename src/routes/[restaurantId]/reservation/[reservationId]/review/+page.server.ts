@@ -20,9 +20,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		// PRD §6.6, the route is gated by `availableTransitions` only at
 		// the cancel/reconfirm level — the review page just renders.
 		const numericId = Number(params.reservationId);
-		const reservationResult = Number.isFinite(numericId)
-			? await api.getBooking(numericId)
-			: null;
+		const reservationResult = Number.isFinite(numericId) ? await api.getBooking(numericId) : null;
 		const reservation =
 			reservationResult && reservationResult.ok
 				? {

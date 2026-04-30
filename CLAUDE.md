@@ -34,7 +34,7 @@ The widget previously called shared package internals (Reservator/Prisma) direct
 - **`src/lib/server/api/widget-api.ts`** — typed `createWidgetApi(restaurantId)` factory. **The only entry point server code should use to talk to the API.** Methods: `getAggregate`, `getWidget`, `getServices`, `getAvailabilities`, `getBooking`, `createBooking`, `updateBooking`, `setBookingStatus`, `upsertReview`, `getReviewSettings`, `getPaymentIntent`.
 - **`src/lib/server/api/types.ts`** re-exports DTOs from `src/lib/api-types.ts` (the canonical, client-safe DTO copy of the OpenAPI shapes — refresh from `${PUBLIC_API_URL}/api-docs/openapi.json` when adapter touches a new field).
 - **`src/lib/server/api/adapters/`** — DTO ↔ legacy widget-state shapes. Date/time normalization, slot semantic-state derivation (`AVAILABLE | ALMOST_FULL | FULL | CLOSED`), pax filtering (REST has no pax filter — applied client-side).
-- **`src/lib/server/api/mocks/payment-intent.ts`** — payment-intent endpoints (PRD §9.2) are not yet on the live API. When `WIDGET_PAYMENT_MOCK_MODE` is set (`stripe-test` | `full`), the BFF synthesizes the payment-intent record. Hard rule: **mocks live ONLY in this file**, no per-component `if (mock)` branches.
+- Payment intents now hit the live API directly (`GET /restaurants/{id}/payment-intents/{id}`); the previous mock module under `src/lib/server/api/mocks/` has been removed.
 
 ### Hand-rolled RPC dispatcher (replaces svelte-rpc)
 
@@ -97,7 +97,6 @@ Copy `.env.example` to `.env`. Server-only secrets (read via `$env/static/privat
 
 - `WIDGET_API_SECRET` — `X-API-Key` for the REST API. Generate with `openssl rand -hex 32`.
 - `PRIVATE_STRIPE_KEY`, `PRIVATE_STRIPE_WEBHOOKS`, `PRIVATE_RESEND_KEY`, etc.
-- `WIDGET_PAYMENT_MOCK_MODE` — empty / `off` / `stripe-test` / `full` (see mock module above).
 
 Public (`$env/static/public`):
 

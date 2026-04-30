@@ -1,5 +1,9 @@
 <script lang="ts">
-	const { size = 64, width = 5, color = '#6366f1' } = $props<{
+	const {
+		size = 64,
+		width = 5,
+		color = '#6366f1'
+	} = $props<{
 		size?: number;
 		width?: number;
 		color?: string;

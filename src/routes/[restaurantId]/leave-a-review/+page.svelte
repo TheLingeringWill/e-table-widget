@@ -35,7 +35,9 @@
 		<!-- Above card -->
 		<h1 class="text-xl font-semibold text-gray-900 text-center">{data.restaurantName}</h1>
 
-		<p class="text-base text-gray-500 text-center mt-6">Nous regrettons que votre expérience n'ait pas été à la hauteur de vos attentes.</p>
+		<p class="text-base text-gray-500 text-center mt-6">
+			Nous regrettons que votre expérience n'ait pas été à la hauteur de vos attentes.
+		</p>
 
 		{#if data.rating}
 			<div class="flex justify-center gap-1 mt-4">

@@ -112,9 +112,7 @@
 		loadingSlots = false;
 
 		// Check if all slots are unavailable and trigger alternative search
-		const hasAvailableSlot = slots.some(
-			(slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED'
-		);
+		const hasAvailableSlot = slots.some((slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED');
 		if (!hasAvailableSlot && slots.length > 0) {
 			searchAlternativeRestaurant();
 		}
@@ -458,7 +456,9 @@
 					</button>
 				{/each}
 			{:else if item.id === 'slots'}
-				{@const hasAvailableSlots = slots.some((slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED')}
+				{@const hasAvailableSlots = slots.some(
+					(slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED'
+				)}
 				<div class="max-h-[400px] w-full overflow-auto">
 					{#if waitlist.selectedUnavailableSlot}
 						<!-- Waitlist prompt for unavailable slot -->
@@ -467,7 +467,8 @@
 							<div class="text-center">
 								<p class="text-sm font-medium mb-1">Ce créneau est actuellement indisponible</p>
 								<p class="text-xs opacity-60">
-									{zonedDateUtils.format('HH:mm', waitlist.selectedUnavailableSlot.date)} - {selection.pax} couverts
+									{zonedDateUtils.format('HH:mm', waitlist.selectedUnavailableSlot.date)} - {selection.pax}
+									couverts
 								</p>
 							</div>
 
@@ -577,12 +578,20 @@
 									>
 										<div class="flex items-center justify-between">
 											<div class="flex-1 min-w-0">
-												<div class="text-sm font-medium truncate">{alternativeRestaurant.restaurant.name}</div>
-												<div class="text-xs opacity-40 truncate">{alternativeRestaurant.restaurant.address}</div>
+												<div class="text-sm font-medium truncate">
+													{alternativeRestaurant.restaurant.name}
+												</div>
+												<div class="text-xs opacity-40 truncate">
+													{alternativeRestaurant.restaurant.address}
+												</div>
 											</div>
 											<div class="flex items-center gap-2 ml-3">
-												<div class="flex items-center gap-1.5 px-2 py-1 rounded bg-white bg-opacity-10">
-													<span class="text-xs font-medium">{zonedDateUtils.format('HH:mm', alternativeRestaurant.slot.date)}</span>
+												<div
+													class="flex items-center gap-1.5 px-2 py-1 rounded bg-white bg-opacity-10"
+												>
+													<span class="text-xs font-medium"
+														>{zonedDateUtils.format('HH:mm', alternativeRestaurant.slot.date)}</span
+													>
 												</div>
 												<ArrowRight size={14} class="opacity-40 group-hover:opacity-70" />
 											</div>
@@ -605,7 +614,10 @@
 								<div class="flex flex-col items-center py-3 px-4 w-full">
 									<p class="text-sm font-medium mb-1">Aucun créneau disponible</p>
 									<p class="text-xs text-center opacity-50 mb-3">
-										Aucune table pour {selection.pax} pers. le {zonedDateUtils.format('DD MMM', selection.date)}
+										Aucune table pour {selection.pax} pers. le {zonedDateUtils.format(
+											'DD MMM',
+											selection.date
+										)}
 									</p>
 								</div>
 
@@ -647,12 +659,20 @@
 									>
 										<div class="flex items-center justify-between">
 											<div class="flex-1 min-w-0">
-												<div class="text-sm font-medium truncate">{alternativeRestaurant.restaurant.name}</div>
-												<div class="text-xs opacity-40 truncate">{alternativeRestaurant.restaurant.address}</div>
+												<div class="text-sm font-medium truncate">
+													{alternativeRestaurant.restaurant.name}
+												</div>
+												<div class="text-xs opacity-40 truncate">
+													{alternativeRestaurant.restaurant.address}
+												</div>
 											</div>
 											<div class="flex items-center gap-2 ml-3">
-												<div class="flex items-center gap-1.5 px-2 py-1 rounded bg-white bg-opacity-10">
-													<span class="text-xs font-medium">{zonedDateUtils.format('HH:mm', alternativeRestaurant.slot.date)}</span>
+												<div
+													class="flex items-center gap-1.5 px-2 py-1 rounded bg-white bg-opacity-10"
+												>
+													<span class="text-xs font-medium"
+														>{zonedDateUtils.format('HH:mm', alternativeRestaurant.slot.date)}</span
+													>
 												</div>
 												<ArrowRight size={14} class="opacity-40 group-hover:opacity-70" />
 											</div>
@@ -692,7 +712,8 @@
 				!selection.date ||
 				!selection.service ||
 				!selection.slot ||
-				((selection.slot?.state === 'FULL' || selection.slot?.state === 'CLOSED') && !waitlist.isWaitlist) ||
+				((selection.slot?.state === 'FULL' || selection.slot?.state === 'CLOSED') &&
+					!waitlist.isWaitlist) ||
 				loadingDates ||
 				loadingSlots ||
 				loadingServices}>{reservation.id ? 'Modifier ma réservation' : 'Réserver'}</Button

@@ -20,9 +20,7 @@ export const load = async ({ params }) => {
 	const pi = piResult.data;
 
 	const bookingResult = await api.getBooking(pi.bookingId);
-	const reservation = bookingResult.ok
-		? bookingToLegacyReservation(bookingResult.data)
-		: undefined;
+	const reservation = bookingResult.ok ? bookingToLegacyReservation(bookingResult.data) : undefined;
 
 	const aggregate = await api.getAggregate();
 	const restaurantName = aggregate.ok ? aggregate.data.restaurant.name : '';

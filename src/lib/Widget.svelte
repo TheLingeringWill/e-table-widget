@@ -35,7 +35,13 @@
 	import { paymentIntent } from './states/paymentIntent.svelte';
 	import { selection } from './states/selection.svelte';
 	import { gotoError, error as errorState } from './states/error.svelte';
-	import { pushGtmEvent, pushEcommerceEvent, trackStep, trackError, trackBookingConfirmed } from './gtm.svelte';
+	import {
+		pushGtmEvent,
+		pushEcommerceEvent,
+		trackStep,
+		trackError,
+		trackBookingConfirmed
+	} from './gtm.svelte';
 
 	let { data: widget, builder, isEmbedded } = $props();
 
@@ -58,9 +64,7 @@
 	);
 
 	let paymentIntentId = $derived(
-		$page.params.paymentIntentId ||
-			$page.url.searchParams.get('paymentIntentId') ||
-			undefined
+		$page.params.paymentIntentId || $page.url.searchParams.get('paymentIntentId') || undefined
 	);
 
 	let loading = $state(!(!reservationId && !paymentIntentId));
@@ -336,12 +340,14 @@
 
 			case 'PAYMENT':
 				pushEcommerceEvent('begin_checkout', {
-					items: [{
-						item_id: selection.service?.id,
-						item_name: selection.service?.name ? getTranslation(selection.service.name) : '',
-						price: paymentIntent.amount ? paymentIntent.amount / 100 : 0,
-						quantity: selection.pax || 1
-					}],
+					items: [
+						{
+							item_id: selection.service?.id,
+							item_name: selection.service?.name ? getTranslation(selection.service.name) : '',
+							price: paymentIntent.amount ? paymentIntent.amount / 100 : 0,
+							quantity: selection.pax || 1
+						}
+					],
 					value: paymentIntent.amount ? paymentIntent.amount / 100 : 0
 				});
 				break;
@@ -362,14 +368,10 @@
 				break;
 
 			case 'ERROR':
-				trackError(
-					errorState.code || 'UNKNOWN_ERROR',
-					errorState.message || 'An error occurred',
-					{
-						service_id: selection.service?.id,
-						pax: selection.pax
-					}
-				);
+				trackError(errorState.code || 'UNKNOWN_ERROR', errorState.message || 'An error occurred', {
+					service_id: selection.service?.id,
+					pax: selection.pax
+				});
 				break;
 		}
 	});

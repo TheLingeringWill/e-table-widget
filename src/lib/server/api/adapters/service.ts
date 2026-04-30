@@ -22,6 +22,11 @@ export type LiveShiftDTO = {
 	maxPaxPerBooking: number;
 	bookable: boolean;
 	waitlistEnabled: boolean;
+	captureEnabled?: boolean;
+	captureAmountPerPax?: number;
+	captureThreshold?: number;
+	foreignCaptureEnabled?: boolean;
+	foreignCaptureAmountPerPax?: number;
 };
 
 // /availabilities wire shape: { data: [{ date, shifts: [{ ...shift, slots }] }] }
@@ -39,6 +44,11 @@ export type LiveSlot = {
 	servicePax: number;
 	serviceMaxPax: number;
 	possibleGuests: number[];
+	captureEnabled?: boolean | null;
+	captureAmountPerPax?: number | null;
+	captureThreshold?: number | null;
+	foreignCaptureEnabled?: boolean | null;
+	foreignCaptureAmountPerPax?: number | null;
 };
 export type LiveShift = LiveShiftDTO & { slots: LiveSlot[] };
 export type LiveDay = { date: string; shifts: LiveShift[] };
@@ -75,6 +85,11 @@ export function shiftToLegacyService(shift: LiveShiftDTO): LegacyService {
 		startTime: timeStringToMs(shift.startTime),
 		endTime: timeStringToMs(shift.endTime),
 		minPaxPerReservation: shift.minPaxPerBooking,
-		maxPaxPerReservation: shift.maxPaxPerBooking
+		maxPaxPerReservation: shift.maxPaxPerBooking,
+		captureEnabled: shift.captureEnabled ?? false,
+		captureAmountPerPax: shift.captureAmountPerPax ?? 0,
+		captureThreshold: shift.captureThreshold ?? 0,
+		foreignCaptureEnabled: shift.foreignCaptureEnabled ?? false,
+		foreignCaptureAmountPerPax: shift.foreignCaptureAmountPerPax ?? 0
 	};
 }

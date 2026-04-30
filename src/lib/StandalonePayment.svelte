@@ -75,14 +75,15 @@
 
 		// Populate selection for summary display
 		if (data.reservation) {
-			selection.date = data.reservation.startDate
-				? new Date(data.reservation.startDate)
-				: null;
+			selection.date = data.reservation.startDate ? new Date(data.reservation.startDate) : null;
 			selection.pax = data.reservation.pax ?? null;
 		}
 
-		// Check if payment already completed
-		if (['captured', 'requires_capture'].includes(data.paymentIntent.status)) {
+		// Check if payment already completed (matches Stripe vocabulary)
+		if (
+			data.paymentIntent.status === 'succeeded' ||
+			data.paymentIntent.status === 'requires_capture'
+		) {
 			gotoStep('DONE');
 		} else {
 			gotoStep('PAYMENT');
@@ -128,13 +129,17 @@
 					<Warning size={48} class="text-red-500" weight="regular" />
 				</div>
 				<h1 class="text-2xl font-semibold text-gray-900 mb-3">Une erreur est survenue</h1>
-				<p class="text-gray-600 text-base leading-relaxed">{error.message || data.error || 'Impossible de charger le paiement.'}</p>
+				<p class="text-gray-600 text-base leading-relaxed">
+					{error.message || data.error || 'Impossible de charger le paiement.'}
+				</p>
 			</div>
 		{:else if step.step === 'DONE'}
 			<!-- Success state -->
 			<div class="bg-white rounded-2xl shadow-lg p-8">
 				<div class="text-center mb-8">
-					<div class="mx-auto w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6">
+					<div
+						class="mx-auto w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6"
+					>
 						<Check size={48} class="text-green-500" weight="bold" />
 					</div>
 					<h1 class="text-2xl font-semibold text-gray-900 mb-2">Paiement autorisé</h1>
@@ -165,7 +170,9 @@
 							<ForkKnife size={24} class="text-gray-400 mt-0.5 flex-shrink-0" />
 							<div>
 								<p class="text-sm text-gray-500 mb-0.5">Nombre de personnes</p>
-								<p class="text-gray-900 font-medium">{selection.pax} personne{selection.pax > 1 ? 's' : ''}</p>
+								<p class="text-gray-900 font-medium">
+									{selection.pax} personne{selection.pax > 1 ? 's' : ''}
+								</p>
 							</div>
 						</div>
 					{/if}
@@ -173,7 +180,9 @@
 					{#if contact.email}
 						<div class="pt-4 border-t border-gray-200">
 							<p class="text-sm text-gray-600">
-								Un email de confirmation a été envoyé à <span class="font-medium text-gray-900">{contact.email}</span>
+								Un email de confirmation a été envoyé à <span class="font-medium text-gray-900"
+									>{contact.email}</span
+								>
 							</p>
 						</div>
 					{/if}
@@ -184,7 +193,9 @@
 			<div class="bg-white rounded-2xl shadow-lg overflow-hidden">
 				<!-- Header with gradient -->
 				<div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white px-8 py-6">
-					<h1 class="text-2xl font-serif font-normal text-center mb-1">{data.restaurant?.name || 'Réservation'}</h1>
+					<h1 class="text-2xl font-serif font-normal text-center mb-1">
+						{data.restaurant?.name || 'Réservation'}
+					</h1>
 					<p class="text-gray-300 text-sm text-center">Finalisation de votre réservation</p>
 				</div>
 
@@ -192,7 +203,9 @@
 				<div class="p-8 space-y-6">
 					<!-- Reservation summary card -->
 					<div class="bg-gray-50 rounded-xl p-6 space-y-4">
-						<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Votre réservation</h2>
+						<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+							Votre réservation
+						</h2>
 
 						{#if selection.date}
 							<div class="flex items-start gap-3">
@@ -209,7 +222,9 @@
 								<ForkKnife size={24} class="text-indigo-500 mt-0.5 flex-shrink-0" />
 								<div>
 									<p class="text-sm text-gray-500 mb-0.5">Nombre de personnes</p>
-									<p class="text-gray-900 font-medium">{selection.pax} personne{selection.pax > 1 ? 's' : ''}</p>
+									<p class="text-gray-900 font-medium">
+										{selection.pax} personne{selection.pax > 1 ? 's' : ''}
+									</p>
 								</div>
 							</div>
 						{/if}
@@ -233,14 +248,19 @@
 								<p class="text-xs text-gray-500">Aucun prélèvement ne sera effectué</p>
 							</div>
 							<div class="text-right">
-								<p class="text-3xl font-bold text-gray-900">{formatAmount(paymentIntent.amount)} €</p>
+								<p class="text-3xl font-bold text-gray-900">
+									{formatAmount(paymentIntent.amount)} €
+								</p>
 							</div>
 						</div>
 
-						<div class="flex items-start gap-2 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+						<div
+							class="flex items-start gap-2 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg"
+						>
 							<Info size={20} class="text-blue-600 mt-0.5 flex-shrink-0" />
 							<p class="text-xs text-blue-900 leading-relaxed">
-								Ce montant sera uniquement autorisé sur votre carte et ne sera prélevé qu'en cas de non-présentation ou d'annulation tardive.
+								Ce montant sera uniquement autorisé sur votre carte et ne sera prélevé qu'en cas de
+								non-présentation ou d'annulation tardive.
 							</p>
 						</div>
 					</div>
@@ -264,7 +284,7 @@
 	}
 
 	/* Hide the back button from Payment component in standalone mode */
-	.payment-wrapper :global(button:has(svg[class*="CaretLeft"])) {
+	.payment-wrapper :global(button:has(svg[class*='CaretLeft'])) {
 		display: none;
 	}
 
@@ -290,13 +310,17 @@
 		border-radius: 0.75rem;
 		padding: 1rem;
 		font-weight: 600;
-		box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);
+		box-shadow:
+			0 4px 6px -1px rgba(79, 70, 229, 0.2),
+			0 2px 4px -1px rgba(79, 70, 229, 0.1);
 		transition: all 0.2s;
 	}
 
 	.payment-wrapper :global(#button:hover) {
 		transform: translateY(-1px);
-		box-shadow: 0 6px 8px -1px rgba(79, 70, 229, 0.3), 0 4px 6px -1px rgba(79, 70, 229, 0.15);
+		box-shadow:
+			0 6px 8px -1px rgba(79, 70, 229, 0.3),
+			0 4px 6px -1px rgba(79, 70, 229, 0.15);
 	}
 
 	.payment-wrapper :global(#button:active) {

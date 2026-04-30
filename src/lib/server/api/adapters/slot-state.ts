@@ -9,7 +9,13 @@ export const ALMOST_FULL_THRESHOLD = 1;
 export function deriveSlotState(
 	dto: Pick<
 		SlotAvailabilityResponseDTO,
-		'closed' | 'markedAsFull' | 'slotPax' | 'slotMaxPax' | 'servicePax' | 'serviceMaxPax' | 'possibleGuests'
+		| 'closed'
+		| 'markedAsFull'
+		| 'slotPax'
+		| 'slotMaxPax'
+		| 'servicePax'
+		| 'serviceMaxPax'
+		| 'possibleGuests'
 	>,
 	pax?: number
 ): SlotSemanticState {
@@ -56,10 +62,7 @@ function combineDateAndTime(date: string, time: string): Date {
 //   - state: derived semantic state (PRD §6.2)
 //   - pax: requested pax (the new API doesn't echo it; carry from input)
 //   - possibleGuests passes through
-export function slotToLegacySlot(
-	dto: SlotAvailabilityResponseDTO,
-	pax: number
-): LegacySlot {
+export function slotToLegacySlot(dto: SlotAvailabilityResponseDTO, pax: number): LegacySlot {
 	return {
 		date: combineDateAndTime(dto.date, dto.time),
 		pax,

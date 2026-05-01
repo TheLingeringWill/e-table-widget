@@ -4,6 +4,7 @@ import {
 	number,
 	object,
 	optional,
+	picklist,
 	string,
 	type GenericSchema,
 	type InferOutput
@@ -124,6 +125,8 @@ export const router = {
 					date: date(),
 					notes: optional(string()),
 					contact: object({
+						civility: picklist(['mr', 'mrs', 'other']),
+						countryCode: string(),
 						firstName: optional(string()),
 						lastName: string(),
 						phone: string(),
@@ -174,6 +177,8 @@ export const router = {
 				time: formatTimeForApi(r.date),
 				source: 'web',
 				note: r.notes ?? null,
+				civility: r.contact.civility,
+				countryCode: r.contact.countryCode,
 				firstName: r.contact.firstName ?? null,
 				lastName: r.contact.lastName,
 				email: r.contact.email,

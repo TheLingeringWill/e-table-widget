@@ -23,7 +23,14 @@
 	let firstNameErrors: string[] = $state([]);
 	let emailErrors: string[] = $state([]);
 	let phoneErrors: string[] = $state([]);
+	let civilityErrors: string[] = $state([]);
 	let iti: ReturnType<typeof intlTelInput> | undefined = $state();
+
+	const CIVILITY_OPTIONS = [
+		{ value: 'mrs', label: 'Madame' },
+		{ value: 'mr', label: 'Monsieur' },
+		{ value: 'other', label: 'Autre' }
+	] as const;
 
 	// Dual-format phone state
 	let phoneE164 = $state<string | null>(null); // Internal E.164 format for API
@@ -59,6 +66,7 @@
 			contact.phone = phoneE164 || contact.phone;
 			input.value = phoneDisplay;
 		}
+		contact.countryCode = getSelectedCountry() ?? contact.countryCode;
 
 		return () => {
 			input.removeEventListener('input', handlePhoneInput);
@@ -75,6 +83,11 @@
 	};
 
 	const validate = () => {
+		if (!contact.civility) {
+			civilityErrors = ['La civilité est requise'];
+		} else {
+			civilityErrors = [];
+		}
 		if (!contact.lastName) {
 			lastNameErrors = ['Le nom est requis'];
 		} else {
@@ -91,7 +104,12 @@
 		}
 		// Validate phone using contextual error messages
 		validatePhone();
-		if (lastNameErrors.length || emailErrors.length || phoneErrors.length) {
+		if (
+			civilityErrors.length ||
+			lastNameErrors.length ||
+			emailErrors.length ||
+			phoneErrors.length
+		) {
 			return;
 		}
 		nextStep();
@@ -130,6 +148,7 @@
 		// Convert to E.164 for storage/API
 		phoneE164 = convertToE164(phoneDisplay, country);
 		contact.phone = phoneE164 || phoneDisplay;
+		contact.countryCode = country ?? contact.countryCode;
 
 		// Auto-update intl-tel-input flag when user types country code
 		if (iti && phoneDisplay.startsWith('+')) {
@@ -168,6 +187,29 @@
 				</div>
 			{/if}
 			<div class="flex flex-col md:gap-4 gap-3">
+				<div class="flex flex-col gap-2">
+					<span class="text-sm">* Civilité :</span>
+					<div class="flex gap-2">
+						{#each CIVILITY_OPTIONS as option (option.value)}
+							<button
+								type="button"
+								class="flex-1 px-3 py-2 border rounded text-sm transition-colors {contact.civility ===
+								option.value
+									? 'bg-gray-800 border-gray-800 text-white'
+									: 'bg-white border-gray-400 text-gray-800 hover:border-gray-600'}"
+								onclick={() => {
+									contact.civility = option.value;
+									civilityErrors = [];
+								}}
+							>
+								{option.label}
+							</button>
+						{/each}
+					</div>
+					{#if civilityErrors.length}
+						<span class="text-xs text-red-600">{civilityErrors[0]}</span>
+					{/if}
+				</div>
 				<TextInput
 					id="phone"
 					inputContainerClass="p-0"

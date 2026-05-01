@@ -22,6 +22,15 @@
 	const book = async () => {
 		loading = true;
 
+		if (!contact.civility) {
+			return gotoError('La civilité est requise.', 'CIVILITY_REQUIRED');
+		}
+		if (!contact.countryCode) {
+			return gotoError(
+				'Le code pays du téléphone est requis.',
+				'COUNTRY_CODE_REQUIRED'
+			);
+		}
 		const [res, err] = await api.book({
 			reservation: {
 				id: reservation?.id,
@@ -31,6 +40,8 @@
 				date: selection.slot.date,
 				notes: contact.notes,
 				contact: {
+					civility: contact.civility,
+					countryCode: contact.countryCode,
 					firstName: contact.firstName,
 					lastName: contact.lastName,
 					phone: contact.phone,

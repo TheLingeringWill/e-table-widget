@@ -7,9 +7,9 @@ export default defineConfig({
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}']
 	},
-
 	server: {
-		port: 8987
+		port: 8987,
+		host: '0.0.0.0'
 	},
 	build: {
 		rollupOptions: {

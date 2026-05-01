@@ -118,6 +118,8 @@
 				reservationTemp.startDate = res.startDate;
 				reservationTemp.pax = res.pax;
 				reservationTemp.notes = res.notes;
+				contact.civility = res.contact.civility ?? null;
+				contact.countryCode = res.contact.countryCode ?? null;
 				contact.firstName = res.contact.firstName;
 				contact.lastName = res.contact.lastName;
 				contact.email = res.contact.email || '';
@@ -157,6 +159,8 @@
 				reservationTemp.startDate = res.reservation.startDate;
 				reservationTemp.pax = res.reservation.pax;
 				reservationTemp.notes = res.reservation.notes;
+				contact.civility = res.reservation.contact?.civility ?? null;
+				contact.countryCode = res.reservation.contact?.countryCode ?? null;
 				contact.firstName = res.reservation.contact?.firstName || '';
 				contact.lastName = res.reservation.contact?.lastName || '';
 				contact.email = res.reservation.contact?.email || '';
@@ -212,6 +216,16 @@
 			if (contactItem) {
 				const parsedContact = JSON.parse(contactItem);
 				if (isValidStoredContact(parsedContact)) {
+					contact.civility =
+						parsedContact.civility === 'mr' ||
+						parsedContact.civility === 'mrs' ||
+						parsedContact.civility === 'other'
+							? parsedContact.civility
+							: null;
+					contact.countryCode =
+						typeof parsedContact.countryCode === 'string' && parsedContact.countryCode.length === 2
+							? parsedContact.countryCode.toUpperCase()
+							: null;
 					contact.firstName = parsedContact.firstName || '';
 					contact.lastName = parsedContact.lastName;
 					contact.email = parsedContact.email;
@@ -293,6 +307,8 @@
 			const storageKey = getStorageKey(widget.restaurantId);
 			if (rememberMe.checked) {
 				const dataToStore = {
+					civility: contact.civility,
+					countryCode: contact.countryCode,
 					firstName: contact.firstName,
 					lastName: contact.lastName,
 					email: contact.email,

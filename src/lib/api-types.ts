@@ -18,6 +18,8 @@ export type BookingStatus =
 
 export type BookingSource = 'web' | 'messenger' | 'thefork' | 'api' | 'phone' | 'walk_in' | 'other';
 
+export type BookingCivility = 'mr' | 'mrs' | 'other';
+
 export type SlotSemanticState = 'AVAILABLE' | 'ALMOST_FULL' | 'FULL' | 'CLOSED';
 
 export interface RestaurantResponseDTO {
@@ -112,6 +114,8 @@ export interface BookingDetailResponseDTO {
 	status: BookingStatus;
 	source: BookingSource;
 	note?: string | null;
+	civility?: BookingCivility | null;
+	countryCode?: string | null;
 	firstName?: string | null;
 	lastName?: string | null;
 	email?: string | null;
@@ -131,6 +135,8 @@ export interface CreateBookingRequestDTO {
 	time: string;
 	source: BookingSource;
 	note?: string | null;
+	civility?: BookingCivility | null;
+	countryCode?: string | null;
 	firstName?: string | null;
 	lastName?: string | null;
 	email?: string | null;

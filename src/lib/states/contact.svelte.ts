@@ -1,7 +1,10 @@
 import { browser } from '$app/environment';
 import { onMount, untrack } from 'svelte';
+import type { BookingCivility } from '$lib/api-types';
 
 export const contact: {
+	civility: BookingCivility | null;
+	countryCode: string | null;
 	firstName: string;
 	lastName: string;
 	email: string;
@@ -9,6 +12,8 @@ export const contact: {
 	comments: string;
 	notes: string;
 } = $state({
+	civility: null,
+	countryCode: null,
 	firstName: '',
 	lastName: '',
 	email: '',

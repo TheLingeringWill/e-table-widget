@@ -6,7 +6,7 @@
 // names; preserving the shape lets the UI code stay untouched until the
 // Widget.svelte data path itself moves to a SvelteKit loader.
 
-import type { BookingDetailResponseDTO } from '../types';
+import type { BookingCivility, BookingDetailResponseDTO } from '../types';
 
 export type LegacyReservationToUpdate = {
 	id: string;
@@ -15,6 +15,8 @@ export type LegacyReservationToUpdate = {
 	pax: number;
 	notes?: string | null;
 	contact: {
+		civility?: BookingCivility | null;
+		countryCode?: string | null;
 		firstName?: string | null;
 		lastName?: string | null;
 		email?: string | null;
@@ -46,6 +48,8 @@ export function bookingToLegacyReservation(
 		pax: dto.pax,
 		notes: dto.note ?? null,
 		contact: {
+			civility: dto.civility ?? null,
+			countryCode: dto.countryCode ?? null,
 			firstName: dto.firstName ?? null,
 			lastName: dto.lastName ?? null,
 			email: dto.email ?? null,

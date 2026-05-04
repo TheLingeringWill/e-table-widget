@@ -15,6 +15,7 @@ import { shiftToLegacyService, type LiveDay } from '$lib/server/api/adapters/ser
 import { formatDateForApi, formatTimeForApi } from '$lib/server/api/adapters/datetime';
 import { filterByPax, slotToLegacySlot } from '$lib/server/api/adapters/slot-state';
 import { isForeignPhone } from '$lib/server/api/adapters/deposit-policy';
+import { resolveBookingStatus } from '$lib/server/api/adapters/booking-status';
 import { ApiReturnStatus } from '$lib/api-types';
 import type {
 	BookingStatus,
@@ -157,11 +158,54 @@ export const router = {
 			}
 			const r = input.reservation;
 
+			const dateStr = formatDateForApi(r.date);
+			const timeStr = formatTimeForApi(r.date);
+			const api = createWidgetApi(rid);
+
+			// Resolve booking status from the live shift+slot at this date/time.
+			// Lenient on lookup miss: a non-PI booking falls back to 'to_confirm'
+			// (the API stays authoritative); a PI booking falls back to
+			// 'confirmed'/'reconfirmed' because the widget only attaches a PI
+			// after createPaymentIntent succeeds, which itself only happens when
+			// capture is required — so PI presence is a reliable capture signal
+			// even if the post-hoc availabilities lookup fails.
+			const piFallback: BookingStatus = r.id ? 'reconfirmed' : 'confirmed';
+			let resolvedStatus: BookingStatus = input.paymentIntentId ? piFallback : 'to_confirm';
+			const availResult = await api.getAvailabilities({
+				startDate: dateStr,
+				endDate: dateStr
+			});
+			if (availResult.ok) {
+				const days = availResult.data.data as LiveDay[];
+				const shift = days.flatMap((d) => d.shifts).find((s) => s.id === Number(r.serviceId));
+				const slot = shift?.slots.find((sl) => sl.time === timeStr);
+				if (shift && slot) {
+					resolvedStatus = resolveBookingStatus({
+						shiftAutoConfirm: shift.autoConfirm ?? false,
+						shiftAutoConfirmMaxPax: shift.autoConfirmMaxPax ?? null,
+						shiftWaitlistEnabled: shift.waitlistEnabled,
+						shiftCaptureEnabled: shift.captureEnabled ?? false,
+						shiftForeignCaptureEnabled: shift.foreignCaptureEnabled ?? false,
+						slot: {
+							markedAsFull: slot.markedAsFull,
+							slotPax: slot.slotPax,
+							slotMaxPax: slot.slotMaxPax,
+							waitlistEnabled: slot.waitlistEnabled,
+							captureEnabled: slot.captureEnabled,
+							foreignCaptureEnabled: slot.foreignCaptureEnabled
+						},
+						pax: r.pax,
+						hasPaymentIntentId: !!input.paymentIntentId,
+						hasReservationId: !!r.id
+					});
+				}
+			}
+
 			const body: CreateBookingRequestDTO = {
 				pax: r.pax,
-				status: 'to_confirm' satisfies BookingStatus,
-				date: formatDateForApi(r.date),
-				time: formatTimeForApi(r.date),
+				status: resolvedStatus,
+				date: dateStr,
+				time: timeStr,
 				source: 'web',
 				note: r.notes ?? null,
 				civility: r.contact.civility,
@@ -174,7 +218,6 @@ export const router = {
 				paymentIntentId: input.paymentIntentId ?? null
 			};
 
-			const api = createWidgetApi(rid);
 			const result = r.id
 				? await api.updateBooking(Number(r.id), body)
 				: await api.createBooking(body);

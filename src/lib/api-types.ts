@@ -7,6 +7,7 @@
 
 export type BookingStatus =
 	| 'to_confirm'
+	| 'waiting_list'
 	| 'confirmed'
 	| 'reconfirmed'
 	| 'canceled'

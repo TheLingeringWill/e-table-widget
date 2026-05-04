@@ -147,6 +147,7 @@ export interface CreateBookingRequestDTO {
 
 export interface CreateBookingResponseDTO extends BookingDetailResponseDTO {
 	paymentIntentClientSecret?: string | null;
+	stripeConnectAccountId?: string | null;
 }
 
 export interface UpdateStatusRequestDTO {
@@ -171,6 +172,21 @@ export interface PaymentIntentResponseDTO {
 		| 'requires_capture'
 		| 'succeeded'
 		| 'canceled';
+	stripeConnectAccountId?: string | null;
+}
+
+export interface CreatePaymentIntentRequestDTO {
+	date: string;
+	time: string;
+	pax: number;
+	isForeign?: boolean;
+}
+
+export interface CreatePaymentIntentResponseDTO {
+	paymentIntentId: string;
+	clientSecret: string;
+	amountCents: number;
+	stripeConnectAccountId: string;
 }
 
 export type ApiErrorResult = {

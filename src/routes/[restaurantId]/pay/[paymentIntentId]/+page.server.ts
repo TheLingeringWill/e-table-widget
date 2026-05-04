@@ -33,11 +33,7 @@ export const load = async ({ params }) => {
 			status: pi.status
 		},
 		reservation,
-		// PRD §6.4 risk row 3: the Stripe account id is no longer exposed by
-		// the REST API. The mock minted the payment intent server-side, so
-		// Stripe Elements does not need a separate Connect account id —
-		// `stripeAccount` stays null.
-		stripeAccountId: null,
+		stripeAccountId: pi.stripeConnectAccountId ?? null,
 		restaurant: {
 			name: restaurantName
 		}

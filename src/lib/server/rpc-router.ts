@@ -138,35 +138,22 @@ export const router = {
 			joiningWaitlist: optional(boolean())
 		}),
 		async ({ input, event }) => {
-			// REST replacement for `reservator.book`. Two call shapes from the
-			// widget UI today:
+			// REST replacement for `reservator.book`. Call shapes from the widget UI:
 			//   1. Initial submit (Booking.svelte): full reservation payload,
 			//      no paymentIntentId. May return REQUIRES_PAYMENT_INTENT for
 			//      services with deposits — Stripe Elements then mints/confirms
 			//      a payment intent on the client.
-			//   2. Confirmation after Stripe success (Payment.svelte):
-			//      paymentIntentId only, expects status: OK (legacy shape).
-			// The webhook is now the source of truth; the second call shape is
-			// vestigial.
+			//   2. After Stripe confirm (Payment.svelte): full reservation
+			//      payload PLUS paymentIntentId. The API verifies the intent
+			//      is in `requires_capture` and persists the booking with
+			//      status = Reconfirmed.
 			const rid = input.reservation ? Number(input.reservation.restaurantId) : ridFromEvent(event);
 			if (!Number.isFinite(rid)) {
 				throw new Error('book: restaurant id missing');
 			}
 
-			// Confirmation-after-Stripe call shape: only paymentIntentId carried.
-			// With the live PaymentIntent API on, the webhook is the sole
-			// confirmation path — the widget no longer needs to round-trip with
-			// `paymentIntentId` after Stripe.confirmCardPayment. Returning OK
-			// keeps the legacy call sites compatible during the transition.
-			if (input.paymentIntentId && !input.reservation) {
-				return {
-					status: ApiReturnStatus.OK,
-					paymentIntent: null as null
-				};
-			}
-
 			if (!input.reservation) {
-				throw new Error('book: missing reservation payload and paymentIntentId');
+				throw new Error('book: missing reservation payload');
 			}
 			const r = input.reservation;
 
@@ -183,7 +170,8 @@ export const router = {
 				lastName: r.contact.lastName,
 				email: r.contact.email,
 				phone: r.contact.phone,
-				isForeign: isForeignPhone(r.contact.phone)
+				isForeign: isForeignPhone(r.contact.phone),
+				paymentIntentId: input.paymentIntentId ?? null
 			};
 
 			const api = createWidgetApi(rid);
@@ -204,17 +192,49 @@ export const router = {
 					undefined;
 				const stripePaymentIntentId = booking.stripePaymentIntentId ?? undefined;
 				const amountCents = booking.paymentAmountCents ?? 0;
+				const stripeAccountId =
+					(booking as { stripeConnectAccountId?: string | null }).stripeConnectAccountId ?? null;
 				return {
 					status: ApiReturnStatus.REQUIRES_PAYMENT_INTENT,
 					paymentIntent: {
 						id: stripePaymentIntentId,
 						clientSecret,
 						amount: amountCents,
-						stripeAccountId: null as string | null
+						stripeAccountId
 					}
 				};
 			}
 			return { status: ApiReturnStatus.OK, paymentIntent: null as null };
+		}
+	),
+	createPaymentIntent: procedure(
+		object({
+			restaurantId: string(),
+			date: date(),
+			pax: number(),
+			phone: string()
+		}),
+		async ({ input }) => {
+			const rid = Number(input.restaurantId);
+			if (!Number.isFinite(rid)) {
+				throw new Error(`createPaymentIntent: invalid restaurant id ${input.restaurantId}`);
+			}
+			const result = await createWidgetApi(rid).createPaymentIntent({
+				date: formatDateForApi(input.date),
+				time: formatTimeForApi(input.date),
+				pax: input.pax,
+				isForeign: isForeignPhone(input.phone)
+			});
+			if (!result.ok) {
+				return { ok: false as const, error: result.error };
+			}
+			return {
+				ok: true as const,
+				paymentIntentId: result.data.paymentIntentId,
+				clientSecret: result.data.clientSecret,
+				amount: result.data.amountCents,
+				stripeAccountId: result.data.stripeConnectAccountId
+			};
 		}
 	),
 	loadReservation: procedure(string(), async ({ input, event }) => {

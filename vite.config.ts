@@ -9,7 +9,8 @@ export default defineConfig({
 	},
 	server: {
 		port: 8987,
-		host: '0.0.0.0'
+		host: '0.0.0.0',
+		allowedHosts: ['.e-table.co']
 	},
 	build: {
 		rollupOptions: {

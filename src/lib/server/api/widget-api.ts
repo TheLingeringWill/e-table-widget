@@ -8,6 +8,8 @@ import type {
 	BookingStatus,
 	CreateBookingRequestDTO,
 	CreateBookingResponseDTO,
+	CreatePaymentIntentRequestDTO,
+	CreatePaymentIntentResponseDTO,
 	PaymentIntentResponseDTO,
 	RestaurantAggregateResponseDTO,
 	ReviewSettingsResponseDTO,
@@ -77,6 +79,15 @@ export function createWidgetApi(restaurantId: number) {
 		},
 		getPaymentIntent(id: string): Promise<RestResult<PaymentIntentResponseDTO>> {
 			return restCall(`/restaurants/${restaurantId}/payment-intents/${id}`, { restaurantId });
+		},
+		createPaymentIntent(
+			body: CreatePaymentIntentRequestDTO
+		): Promise<RestResult<CreatePaymentIntentResponseDTO>> {
+			return restCall(`/restaurants/${restaurantId}/payment-intents`, {
+				restaurantId,
+				method: 'POST',
+				body
+			});
 		}
 	};
 }

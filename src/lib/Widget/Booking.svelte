@@ -26,11 +26,38 @@
 			return gotoError('La civilité est requise.', 'CIVILITY_REQUIRED');
 		}
 		if (!contact.countryCode) {
-			return gotoError(
-				'Le code pays du téléphone est requis.',
-				'COUNTRY_CODE_REQUIRED'
-			);
+			return gotoError('Le code pays du téléphone est requis.', 'COUNTRY_CODE_REQUIRED');
 		}
+
+		// Edits: skip the deposit pre-check and just update the existing booking.
+		if (!reservation?.id) {
+			// New bookings: try to pre-create a PaymentIntent. If the slot has no
+			// deposit policy the API returns 409 "no deposit required" and we fall
+			// through to the legacy create path. Otherwise we collect the
+			// clientSecret and route to PAYMENT, where Stripe Elements will
+			// authorize the card; the booking itself is then persisted with
+			// `paymentIntentId` and lands in status = Reconfirmed.
+			const [piRes, piErr] = await api.createPaymentIntent({
+				restaurantId: widget.restaurantId,
+				date: selection.slot.date,
+				pax: selection.pax,
+				phone: contact.phone
+			});
+			if (piErr) {
+				return gotoError(null, 'CREATE_PAYMENT_INTENT_FAILED');
+			}
+			if (piRes.ok) {
+				paymentIntent.id = piRes.paymentIntentId;
+				paymentIntent.amount = piRes.amount;
+				paymentIntent.clientSecret = piRes.clientSecret;
+				paymentIntent.stripeAccountId = piRes.stripeAccountId ?? null;
+				gotoStep('PAYMENT');
+				return;
+			}
+			// `not deposit required` → no deposit policy on this slot; fall through
+			// to the regular create path below.
+		}
+
 		const [res, err] = await api.book({
 			reservation: {
 				id: reservation?.id,
@@ -60,6 +87,10 @@
 			res.paymentIntent?.amount > 0 &&
 			res.paymentIntent?.clientSecret?.length > 0
 		) {
+			// Legacy fallback: API created the PI server-side and persisted the
+			// booking in RequiresPaymentIntent. Should not happen for new bookings
+			// after the createPaymentIntent pre-check above, but kept for the
+			// edit-existing-booking path.
 			paymentIntent.id = res.paymentIntent.id;
 			paymentIntent.amount = res.paymentIntent.amount;
 			paymentIntent.clientSecret = res.paymentIntent.clientSecret;

@@ -55,6 +55,7 @@
 	import { nextStep, previousStep } from '$lib/states/step.svelte';
 	import { gotoError } from '$lib/states/error.svelte';
 	import { paymentIntent } from '$lib/states/paymentIntent.svelte';
+	import { ApiReturnStatus } from '$lib/api-types';
 
 	let {
 		widget
@@ -180,26 +181,55 @@
 
 		if (result.error) {
 			gotoError(null, result.error.message);
-		} else {
-			paymentIntentClientSecret = paymentIntent.clientSecret;
-			// The webhook is the sole confirmation channel — no round-trip
-			// needed. Optimistically transition to DONE; the booking
-			// confirmation email is the real source of truth.
-			window.parent?.postMessage(
-				{
-					type: 'confirmation',
-					data: {
-						firstName: contact.firstName || '',
-						lastName: contact.lastName || '',
-						phone: contact.phone || '',
-						pax: selection.pax || '',
-						date: selection.date || ''
-					}
-				},
-				'*'
-			);
-			nextStep();
+			return;
 		}
+
+		// Card is now in `requires_capture` state on Stripe's side. Persist the
+		// booking with the authorized `paymentIntentId`; the API verifies the
+		// intent server-side and inserts with status = Reconfirmed.
+		if (!contact.civility || !contact.countryCode) {
+			gotoError('Contact information missing.', 'CONTACT_MISSING');
+			return;
+		}
+		const [bookRes, bookErr] = await api.book({
+			reservation: {
+				restaurantId: widget.restaurantId,
+				serviceId: selection.service.id,
+				pax: selection.pax,
+				date: selection.slot.date,
+				notes: contact.notes,
+				contact: {
+					civility: contact.civility,
+					countryCode: contact.countryCode,
+					firstName: contact.firstName,
+					lastName: contact.lastName,
+					phone: contact.phone,
+					email: contact.email
+				}
+			},
+			paymentIntentId: paymentIntent.id ?? undefined
+		});
+
+		if (bookErr || (bookRes && bookRes.status !== ApiReturnStatus.OK)) {
+			gotoError(bookRes?.message ?? null, bookRes?.status ?? 'BOOK_AFTER_PAYMENT_FAILED');
+			return;
+		}
+
+		paymentIntentClientSecret = paymentIntent.clientSecret;
+		window.parent?.postMessage(
+			{
+				type: 'confirmation',
+				data: {
+					firstName: contact.firstName || '',
+					lastName: contact.lastName || '',
+					phone: contact.phone || '',
+					pax: selection.pax || '',
+					date: selection.date || ''
+				}
+			},
+			'*'
+		);
+		nextStep();
 	};
 
 	$effect(() => {

@@ -31,11 +31,7 @@
 			"environment": [
 				{ "name": "HOST", "value": "0.0.0.0" },
 				{ "name": "PORT", "value": "3000" },
-				{ "name": "NODE_ENV", "value": "production" },
-				{
-					"name": "PUBLIC_STRIPE_KEY",
-					"value": "pk_test_51SWzFZArUKFeBawSJeilzblBg31BkYP4kNvWN0q99wr1pntaSyKDMoAPHBOIafCOGgQNufOrhPfhZrj4s79FpywC00qSxTc9Zf"
-				}
+				{ "name": "NODE_ENV", "value": "production" }
 			],
 			"secrets": [
 				{
@@ -45,6 +41,10 @@
 				{
 					"name": "WIDGET_API_SECRET",
 					"valueFrom": "arn:aws:secretsmanager:eu-west-3:138029549325:secret:e-table/staging/widget-O19xd3:WIDGET_API_SECRET::"
+				},
+				{
+					"name": "PUBLIC_STRIPE_KEY",
+					"valueFrom": "arn:aws:secretsmanager:eu-west-3:138029549325:secret:e-table/staging/widget-O19xd3:PUBLIC_STRIPE_KEY::"
 				}
 			],
 			"logConfiguration": {

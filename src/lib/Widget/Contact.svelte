@@ -5,7 +5,6 @@
 	import { onMount, untrack } from 'svelte';
 	import intlTelInput from 'intl-tel-input';
 	import 'intl-tel-input/build/css/intlTelInput.css';
-	import * as v from 'valibot';
 	import { contact, rememberMe, prefilled } from '$lib/states/contact.svelte';
 	import { nextStep, previousStep } from '$lib/states/step.svelte';
 	import { waitlist } from '$lib/states/waitlist.svelte';
@@ -32,6 +31,9 @@
 		{ value: 'other', label: 'Autre' }
 	] as const;
 
+	const EMAIL_REGEX =
+		/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
 	// Dual-format phone state
 	let phoneE164 = $state<string | null>(null); // Internal E.164 format for API
 	let phoneDisplay = $state<string>(contact.phone || ''); // Formatted display for user
@@ -44,19 +46,27 @@
 		return undefined;
 	};
 
+	const normalizeEmail = () => {
+		contact.email = contact.email.trim().toLowerCase();
+	};
+
 	onMount(() => {
 		const input = document.querySelector('#phone') as HTMLInputElement;
+		const initialCountry = page.data.countryCode || 'FR';
 		iti = intlTelInput(input, {
 			geoIpLookup: (callback) => {
-				callback(page.data.countryCode);
+				callback(initialCountry);
 			},
-			initialCountry: page.data.countryCode,
+			initialCountry,
 			containerClass: 'ui-field-input-container ui-text-input-container'
 		});
 
 		// Attach event listeners directly since TextInput doesn't pass them through
 		input.addEventListener('input', handlePhoneInput);
 		input.addEventListener('blur', validatePhone);
+
+		const emailInput = document.querySelector('#email') as HTMLInputElement | null;
+		emailInput?.addEventListener('blur', normalizeEmail);
 
 		// Migrate old localStorage formats to E.164 and sync input value
 		if (contact.phone) {
@@ -66,11 +76,12 @@
 			contact.phone = phoneE164 || contact.phone;
 			input.value = phoneDisplay;
 		}
-		contact.countryCode = getSelectedCountry() ?? contact.countryCode;
+		contact.countryCode = getSelectedCountry() ?? contact.countryCode ?? 'FR';
 
 		return () => {
 			input.removeEventListener('input', handlePhoneInput);
 			input.removeEventListener('blur', validatePhone);
+			emailInput?.removeEventListener('blur', normalizeEmail);
 		};
 	});
 
@@ -93,14 +104,13 @@
 		} else {
 			lastNameErrors = [];
 		}
+		normalizeEmail();
 		if (!contact.email) {
 			emailErrors = ["L'adresse e-mail est requise"];
+		} else if (!EMAIL_REGEX.test(contact.email)) {
+			emailErrors = ["L'adresse e-mail est invalide"];
 		} else {
-			if (!v.safeParse(v.pipe(v.string(), v.email()), contact.email).success) {
-				emailErrors = ["L'adresse e-mail est invalide"];
-			} else {
-				emailErrors = [];
-			}
+			emailErrors = [];
 		}
 		// Validate phone using contextual error messages
 		validatePhone();
@@ -217,7 +227,12 @@
 					label="* Numéro de téléphone :"
 					bind:value={phoneDisplay}
 				/>
-				<TextInput errors={emailErrors} label="* Adresse e-mail" bind:value={contact.email} />
+				<TextInput
+					id="email"
+					errors={emailErrors}
+					label="* Adresse e-mail"
+					bind:value={contact.email}
+				/>
 				<TextInput errors={lastNameErrors} label="* Nom :" bind:value={contact.lastName} />
 				<TextInput errors={firstNameErrors} label="Prénom :" bind:value={contact.firstName} />
 				<TextInput label="Notes pour notre équipe :" bind:value={contact.notes} />

@@ -6,6 +6,6 @@
 // type stays satisfied without re-introducing the legacy plumbing.
 export const load = async () => {
 	return {
-		countryCode: ''
+		countryCode: 'FR'
 	};
 };

@@ -406,7 +406,9 @@
 										</div>
 									</div>
 									{#if service.description?.length > 0}
-										<div class="text-sm truncate min-w-0 flex-1 text-left opacity-70">•&nbsp;{getTranslation(service.description)}</div>
+										<div class="text-sm truncate min-w-0 flex-1 text-left opacity-70">
+											•&nbsp;{getTranslation(service.description)}
+										</div>
 									{/if}
 								</button>
 							{/each}

@@ -14,14 +14,9 @@ import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
 import { shiftToLegacyService, type LiveDay } from '$lib/server/api/adapters/service';
 import { formatDateForApi, formatTimeForApi } from '$lib/server/api/adapters/datetime';
 import { filterByPax, slotToLegacySlot } from '$lib/server/api/adapters/slot-state';
-import { isForeignPhone } from '$lib/server/api/adapters/deposit-policy';
 import { resolveBookingStatus } from '$lib/server/api/adapters/booking-status';
 import { ApiReturnStatus } from '$lib/api-types';
-import type {
-	BookingStatus,
-	CreateBookingRequestDTO,
-	CreateBookingResponseDTO
-} from '$lib/server/api/types';
+import type { BookingStatus, CreateBookingRequestDTO } from '$lib/server/api/types';
 
 // PRD §7 Phase 4: the rpc dispatcher runs at /api/<method> so it has no
 // :restaurantId path param. The browser client sets `X-RESTO` (see
@@ -214,7 +209,6 @@ export const router = {
 				lastName: r.contact.lastName,
 				email: r.contact.email,
 				phone: r.contact.phone,
-				isForeign: isForeignPhone(r.contact.phone),
 				paymentIntentId: input.paymentIntentId ?? null
 			};
 
@@ -228,25 +222,6 @@ export const router = {
 				return { status: 'ERROR', message: result.error.message };
 			}
 
-			const booking = result.data as CreateBookingResponseDTO;
-			if (booking.status === 'requires_payment_intent') {
-				const clientSecret =
-					(booking as { paymentIntentClientSecret?: string | null }).paymentIntentClientSecret ??
-					undefined;
-				const stripePaymentIntentId = booking.stripePaymentIntentId ?? undefined;
-				const amountCents = booking.paymentAmountCents ?? 0;
-				const stripeAccountId =
-					(booking as { stripeConnectAccountId?: string | null }).stripeConnectAccountId ?? null;
-				return {
-					status: ApiReturnStatus.REQUIRES_PAYMENT_INTENT,
-					paymentIntent: {
-						id: stripePaymentIntentId,
-						clientSecret,
-						amount: amountCents,
-						stripeAccountId
-					}
-				};
-			}
 			return { status: ApiReturnStatus.OK, paymentIntent: null as null };
 		}
 	),
@@ -255,7 +230,7 @@ export const router = {
 			restaurantId: string(),
 			date: date(),
 			pax: number(),
-			phone: string()
+			countryCode: string()
 		}),
 		async ({ input }) => {
 			const rid = Number(input.restaurantId);
@@ -267,8 +242,7 @@ export const router = {
 				pax: input.pax,
 				date: formatDateForApi(input.date),
 				time: formatTimeForApi(input.date),
-				source: 'web',
-				isForeign: isForeignPhone(input.phone)
+				countryCode: input.countryCode
 			});
 			if (!result.ok) {
 				// Per API contract: 409 means "no deposit required for this slot, or
@@ -310,6 +284,44 @@ export const router = {
 		}
 		return bookingToLegacyReservation(result.data);
 	}),
+	setBookingStatus: procedure(
+		object({
+			bookingId: string(),
+			status: picklist([
+				'to_confirm',
+				'waiting_list',
+				'confirmed',
+				'reconfirmed',
+				'canceled',
+				'no_show',
+				'arrived',
+				'seated',
+				'finished'
+			])
+		}),
+		async ({ input, event }) => {
+			// Standalone-payment finalization path. After Stripe authorizes the
+			// pre-existing booking's payment intent, the widget calls this to
+			// transition the booking into 'reconfirmed' (the booking already
+			// exists in the API for standalone flows).
+			const rid = ridFromEvent(event);
+			if (!Number.isFinite(rid)) {
+				throw new Error('setBookingStatus: restaurantId missing');
+			}
+			const numericId = Number(input.bookingId);
+			if (!Number.isFinite(numericId)) {
+				throw new Error(`setBookingStatus: invalid booking id ${input.bookingId}`);
+			}
+			const result = await createWidgetApi(rid).setBookingStatus(
+				numericId,
+				input.status as BookingStatus
+			);
+			if (!result.ok) {
+				return { ok: false as const, error: result.error };
+			}
+			return { ok: true as const, status: result.data.status };
+		}
+	),
 	loadPaymentIntent: procedure(string(), async ({ input, event }) => {
 		// REST replacement for the legacy reservator-driven payment-intent
 		// load. Hits the live PaymentIntent GET endpoint.

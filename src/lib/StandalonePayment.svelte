@@ -4,6 +4,7 @@
 	import { paymentIntent } from './states/paymentIntent.svelte';
 	import { contact } from './states/contact.svelte';
 	import { selection } from './states/selection.svelte';
+	import { reservation } from './states/reservation.svelte';
 	import { step, gotoStep } from './states/step.svelte';
 	import { error } from './states/error.svelte';
 	import { Check, Warning, Calendar, ForkKnife, User, Info } from 'phosphor-svelte';
@@ -17,6 +18,7 @@
 			status: string;
 		};
 		reservation?: {
+			id?: string;
 			serviceId?: string;
 			startDate?: Date | string;
 			pax?: number;
@@ -77,6 +79,16 @@
 		if (data.reservation) {
 			selection.date = data.reservation.startDate ? new Date(data.reservation.startDate) : null;
 			selection.pax = data.reservation.pax ?? null;
+			// Standalone mode: Payment.svelte reads `reservation.id` to call
+			// `setBookingStatus` after Stripe authorizes the card. The booking
+			// already exists for this flow.
+			reservation.id = data.reservation.id;
+			reservation.serviceId = data.reservation.serviceId;
+			reservation.pax = data.reservation.pax;
+			reservation.notes = data.reservation.notes;
+			if (data.reservation.startDate) {
+				reservation.startDate = new Date(data.reservation.startDate);
+			}
 		}
 
 		// Check if payment already completed (matches Stripe vocabulary)
@@ -267,7 +279,7 @@
 
 					<!-- Payment component -->
 					<div class="payment-wrapper">
-						<Payment widget={{ id: data.paymentIntent?.id }} />
+						<Payment widget={{ id: data.paymentIntent?.id }} mode="standalone" />
 					</div>
 				</div>
 			</div>

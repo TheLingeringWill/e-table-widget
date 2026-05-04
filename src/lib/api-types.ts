@@ -143,7 +143,6 @@ export interface CreateBookingRequestDTO {
 	email?: string | null;
 	phone?: string | null;
 	paymentIntentId?: string | null;
-	isForeign?: boolean;
 }
 
 export interface CreateBookingResponseDTO extends BookingDetailResponseDTO {
@@ -181,8 +180,7 @@ export interface CreatePaymentIntentRequestDTO {
 	pax: number;
 	date: string;
 	time: string;
-	source: 'web';
-	isForeign?: boolean;
+	countryCode: string;
 }
 
 export interface CreatePaymentIntentResponseDTO {

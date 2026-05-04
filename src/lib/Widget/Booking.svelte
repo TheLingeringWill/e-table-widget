@@ -8,7 +8,7 @@
 	import { ApiReturnStatus } from '$lib/api-types';
 	import { gotoError } from '$lib/states/error.svelte';
 	import { paymentIntent } from '$lib/states/paymentIntent.svelte';
-	import { reservation } from '$lib/states/reservation.svelte';
+	import { reservation, setPendingReservation } from '$lib/states/reservation.svelte';
 	import { waitlist } from '$lib/states/waitlist.svelte';
 
 	let {
@@ -29,39 +29,10 @@
 			return gotoError('Le code pays du téléphone est requis.', 'COUNTRY_CODE_REQUIRED');
 		}
 
-		// Edits: skip the deposit pre-check and just update the existing booking.
-		// Waitlist: skip too — a waitlist entry is not a confirmed booking, so no
-		// deposit is owed even if the slot/shift has a capture policy. The server
-		// resolves status='waiting_list' from the live shift+slot in `book`.
-		if (!reservation?.id && !waitlist.isWaitlist) {
-			// New bookings: try to pre-create a PaymentIntent. If the slot has no
-			// deposit policy the API returns 409 "no deposit required" and we fall
-			// through to the legacy create path. Otherwise we collect the
-			// clientSecret and route to PAYMENT, where Stripe Elements will
-			// authorize the card; the booking itself is then persisted with
-			// `paymentIntentId` and lands in status = Reconfirmed.
-			const [piRes, piErr] = await api.createPaymentIntent({
-				restaurantId: widget.restaurantId,
-				date: selection.slot.date,
-				pax: selection.pax,
-				phone: contact.phone
-			});
-			if (piErr) {
-				return gotoError(null, 'CREATE_PAYMENT_INTENT_FAILED');
-			}
-			if (piRes.ok) {
-				paymentIntent.id = piRes.paymentIntentId;
-				paymentIntent.amount = piRes.amount;
-				paymentIntent.clientSecret = piRes.clientSecret;
-				paymentIntent.stripeAccountId = piRes.stripeAccountId ?? null;
-				gotoStep('PAYMENT');
-				return;
-			}
-			// `not deposit required` → no deposit policy on this slot; fall through
-			// to the regular create path below.
-		}
-
-		const [res, err] = await api.book({
+		// Build the full reservation payload up front: both branches below need
+		// it (the Stripe pre-check stashes it for Payment.svelte to replay; the
+		// regular path posts it directly).
+		const reservationPayload = {
 			reservation: {
 				id: reservation?.id,
 				restaurantId: widget.restaurantId,
@@ -79,26 +50,50 @@
 				}
 			},
 			joiningWaitlist: waitlist.isWaitlist
-		});
+		};
+
+		// Edits: skip the deposit pre-check and just update the existing booking.
+		// Waitlist: skip too — a waitlist entry is not a confirmed booking, so no
+		// deposit is owed even if the slot/shift has a capture policy. The server
+		// resolves status='waiting_list' from the live shift+slot in `book`.
+		if (!reservation?.id && !waitlist.isWaitlist) {
+			// New bookings: try to pre-create a PaymentIntent. If the slot has no
+			// deposit policy the API returns 409 "no deposit required" and we fall
+			// through to the regular create path. Otherwise we collect the
+			// clientSecret and route to PAYMENT, where Stripe Elements will
+			// authorize the card; the booking itself is then persisted by
+			// Payment.svelte calling `api.book(...)` synchronously with
+			// `paymentIntentId` after `confirmCardPayment` resolves.
+			const [piRes, piErr] = await api.createPaymentIntent({
+				restaurantId: widget.restaurantId,
+				date: selection.slot.date,
+				pax: selection.pax,
+				countryCode: contact.countryCode
+			});
+			if (piErr) {
+				return gotoError(null, 'CREATE_PAYMENT_INTENT_FAILED');
+			}
+			if (piRes.ok) {
+				paymentIntent.id = piRes.paymentIntentId;
+				paymentIntent.amount = piRes.amount;
+				paymentIntent.clientSecret = piRes.clientSecret;
+				paymentIntent.stripeAccountId = piRes.stripeAccountId ?? null;
+				// Stash the full reservation payload so Payment.svelte can replay
+				// it post-confirm with the captured paymentIntentId.
+				setPendingReservation(reservationPayload);
+				gotoStep('PAYMENT');
+				return;
+			}
+			// `no deposit required` → no deposit policy on this slot; fall through
+			// to the regular create path below.
+		}
+
+		const [res, err] = await api.book(reservationPayload);
 		if (err) {
 			return console.log(err);
 		}
 		if (res.status === 'OK') {
 			nextStep();
-		} else if (
-			res.status === ApiReturnStatus.REQUIRES_PAYMENT_INTENT &&
-			res.paymentIntent?.amount > 0 &&
-			res.paymentIntent?.clientSecret?.length > 0
-		) {
-			// Legacy fallback: API created the PI server-side and persisted the
-			// booking in RequiresPaymentIntent. Should not happen for new bookings
-			// after the createPaymentIntent pre-check above, but kept for the
-			// edit-existing-booking path.
-			paymentIntent.id = res.paymentIntent.id;
-			paymentIntent.amount = res.paymentIntent.amount;
-			paymentIntent.clientSecret = res.paymentIntent.clientSecret;
-			paymentIntent.stripeAccountId = res.paymentIntent.stripeAccountId ?? null;
-			gotoStep('PAYMENT');
 		} else if (res.status === ApiReturnStatus.CUSTOMER_ALREADY_BOOKED_SERVICE) {
 			gotoError('Vous avez déjà réservé pour ce service.');
 		} else {

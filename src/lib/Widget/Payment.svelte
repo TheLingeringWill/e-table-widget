@@ -47,7 +47,6 @@
 	import { CaretLeft } from 'phosphor-svelte';
 	import { slide } from 'svelte/transition';
 	import Button from './Button.svelte';
-	import { api } from '$lib/widget-rpc-client';
 	import Separator from 'maket/Separator';
 	import { browser, dev } from '$app/environment';
 	import { selection } from '$lib/states/selection.svelte';
@@ -55,12 +54,19 @@
 	import { nextStep, previousStep } from '$lib/states/step.svelte';
 	import { gotoError } from '$lib/states/error.svelte';
 	import { paymentIntent } from '$lib/states/paymentIntent.svelte';
-	import { ApiReturnStatus } from '$lib/api-types';
+	import {
+		reservation,
+		pendingReservation,
+		clearPendingReservation
+	} from '$lib/states/reservation.svelte';
+	import { api } from '$lib/widget-rpc-client';
 
 	let {
-		widget
+		widget,
+		mode = 'embedded'
 	}: {
 		widget: any;
+		mode?: 'embedded' | 'standalone';
 	} = $props();
 
 	let paymentIntentClientSecret = $state('');
@@ -184,38 +190,74 @@
 			return;
 		}
 
-		// Card is now in `requires_capture` state on Stripe's side. Persist the
-		// booking with the authorized `paymentIntentId`; the API verifies the
-		// intent server-side and inserts with status = Reconfirmed.
-		if (!contact.civility || !contact.countryCode) {
-			gotoError('Contact information missing.', 'CONTACT_MISSING');
+		const pi = result.paymentIntent;
+		if (!pi || pi.status !== 'requires_capture') {
+			gotoError(null, 'PAYMENT_NOT_AUTHORIZED');
 			return;
 		}
+
+		if (mode === 'standalone') {
+			// Standalone mode: the booking already exists (created server-side
+			// when the deposit-link email was minted). Flip its status to
+			// 'reconfirmed' to acknowledge the customer authorized the card.
+			// Failure here does NOT cancel the PI — the booking is real and
+			// admin needs to investigate.
+			const bookingId = reservation?.id;
+			if (!bookingId) {
+				gotoError(
+					'Réservation introuvable. Veuillez contacter le restaurant.',
+					'BOOKING_ID_MISSING'
+				);
+				return;
+			}
+			const [statusRes, statusErr] = await api.setBookingStatus({
+				bookingId,
+				status: 'reconfirmed'
+			});
+			if (statusErr || !statusRes?.ok) {
+				gotoError(
+					"Le paiement a été autorisé mais la réservation n'a pas pu être finalisée. Veuillez contacter le restaurant.",
+					'BOOKING_RECONFIRM_FAILED'
+				);
+				return;
+			}
+
+			paymentIntentClientSecret = paymentIntent.clientSecret as string;
+			nextStep();
+			return;
+		}
+
+		// Embedded mode: synchronously create the booking with the captured
+		// paymentIntentId so the customer gets immediate confirmation. The
+		// previous webhook-driven path is gone.
+		const payload = pendingReservation.payload;
+		if (!payload) {
+			gotoError('Réservation introuvable. Veuillez recommencer.', 'RESERVATION_PAYLOAD_MISSING');
+			return;
+		}
+
 		const [bookRes, bookErr] = await api.book({
-			reservation: {
-				restaurantId: widget.restaurantId,
-				serviceId: selection.service.id,
-				pax: selection.pax,
-				date: selection.slot.date,
-				notes: contact.notes,
-				contact: {
-					civility: contact.civility,
-					countryCode: contact.countryCode,
-					firstName: contact.firstName,
-					lastName: contact.lastName,
-					phone: contact.phone,
-					email: contact.email
-				}
-			},
-			paymentIntentId: paymentIntent.id ?? undefined
+			...payload,
+			paymentIntentId: pi.id
 		});
-
-		if (bookErr || (bookRes && bookRes.status !== ApiReturnStatus.OK)) {
-			gotoError(bookRes?.message ?? null, bookRes?.status ?? 'BOOK_AFTER_PAYMENT_FAILED');
+		if (bookErr || !bookRes || bookRes.status !== 'OK') {
+			// TODO: reconcile abandoned PI — the API has no
+			// POST /restaurants/{id}/payment-intents/{id}/cancel endpoint yet,
+			// so the authorized card hold lingers until Stripe auto-expires it.
+			// When the cancel endpoint lands, call it here before routing to
+			// ERROR.
+			clearPendingReservation();
+			gotoError(
+				bookRes && 'message' in bookRes && bookRes.message
+					? (bookRes.message as string)
+					: "La réservation n'a pas pu être finalisée. Veuillez contacter le restaurant.",
+				'BOOKING_CREATE_AFTER_PAYMENT_FAILED'
+			);
 			return;
 		}
 
-		paymentIntentClientSecret = paymentIntent.clientSecret;
+		clearPendingReservation();
+		paymentIntentClientSecret = paymentIntent.clientSecret as string;
 		window.parent?.postMessage(
 			{
 				type: 'confirmation',

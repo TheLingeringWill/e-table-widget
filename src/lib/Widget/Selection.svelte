@@ -396,27 +396,17 @@
 											openAccordion();
 										});
 									}}
-									class="flex flex-col gap-2 px-4 py-2 text-sm w-full rounded hover:bg-white hover:bg-opacity-5 border data-[active=true]:bg-white data-[active=true]:bg-opacity-30 disabled:opacity-50 disabled:pointer-events-none"
+									class="flex flex-row items-center gap-2 min-w-0 px-4 py-2 text-sm w-full rounded hover:bg-white hover:bg-opacity-5 border data-[active=true]:bg-white data-[active=true]:bg-opacity-30 disabled:opacity-50 disabled:pointer-events-none"
 								>
-									<div class="flex items-center gap-2">
+									<div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
 										<b>{getTranslation(service.name)}</b>
 										<div>•</div>
-										<div class="flex items-center gap-1">
-											<!-- <Clock size={20} /> -->
-											<div>
-												{formatTime(service.startTime)} - {formatTime(service.endTime)}
-											</div>
-										</div>
-										<!-- <div>•</div>
-									<div class="flex items-center gap-1">
-										<ForkKnife size={20} />
 										<div>
-											{service.minPaxPerReservation} - {service.maxPaxPerReservation}
+											{formatTime(service.startTime)} - {formatTime(service.endTime)}
 										</div>
-									</div> -->
 									</div>
 									{#if service.description?.length > 0}
-										<div class="text-sm">{getTranslation(service.description)}</div>
+										<div class="text-sm truncate min-w-0 flex-1 text-left opacity-70">•&nbsp;{getTranslation(service.description)}</div>
 									{/if}
 								</button>
 							{/each}

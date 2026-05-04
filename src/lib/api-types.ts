@@ -176,9 +176,11 @@ export interface PaymentIntentResponseDTO {
 }
 
 export interface CreatePaymentIntentRequestDTO {
+	idempotencyKey: string;
+	pax: number;
 	date: string;
 	time: string;
-	pax: number;
+	source: 'web';
 	isForeign?: boolean;
 }
 

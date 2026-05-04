@@ -220,13 +220,22 @@ export const router = {
 				throw new Error(`createPaymentIntent: invalid restaurant id ${input.restaurantId}`);
 			}
 			const result = await createWidgetApi(rid).createPaymentIntent({
+				idempotencyKey: crypto.randomUUID(),
+				pax: input.pax,
 				date: formatDateForApi(input.date),
 				time: formatTimeForApi(input.date),
-				pax: input.pax,
+				source: 'web',
 				isForeign: isForeignPhone(input.phone)
 			});
 			if (!result.ok) {
-				return { ok: false as const, error: result.error };
+				// Per API contract: 409 means "no deposit required for this slot, or
+				// restaurant not onboarded" — fall through to legacy book() path.
+				// Any other error is a real failure that must not be masked, otherwise
+				// a deposit-required slot silently slips into book() with no payment.
+				if (result.error.code === 'http_409' || result.error.code === 'no_deposit_required') {
+					return { ok: false as const, error: result.error };
+				}
+				throw new Error(`createPaymentIntent: ${result.error.code} ${result.error.message}`);
 			}
 			return {
 				ok: true as const,

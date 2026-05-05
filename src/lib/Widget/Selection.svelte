@@ -42,7 +42,10 @@
 			return;
 		}
 		loadingServices = true;
-		const [res, error] = await api.getServices({ restaurantId, date: selection.date });
+		const [res, error] = await api.getServices({
+			restaurantId,
+			date: zonedDateUtils.format('YYYY-MM-DD', selection.date)
+		});
 		if (error) {
 			console.log(error);
 			services = [];
@@ -80,7 +83,7 @@
 			restaurantId,
 			serviceId: selection.service.id,
 			pax: selection.pax,
-			date: selection.date
+			date: zonedDateUtils.format('YYYY-MM-DD', selection.date)
 		});
 		if (error) {
 			console.log(error);
@@ -211,7 +214,7 @@
 
 		const [res, error] = await api.getAlternativeRestaurant({
 			restaurantId,
-			date: selection.date,
+			date: zonedDateUtils.format('YYYY-MM-DD', selection.date),
 			serviceId: selection.service.id,
 			pax: selection.pax,
 			requestedTime: referenceTime
@@ -289,11 +292,8 @@
 		// Add query parameters for pre-selection. The receiving widget's
 		// Widget.svelte reads `date` (YYYY-MM-DD) and `time` (HH:MM) directly
 		// into reservationTemp.startDate as strings.
-		const y = selection.date.getFullYear();
-		const m = String(selection.date.getMonth() + 1).padStart(2, '0');
-		const d = String(selection.date.getDate()).padStart(2, '0');
 		const params = new URLSearchParams();
-		params.set('date', `${y}-${m}-${d}`);
+		params.set('date', zonedDateUtils.format('YYYY-MM-DD', selection.date));
 		params.set('serviceId', alt.service.id);
 		params.set('pax', String(selection.pax));
 		params.set('time', alt.slot.time);

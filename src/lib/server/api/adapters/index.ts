@@ -6,6 +6,5 @@
 //   - Pax filtering for availabilities (REST has no pax filter; the widget filters client-side).
 
 export * from './slot-state.js';
-export * from './datetime.js';
 export * from './booking.js';
 export * from './service.js';

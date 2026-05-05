@@ -1,6 +1,5 @@
 import {
 	boolean,
-	date,
 	number,
 	object,
 	optional,
@@ -12,7 +11,6 @@ import {
 import { createWidgetApi } from '$lib/server/api/widget-api';
 import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
 import { shiftToLegacyService, type LiveDay } from '$lib/server/api/adapters/service';
-import { formatDateForApi } from '$lib/server/api/adapters/datetime';
 import { filterByPax, slotToLegacySlot } from '$lib/server/api/adapters/slot-state';
 import { resolveBookingStatus } from '$lib/server/api/adapters/booking-status';
 import { ApiReturnStatus } from '$lib/api-types';
@@ -47,7 +45,7 @@ const procedure = <S extends GenericSchema, R>(
 });
 
 export const router = {
-	getServices: procedure(object({ restaurantId: string(), date: date() }), async ({ input }) => {
+	getServices: procedure(object({ restaurantId: string(), date: string() }), async ({ input }) => {
 		// Source the per-date service tile list from /availabilities, not
 		// /services. The API resolves service exceptions (overrides /
 		// closures) at the shift level — see resolve_shifts_for_day in
@@ -63,7 +61,7 @@ export const router = {
 		if (!Number.isFinite(rid)) {
 			throw new Error(`getServices: invalid restaurant id ${input.restaurantId}`);
 		}
-		const day = formatDateForApi(input.date);
+		const day = input.date;
 		const result = await createWidgetApi(rid).getAvailabilities({
 			startDate: day,
 			endDate: day
@@ -76,7 +74,7 @@ export const router = {
 		return shifts.filter((s) => s.bookable === true).map(shiftToLegacyService);
 	}),
 	getServiceSlots: procedure(
-		object({ restaurantId: string(), serviceId: string(), pax: number(), date: date() }),
+		object({ restaurantId: string(), serviceId: string(), pax: number(), date: string() }),
 		async ({ input }) => {
 			// REST replacement for `reservator.getServiceSlots`. The new endpoint
 			// takes a date range with no pax filter — we send a single-day
@@ -86,7 +84,7 @@ export const router = {
 			if (!Number.isFinite(rid)) {
 				throw new Error(`getServiceSlots: invalid restaurant id ${input.restaurantId}`);
 			}
-			const day = formatDateForApi(input.date);
+			const day = input.date;
 			const result = await createWidgetApi(rid).getAvailabilities({
 				startDate: day,
 				endDate: day
@@ -366,7 +364,7 @@ export const router = {
 	getAlternativeRestaurant: procedure(
 		object({
 			restaurantId: string(),
-			date: date(),
+			date: string(),
 			serviceId: string(),
 			pax: number(),
 			requestedTime: string() // 'HH:MM'

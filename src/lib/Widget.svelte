@@ -29,6 +29,7 @@
 	import Summary from './Widget/Summary.svelte';
 	import { gotoStep, step } from '$lib/states/step.svelte';
 	import { browser } from '$app/environment';
+	import { parseSlotDateAsCalendarDate, slotKey } from '$lib/utils/slotFormat';
 	import { contact, rememberMe, prefilled } from './states/contact.svelte';
 	import { reservation, reservationTemp } from './states/reservation.svelte';
 	import { useWidget, getTranslation } from './context.svelte';
@@ -84,8 +85,8 @@
 	const preselectedTime = $page.url.searchParams.get('time');
 
 	if (preselectedDate || preselectedServiceId || preselectedPax || preselectedTime) {
-		if (preselectedTime) {
-			reservationTemp.startDate = new Date(preselectedTime);
+		if (preselectedDate && preselectedTime) {
+			reservationTemp.startDate = { date: preselectedDate, time: preselectedTime };
 		}
 		if (preselectedServiceId) {
 			reservationTemp.serviceId = preselectedServiceId;
@@ -165,11 +166,15 @@
 				contact.lastName = res.reservation.contact?.lastName || '';
 				contact.email = res.reservation.contact?.email || '';
 				contact.phone = res.reservation.contact?.phone || '';
-				selection.date = res.reservation.startDate;
+				const sd = res.reservation.startDate;
+				if (sd) {
+					selection.date = parseSlotDateAsCalendarDate(sd.date);
+				}
 				selection.service = res.reservation.service;
 				selection.pax = res.reservation.pax;
 				selection.slot = {
-					date: res.reservation.startDate,
+					date: sd?.date ?? '',
+					time: sd?.time ?? '',
 					pax: res.reservation.pax,
 					state: 'OPEN'
 				};
@@ -340,7 +345,7 @@
 					service_name: selection.service?.name ? getTranslation(selection.service.name) : '',
 					pax: selection.pax,
 					date: selection.date?.toISOString(),
-					slot_time: selection.slot?.date
+					slot_time: selection.slot ? slotKey(selection.slot.date, selection.slot.time) : null
 				});
 				break;
 

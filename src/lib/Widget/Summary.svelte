@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { getTranslation, useWidget, useZonedDateUtils } from '$lib/context.svelte';
+	import { getTranslation, useWidget } from '$lib/context.svelte';
 	import { gotoSelection, selection } from '$lib/states/selection.svelte';
 	import { step } from '$lib/states/step.svelte';
+	import { formatSlotDate } from '$lib/utils/slotFormat';
 	import { Calendar, CallBell, Clock, ForkKnife, PencilSimple } from 'phosphor-svelte';
 	import { onDestroy, onMount } from 'svelte';
 
 	const widget = useWidget();
-	const zonedDateUtils = useZonedDateUtils();
 
 	let mounted = $state(false);
 	let showSummary = $state(false);
@@ -72,7 +72,7 @@
 	<div class="flex flex-col gap-1" id="summary">
 		{@render button(
 			0,
-			selection.slot?.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }),
+			selection.slot ? formatSlotDate(selection.slot.date, 'D MMMM') : undefined,
 			Calendar
 		)}
 		{@render button(1, selection.service?.name[0].value, CallBell)}
@@ -81,13 +81,7 @@
 			`${selection.pax} personne${(selection?.pax ?? 0 > 1) ? 's' : ''}`,
 			ForkKnife
 		)}
-		{@render button(
-			3,
-			selection.slot?.date
-				? zonedDateUtils.format('HH:mm', selection.slot.date)
-				: 'Sélectionnez un horaire',
-			Clock
-		)}
+		{@render button(3, selection.slot?.time ?? 'Sélectionnez un horaire', Clock)}
 	</div>
 
 	{#if widget.summaryText?.length > 0}

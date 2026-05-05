@@ -2,6 +2,7 @@
 	import { goto, invalidate } from '$app/navigation';
 	import Button from '$lib/Widget/Button.svelte';
 	import { enhance } from '$app/forms';
+	import { formatSlotDate } from '$lib/utils/slotFormat';
 
 	const { data } = $props();
 
@@ -10,24 +11,16 @@
 	let loading = $state(false);
 	let success = $state(false);
 	let error = $state(false);
-
-	// Format time in restaurant timezone (Europe/Paris)
-	const formattedDate = reservation.startDate.toLocaleDateString('fr-FR', {
-		timeZone: 'Europe/Paris'
-	});
-	const formattedTime = reservation.startDate.toLocaleTimeString('fr-FR', {
-		timeZone: 'Europe/Paris',
-		hour: '2-digit',
-		minute: '2-digit'
-	});
 </script>
 
 <div class="flex flex-col justify-center items-center gap-5 w-full h-full">
 	<div class="text-lg font-bold">{restaurant.name}</div>
 	<hr />
 	<div>
-		Réservation du <b>{formattedDate}</b> à
-		<b>{formattedTime}</b> pour
+		Réservation du
+		<b>{formatSlotDate(reservation.startDate.date, 'DD/MM/YYYY')}</b>
+		à
+		<b>{reservation.startDate.time}</b> pour
 		<b>{data.reservation.pax}</b>
 		personne(s).
 	</div>

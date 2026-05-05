@@ -31,7 +31,7 @@ export const load = async ({ params, url }) => {
 		reservation: {
 			id: String(booking.id),
 			restaurantId: String(booking.restaurantId),
-			startDate: combineDateAndTime(booking.date, booking.time),
+			startDate: { date: booking.date, time: booking.time },
 			pax: booking.pax,
 			status: mapStatusToLegacy(booking.status)
 		},
@@ -66,12 +66,6 @@ export const actions = {
 		}
 	}
 } satisfies Actions;
-
-function combineDateAndTime(date: string, time: string): Date {
-	const [y, m, d] = date.split('-').map(Number);
-	const [h, mn] = time.split(':').map(Number);
-	return new Date(y, (m ?? 1) - 1, d ?? 1, h ?? 0, mn ?? 0);
-}
 
 // The +page.svelte template checks status against the legacy 'USER_CANCELED' /
 // 'RESTAURANT_CANCELED' literals. Map the REST `canceled` value into one of

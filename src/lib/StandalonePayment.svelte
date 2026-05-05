@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount, setContext } from 'svelte';
+	import type { SlotTimestamp } from '$lib/api-types';
+	import { parseSlotDateAsCalendarDate } from '$lib/utils/slotFormat';
 	import Payment from './Widget/Payment.svelte';
 	import { paymentIntent } from './states/paymentIntent.svelte';
 	import { contact } from './states/contact.svelte';
@@ -20,7 +22,7 @@
 		reservation?: {
 			id?: string;
 			serviceId?: string;
-			startDate?: Date | string;
+			startDate?: SlotTimestamp | null;
 			pax?: number;
 			notes?: string;
 			contact?: {
@@ -77,7 +79,9 @@
 
 		// Populate selection for summary display
 		if (data.reservation) {
-			selection.date = data.reservation.startDate ? new Date(data.reservation.startDate) : null;
+			selection.date = data.reservation.startDate
+				? parseSlotDateAsCalendarDate(data.reservation.startDate.date)
+				: null;
 			selection.pax = data.reservation.pax ?? null;
 			// Standalone mode: Payment.svelte reads `reservation.id` to call
 			// `setBookingStatus` after Stripe authorizes the card. The booking
@@ -86,9 +90,7 @@
 			reservation.serviceId = data.reservation.serviceId;
 			reservation.pax = data.reservation.pax;
 			reservation.notes = data.reservation.notes;
-			if (data.reservation.startDate) {
-				reservation.startDate = new Date(data.reservation.startDate);
-			}
+			reservation.startDate = data.reservation.startDate ?? undefined;
 		}
 
 		// Check if payment already completed (matches Stripe vocabulary)

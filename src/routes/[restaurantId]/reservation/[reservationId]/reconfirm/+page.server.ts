@@ -39,11 +39,12 @@ export const load = async ({ params }) => {
 
 	return {
 		// Mirror the legacy reservation shape the +page.svelte template reads.
-		// startDate is reconstructed from the REST date+time pair.
+		// startDate stays as the REST date+time pair (already in restaurant
+		// local clock) so display can format directly without a tz round-trip.
 		reservation: {
 			id: String(after.data.id),
 			restaurantId: String(after.data.restaurantId),
-			startDate: combineDateAndTime(after.data.date, after.data.time),
+			startDate: { date: after.data.date, time: after.data.time },
 			pax: after.data.pax,
 			status: after.data.status,
 			restaurant: {
@@ -56,9 +57,3 @@ export const load = async ({ params }) => {
 		}
 	};
 };
-
-function combineDateAndTime(date: string, time: string): Date {
-	const [y, m, d] = date.split('-').map(Number);
-	const [h, mn] = time.split(':').map(Number);
-	return new Date(y, (m ?? 1) - 1, d ?? 1, h ?? 0, mn ?? 0);
-}

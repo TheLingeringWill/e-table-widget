@@ -12,7 +12,7 @@ import {
 import { createWidgetApi } from '$lib/server/api/widget-api';
 import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
 import { shiftToLegacyService, type LiveDay } from '$lib/server/api/adapters/service';
-import { formatDateForApi, formatTimeForApi } from '$lib/server/api/adapters/datetime';
+import { formatDateForApi } from '$lib/server/api/adapters/datetime';
 import { filterByPax, slotToLegacySlot } from '$lib/server/api/adapters/slot-state';
 import { resolveBookingStatus } from '$lib/server/api/adapters/booking-status';
 import { ApiReturnStatus } from '$lib/api-types';
@@ -118,7 +118,7 @@ export const router = {
 					restaurantId: string(),
 					serviceId: string(),
 					pax: number(),
-					date: date(),
+					date: object({ date: string(), time: string() }),
 					notes: optional(string()),
 					contact: object({
 						civility: picklist(['mr', 'mrs', 'other']),
@@ -153,8 +153,8 @@ export const router = {
 			}
 			const r = input.reservation;
 
-			const dateStr = formatDateForApi(r.date);
-			const timeStr = formatTimeForApi(r.date);
+			const dateStr = r.date.date;
+			const timeStr = r.date.time;
 			const api = createWidgetApi(rid);
 
 			// Resolve booking status from the live shift+slot at this date/time.
@@ -228,7 +228,7 @@ export const router = {
 	createPaymentIntent: procedure(
 		object({
 			restaurantId: string(),
-			date: date(),
+			date: object({ date: string(), time: string() }),
 			pax: number(),
 			countryCode: string()
 		}),
@@ -240,8 +240,8 @@ export const router = {
 			const result = await createWidgetApi(rid).createPaymentIntent({
 				idempotencyKey: crypto.randomUUID(),
 				pax: input.pax,
-				date: formatDateForApi(input.date),
-				time: formatTimeForApi(input.date),
+				date: input.date.date,
+				time: input.date.time,
 				countryCode: input.countryCode
 			});
 			if (!result.ok) {
@@ -369,7 +369,7 @@ export const router = {
 			date: date(),
 			serviceId: string(),
 			pax: number(),
-			requestedTime: number() // milliseconds from midnight
+			requestedTime: string() // 'HH:MM'
 		}),
 		async () => {
 			// Dropped for v1 per PRD §3 non-goals: the previous implementation
@@ -389,7 +389,7 @@ export const router = {
 						found: true;
 						restaurant: { id: string; name: string; address: string; widgetId: string };
 						service: { id: string; name: string };
-						slot: { date: Date; state: 'AVAILABLE' | 'ALMOST_FULL' };
+						slot: { date: string; time: string; state: 'AVAILABLE' | 'ALMOST_FULL' };
 				  };
 		}
 	)

@@ -25,7 +25,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 			reservationResult && reservationResult.ok
 				? {
 						id: String(reservationResult.data.id),
-						startDate: combineDateAndTime(reservationResult.data.date, reservationResult.data.time),
+						startDate: { date: reservationResult.data.date, time: reservationResult.data.time },
 						pax: reservationResult.data.pax
 					}
 				: null;
@@ -48,9 +48,3 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	}
 	throw redirect(302, leaveReviewUrl.pathname + leaveReviewUrl.search);
 };
-
-function combineDateAndTime(date: string, time: string): Date {
-	const [y, m, d] = date.split('-').map(Number);
-	const [h, mn] = time.split(':').map(Number);
-	return new Date(y, (m ?? 1) - 1, d ?? 1, h ?? 0, mn ?? 0);
-}

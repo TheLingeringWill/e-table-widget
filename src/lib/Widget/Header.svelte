@@ -4,7 +4,8 @@
 	import { selection } from '$lib/states/selection.svelte';
 	import { step, previousStep } from '$lib/states/step.svelte';
 	import { reservation } from '$lib/states/reservation.svelte';
-	import { useWidget, getTranslation, useZonedDateUtils } from '$lib/context.svelte.js';
+	import { useWidget, getTranslation } from '$lib/context.svelte.js';
+	import { formatSlotDate } from '$lib/utils/slotFormat';
 	let {
 		theme,
 		showSummary = false
@@ -14,7 +15,6 @@
 	} = $props();
 
 	const widget = useWidget();
-	const zonedDateUtils = useZonedDateUtils();
 
 	const title = $derived(getTranslation(widget.title));
 	const description = $derived(getTranslation(widget.description));
@@ -29,17 +29,17 @@
 			{@html description}
 		</div>
 	{/if}
-	{#if reservation.id && step.step !== 'PAYMENT'}
+	{#if reservation.id && reservation.startDate && step.step !== 'PAYMENT'}
 		<div
 			class="bg-yellow-100 border rounded-lg px-3 py-2 border-yellow-800 text-sm font-normal text-yellow-900"
 			transition:slide
 		>
 			Modification de votre réservation du <b
-				>{zonedDateUtils.format('DD/MM/YYYY', reservation.startDate)}</b
+				>{formatSlotDate(reservation.startDate.date, 'DD/MM/YYYY')}</b
 			>
 			à
-			<b>{zonedDateUtils.format('HH:mm', reservation.startDate)}</b> pour <b>{reservation.pax}</b>
-			personne{reservation.pax > 1 ? 's' : ''}
+			<b>{reservation.startDate.time}</b> pour <b>{reservation.pax}</b>
+			personne{(reservation.pax ?? 0) > 1 ? 's' : ''}
 		</div>
 	{/if}
 	{#if showSummary}
@@ -61,8 +61,7 @@
 			>
 				<div class="flex items-center gap-1">
 					<Calendar size={24} />
-					<b>{selection.slot.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</b
-					>
+					<b>{selection.slot ? formatSlotDate(selection.slot.date, 'D MMMM') : ''}</b>
 				</div>
 			</button>
 			<button
@@ -70,11 +69,7 @@
 				onclick={() => previousStep('SELECTION', 2)}
 			>
 				<div class="flex items-center gap-1">
-					<Clock size={24} /><b
-						>{selection.slot?.date
-							? zonedDateUtils.format('HH:mm', selection.slot.date)
-							: 'Sélectionnez un horaire'}</b
-					>
+					<Clock size={24} /><b>{selection.slot?.time ?? 'Sélectionnez un horaire'}</b>
 				</div>
 			</button>
 		</div>

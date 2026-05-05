@@ -1,15 +1,13 @@
 <script lang="ts">
-	import { formatTime } from '$lib/utils/time';
-	import { useZonedDateUtils } from '$lib/context.svelte';
-
-	const zonedDateUtils = useZonedDateUtils();
+	import type { SlotTimestamp } from '$lib/api-types';
+	import { formatSlotDate } from '$lib/utils/slotFormat';
 
 	let {
 		restaurantName,
 		reservation
 	}: {
 		restaurantName: string;
-		reservation: { id: string; startDate: Date; pax: number } | null;
+		reservation: { id: string; startDate: SlotTimestamp; pax: number } | null;
 	} = $props();
 </script>
 
@@ -52,8 +50,8 @@
 	<!-- Reservation Details (Below Card) -->
 	{#if reservation}
 		<div class="text-xs text-gray-500 text-center mt-4 max-w-md">
-			Réservation du {zonedDateUtils.format('DD/MM/YYYY', reservation.startDate)}
-			à {formatTime(zonedDateUtils.dateToTime(reservation.startDate))}
+			Réservation du {formatSlotDate(reservation.startDate.date, 'DD/MM/YYYY')}
+			à {reservation.startDate.time}
 			pour {reservation.pax} personne(s)
 		</div>
 	{/if}

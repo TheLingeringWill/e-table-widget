@@ -1,12 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { useZonedDateUtils } from '$lib/context.svelte';
-	import { formatTime } from '$lib/utils/time';
+	import { formatSlotDate } from '$lib/utils/slotFormat';
 	import { Check } from 'phosphor-svelte';
 
 	let { data, form } = $props();
-
-	const zonedDateUtils = useZonedDateUtils();
 
 	let submitting = $state(false);
 </script>
@@ -90,8 +87,8 @@
 		<!-- Reservation Details (Below Card) -->
 		{#if data.reservation}
 			<div class="text-xs text-gray-500 text-center mt-4 max-w-md">
-				Réservation du {zonedDateUtils.format('DD/MM/YYYY', data.reservation.startDate)}
-				à {formatTime(zonedDateUtils.dateToTime(data.reservation.startDate))}
+				Réservation du {formatSlotDate(data.reservation.startDate.date, 'DD/MM/YYYY')}
+				à {data.reservation.startDate.time}
 				pour {data.reservation.pax} personne(s)
 			</div>
 		{/if}

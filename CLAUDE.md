@@ -87,9 +87,9 @@ Note: the legacy `[widgetId]` URL segment is gone — widgets are 1:1 with resta
 
 ### Timezone handling
 
-`src/lib/utils/zonedDateUtils.ts` is a widget-local copy of the legacy shared util (the `shared` workspace package was removed). Provided to components via context (`useZonedDateUtils()` in `src/lib/context.svelte.ts`).
+`src/lib/utils/zonedDateUtils.ts` is a widget-local copy of the legacy shared util (the `shared` workspace package was removed). Provided to components via context (`useZonedDateUtils()` in `src/lib/context.svelte.ts`). Used now only for the user-picked calendar date (`selection.date`) — display formatting and the `ZonedCalendarInput` wrapper.
 
-**Critical:** slot timestamps from `/restaurants/{id}/availabilities` are **already timezone-aware** — combine `date: 'YYYY-MM-DD'` + `time: 'HH:MM'` into a JS `Date` directly (see `adapters/slot-state.ts` and `adapters/booking.ts:combineDateAndTime`). Running them through `ZonedDateUtils.inferDateToZone` adds a spurious offset and shifts displayed times by hours. Other date fields (e.g. user-selected calendar dates) still need ZonedDateUtils.
+**Critical:** slot timestamps and reservation `startDate` from `/restaurants/{id}/availabilities` and `/bookings` are **already timezone-aware** — they arrive as `date: 'YYYY-MM-DD'` + `time: 'HH:MM'` strings in the restaurant's local clock. Carry them as-is end-to-end (the `SlotTimestamp` type in `api-types.ts`); never convert them to a JS `Date`. The `src/lib/utils/slotFormat.ts` helpers (`formatSlotDate`, `formatSlotDateTime`, `slotKey`, `parseSlotDateAsCalendarDate`) are the only sanctioned way to format or compare them. Building a `Date` via `new Date(y, m-1, d, h, mn)` interprets the wall-clock components in the *browser's* TZ; `dayjs(date).tz(restaurantTimezone)` then shifts the underlying UTC instant *into* the restaurant TZ, producing displays off by hours when the browser TZ ≠ the restaurant TZ. The string-passthrough approach side-steps this entirely.
 
 ## Environment
 

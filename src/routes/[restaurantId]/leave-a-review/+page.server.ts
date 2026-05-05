@@ -26,7 +26,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		if (result.ok) {
 			reservation = {
 				id: String(result.data.id),
-				startDate: combineDateAndTime(result.data.date, result.data.time),
+				startDate: { date: result.data.date, time: result.data.time },
 				pax: result.data.pax
 			};
 		}
@@ -75,9 +75,3 @@ export const actions: Actions = {
 		return { success: true };
 	}
 };
-
-function combineDateAndTime(date: string, time: string): Date {
-	const [y, m, d] = date.split('-').map(Number);
-	const [h, mn] = time.split(':').map(Number);
-	return new Date(y, (m ?? 1) - 1, d ?? 1, h ?? 0, mn ?? 0);
-}

@@ -249,8 +249,16 @@ export interface LegacyService {
 	[k: string]: unknown;
 }
 
+// A REST timestamp pair in the restaurant's local clock, mirroring the
+// SlotAvailabilityResponseDTO / BookingDetailResponseDTO `date` + `time`
+// fields directly. Carried as strings end-to-end so display and submission
+// can never drift from the restaurant clock no matter what timezone the
+// browser is in.
+export type SlotTimestamp = { date: string; time: string };
+
 export interface LegacySlot {
-	date: Date;
+	date: string; // 'YYYY-MM-DD' in restaurant local clock
+	time: string; // 'HH:MM' in restaurant local clock
 	pax: number;
 	state: LegacySlotState;
 	waitlistEnabled?: boolean;

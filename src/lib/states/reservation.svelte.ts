@@ -1,7 +1,9 @@
+import type { SlotTimestamp } from '$lib/api-types';
+
 export const reservation: {
 	id: string | undefined;
 	serviceId: string | undefined;
-	startDate: Date | undefined;
+	startDate: SlotTimestamp | undefined;
 	pax: number | undefined;
 	notes: string | undefined;
 } = $state({
@@ -23,7 +25,7 @@ export const resetReservation = () => {
 export const reservationTemp: {
 	id: string | null;
 	serviceId: string | null;
-	startDate: Date | null;
+	startDate: SlotTimestamp | null;
 	pax: number | null;
 	notes: string | null;
 } = $state({

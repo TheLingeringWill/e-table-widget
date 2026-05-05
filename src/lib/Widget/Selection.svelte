@@ -8,10 +8,11 @@
 	import { accordionToOpen, openedAccordion, selection } from '$lib/states/selection.svelte';
 	import { nextStep } from '$lib/states/step.svelte';
 	import { waitlist, resetWaitlist, joinWaitlist, type Slot } from '$lib/states/waitlist.svelte';
-	import { formatTime, getTimeFromDate, hours, minutes } from '$lib/utils/time';
+	import { formatTime, hours, minutes } from '$lib/utils/time';
 	import { reservation, reservationTemp } from '$lib/states/reservation.svelte';
 	import { getTranslation, useZonedDateUtils } from '$lib/context.svelte';
 	import ZonedCalendarInput from '$lib/utils/ZonedCalendarInput.svelte';
+	import { parseSlotDateAsCalendarDate, slotKey } from '$lib/utils/slotFormat';
 	import { pushGtmEvent } from '../gtm.svelte';
 
 	let {
@@ -90,7 +91,9 @@
 		slots = res;
 		if (reservationTemp.startDate) {
 			const foundSlot = slots.find(
-				(slot) => slot.date.getTime() === reservationTemp.startDate.getTime()
+				(slot) =>
+					slot.date === reservationTemp.startDate?.date &&
+					slot.time === reservationTemp.startDate?.time
 			);
 			if (foundSlot) {
 				selection.slot = foundSlot;
@@ -99,7 +102,7 @@
 		}
 		if (selection.slot !== null && slots.length > 0) {
 			const foundSlot = slots.find(
-				(slot) => getTimeFromDate(slot.date) === getTimeFromDate(selection.slot?.date || new Date())
+				(slot) => slot.date === selection.slot?.date && slot.time === selection.slot?.time
 			);
 			const isUnavailable = foundSlot?.state === 'FULL' || foundSlot?.state === 'CLOSED';
 
@@ -134,9 +137,7 @@
 
 	onMount(async () => {
 		if (reservationTemp.startDate) {
-			const date = new Date(reservationTemp.startDate);
-			date.setHours(0, 0, 0, 0);
-			selection.date = date;
+			selection.date = parseSlotDateAsCalendarDate(reservationTemp.startDate.date);
 		}
 
 		if (selection.date) {
@@ -200,9 +201,10 @@
 	const searchAlternativeRestaurant = async () => {
 		if (!selection.date || !selection.service || !selection.pax) return;
 
-		// Use first slot time as reference, or service start time if no slots
+		// Use first slot time as reference, or service start time if no slots.
+		// Both branches produce 'HH:MM' to match the new requestedTime schema.
 		const referenceTime =
-			slots.length > 0 ? getTimeFromDate(slots[0].date) : selection.service.startTime;
+			slots.length > 0 ? slots[0].time : formatTime(selection.service.startTime);
 
 		loadingAlternative = true;
 		alternativeRestaurant = null;
@@ -236,7 +238,7 @@
 			(slot) =>
 				slot.state !== 'FULL' &&
 				slot.state !== 'CLOSED' &&
-				slot.date.getTime() !== unavailableSlot.date.getTime()
+				slotKey(slot.date, slot.time) !== slotKey(unavailableSlot.date, unavailableSlot.time)
 		);
 	};
 
@@ -252,7 +254,7 @@
 			joinWaitlist();
 			waitlist.selectedUnavailableSlot = null;
 			pushGtmEvent('slot_selected', {
-				slot_time: selection.slot.date.toISOString(),
+				slot_time: slotKey(selection.slot.date, selection.slot.time),
 				availability: 'WAITLIST'
 			});
 			nextStep();
@@ -264,7 +266,7 @@
 		selection.slot = slot;
 		resetWaitlist();
 		pushGtmEvent('slot_selected', {
-			slot_time: slot.date.toISOString(),
+			slot_time: slotKey(slot.date, slot.time),
 			availability: slot.state
 		});
 		onSlotChange().then(() => {
@@ -284,12 +286,17 @@
 		// Base widget URL
 		const baseUrl = `/${alt.restaurant.id}/${alt.restaurant.widgetId}`;
 
-		// Add query parameters for pre-selection
+		// Add query parameters for pre-selection. The receiving widget's
+		// Widget.svelte reads `date` (YYYY-MM-DD) and `time` (HH:MM) directly
+		// into reservationTemp.startDate as strings.
+		const y = selection.date.getFullYear();
+		const m = String(selection.date.getMonth() + 1).padStart(2, '0');
+		const d = String(selection.date.getDate()).padStart(2, '0');
 		const params = new URLSearchParams();
-		params.set('date', selection.date.toISOString());
+		params.set('date', `${y}-${m}-${d}`);
 		params.set('serviceId', alt.service.id);
 		params.set('pax', String(selection.pax));
-		params.set('time', alt.slot.date.toISOString());
+		params.set('time', alt.slot.time);
 
 		return `${baseUrl}?${params.toString()}`;
 	};
@@ -329,7 +336,7 @@
 			{
 				id: 'slots',
 				icon: Clock,
-				title: `${selection.slot ? zonedDateUtils.format('HH:mm', selection.slot.date) : 'Sélectionnez un horaire'}`,
+				title: `${selection.slot ? selection.slot.time : 'Sélectionnez un horaire'}`,
 				loading: loadingSlots,
 				contentClass: 'flex flex-wrap gap-2 justify-center',
 				disabled: !selection.date || !selection.service || !selection.pax
@@ -459,7 +466,7 @@
 							<div class="text-center">
 								<p class="text-sm font-medium mb-1">Ce créneau est actuellement indisponible</p>
 								<p class="text-xs opacity-60">
-									{zonedDateUtils.format('HH:mm', waitlist.selectedUnavailableSlot.date)} - {selection.pax}
+									{waitlist.selectedUnavailableSlot.time} - {selection.pax}
 									couverts
 								</p>
 							</div>
@@ -473,7 +480,7 @@
 												onclick={() => handleSelectAlternative(altSlot)}
 												class="flex items-center justify-between gap-3 px-4 py-2 text-sm w-full rounded border border-white border-opacity-20 hover:bg-white hover:bg-opacity-10 transition-all"
 											>
-												<span>{zonedDateUtils.format('HH:mm', altSlot.date)}</span>
+												<span>{altSlot.time}</span>
 											</button>
 										{/each}
 									</div>
@@ -512,16 +519,19 @@
 						<div class="flex flex-col gap-2 px-5 py-2">
 							{#each visibleSlots as slot}
 								{@const isUnavailable = slot.state === 'FULL' || slot.state === 'CLOSED'}
-								{#key slot.date}
+								{#key slotKey(slot.date, slot.time)}
 									<button
-										data-active={slot.date.getTime() === selection.slot?.date.getTime()}
+										data-active={selection.slot
+											? slotKey(slot.date, slot.time) ===
+												slotKey(selection.slot.date, selection.slot.time)
+											: false}
 										onclick={() => {
 											if (isUnavailable) {
 												handleUnavailableSlotClick(slot);
 											} else {
 												selection.slot = slot;
 												pushGtmEvent('slot_selected', {
-													slot_time: slot.date.toISOString(),
+													slot_time: slotKey(slot.date, slot.time),
 													availability: slot.state
 												});
 												onSlotChange().then(() => {
@@ -532,7 +542,7 @@
 										class="flex items-center justify-between gap-3 px-4 py-2 text-sm w-full rounded hover:bg-white hover:bg-opacity-5 border data-[active=true]:bg-white data-[active=true]:bg-opacity-30"
 									>
 										<div class="flex items-center gap-3">
-											{zonedDateUtils.format('HH:mm', slot.date)}
+											{slot.time}
 										</div>
 									</button>
 								{/key}
@@ -561,7 +571,10 @@
 													original_restaurant_id: restaurantId,
 													alternative_restaurant_id: alternativeRestaurant.restaurant.id,
 													alternative_restaurant_name: alternativeRestaurant.restaurant.name,
-													slot_time: alternativeRestaurant.slot.date.toISOString()
+													slot_time: slotKey(
+													alternativeRestaurant.slot.date,
+													alternativeRestaurant.slot.time
+												)
 												});
 												window.location.href = buildAlternativeWidgetUrl(alternativeRestaurant);
 											}
@@ -582,7 +595,7 @@
 													class="flex items-center gap-1.5 px-2 py-1 rounded bg-white bg-opacity-10"
 												>
 													<span class="text-xs font-medium"
-														>{zonedDateUtils.format('HH:mm', alternativeRestaurant.slot.date)}</span
+														>{alternativeRestaurant.slot.time}</span
 													>
 												</div>
 												<ArrowRight size={14} class="opacity-40 group-hover:opacity-70" />
@@ -642,7 +655,10 @@
 													original_restaurant_id: restaurantId,
 													alternative_restaurant_id: alternativeRestaurant.restaurant.id,
 													alternative_restaurant_name: alternativeRestaurant.restaurant.name,
-													slot_time: alternativeRestaurant.slot.date.toISOString()
+													slot_time: slotKey(
+													alternativeRestaurant.slot.date,
+													alternativeRestaurant.slot.time
+												)
 												});
 												window.location.href = buildAlternativeWidgetUrl(alternativeRestaurant);
 											}
@@ -663,7 +679,7 @@
 													class="flex items-center gap-1.5 px-2 py-1 rounded bg-white bg-opacity-10"
 												>
 													<span class="text-xs font-medium"
-														>{zonedDateUtils.format('HH:mm', alternativeRestaurant.slot.date)}</span
+														>{alternativeRestaurant.slot.time}</span
 													>
 												</div>
 												<ArrowRight size={14} class="opacity-40 group-hover:opacity-70" />

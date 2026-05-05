@@ -22,10 +22,3 @@ export const formatTime = (milliseconds: number): string => {
 	const fm = m < 10 ? `0${m}` : `${m}`;
 	return `${fh}:${fm}`;
 };
-
-export const getTimeFromDate = (date: Date): number => {
-	// Legacy callers pass a `Date` and use the result with `formatTime`
-	// (so it must be milliseconds-from-midnight). Compute it from local
-	// hours/minutes — the shared/utils/time helpers used the same shape.
-	return date.getHours() * 60 * 60 * 1000 + date.getMinutes() * 60 * 1000;
-};

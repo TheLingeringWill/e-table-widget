@@ -38,7 +38,7 @@
 				restaurantId: widget.restaurantId,
 				serviceId: selection.service.id,
 				pax: selection.pax,
-				date: selection.slot.date,
+				date: { date: selection.slot.date, time: selection.slot.time },
 				notes: contact.notes,
 				contact: {
 					civility: contact.civility,
@@ -66,7 +66,7 @@
 			// `paymentIntentId` after `confirmCardPayment` resolves.
 			const [piRes, piErr] = await api.createPaymentIntent({
 				restaurantId: widget.restaurantId,
-				date: selection.slot.date,
+				date: { date: selection.slot.date, time: selection.slot.time },
 				pax: selection.pax,
 				countryCode: contact.countryCode
 			});

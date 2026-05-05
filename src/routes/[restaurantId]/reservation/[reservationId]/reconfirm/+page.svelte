@@ -1,10 +1,8 @@
 <script lang="ts">
-	import { useZonedDateUtils } from '$lib/context.svelte.js';
+	import { formatSlotDateTime } from '$lib/utils/slotFormat';
 	import Check from 'phosphor-svelte/lib/Check';
 
 	let { data } = $props();
-
-	const zonedDateUtils = useZonedDateUtils();
 
 	const reservation = $derived(data.reservation);
 </script>
@@ -19,7 +17,13 @@
 			<div class="text-center">
 				Nous vous attendons le
 				<div>
-					<b>{zonedDateUtils.format('DD/MM/YYYY à HH:mm', reservation.startDate)}</b>
+					<b
+						>{formatSlotDateTime(
+							reservation.startDate.date,
+							reservation.startDate.time,
+							'DD/MM/YYYY à HH:mm'
+						)}</b
+					>
 				</div>
 			</div>
 		</div>

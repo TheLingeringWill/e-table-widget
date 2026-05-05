@@ -4,4 +4,8 @@
 	let { data } = $props();
 </script>
 
-<Review restaurantName={data.restaurantName} reservation={data.reservation} />
+<Review
+	restaurantName={data.restaurantName}
+	reservation={data.reservation}
+	reservationId={data.reservationId}
+/>

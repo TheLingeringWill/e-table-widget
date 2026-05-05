@@ -4,10 +4,12 @@
 
 	let {
 		restaurantName,
-		reservation
+		reservation,
+		reservationId = null
 	}: {
 		restaurantName: string;
 		reservation: { id: string; startDate: SlotTimestamp; pax: number } | null;
+		reservationId?: string | null;
 	} = $props();
 </script>
 
@@ -37,7 +39,9 @@
 		<div class="flex justify-center gap-2">
 			{#each [1, 2, 3, 4, 5] as star}
 				<a
-					href="?rating={star}"
+					href={reservationId
+						? `?rating=${star}&reservationId=${reservationId}`
+						: `?rating=${star}`}
 					class="size-12 flex items-center justify-center transition-transform active:scale-90 select-none touch-manipulation"
 					aria-label="Note {star} étoile{star > 1 ? 's' : ''}"
 				>

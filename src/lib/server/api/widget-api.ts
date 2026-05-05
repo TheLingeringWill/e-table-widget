@@ -13,6 +13,7 @@ import type {
 	PaymentIntentResponseDTO,
 	RestaurantAggregateResponseDTO,
 	ReviewSettingsResponseDTO,
+	UpdateBookingRequestDTO,
 	UpsertReviewRequestDTO,
 	WidgetResponseDTO
 } from './types';
@@ -49,7 +50,7 @@ export function createWidgetApi(restaurantId: number) {
 		},
 		updateBooking(
 			id: number,
-			body: CreateBookingRequestDTO
+			body: UpdateBookingRequestDTO
 		): Promise<RestResult<BookingDetailResponseDTO>> {
 			return restCall(`/restaurants/${restaurantId}/bookings/${id}`, {
 				restaurantId,

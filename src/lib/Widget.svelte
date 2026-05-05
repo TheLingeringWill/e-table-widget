@@ -113,11 +113,13 @@
 				reservation.serviceId = res.serviceId;
 				reservation.startDate = res.startDate;
 				reservation.pax = res.pax;
+				reservation.seatingTime = res.seatingTime;
 				reservation.notes = res.notes;
 				reservationTemp.id = res.id;
 				reservationTemp.serviceId = res.serviceId;
 				reservationTemp.startDate = res.startDate;
 				reservationTemp.pax = res.pax;
+				reservationTemp.seatingTime = res.seatingTime;
 				reservationTemp.notes = res.notes;
 				contact.civility = res.contact.civility ?? null;
 				contact.countryCode = res.contact.countryCode ?? null;
@@ -154,11 +156,13 @@
 				reservation.serviceId = res.reservation.serviceId;
 				reservation.startDate = res.reservation.startDate;
 				reservation.pax = res.reservation.pax;
+				reservation.seatingTime = res.reservation.seatingTime;
 				reservation.notes = res.reservation.notes ?? undefined;
 				reservationTemp.id = res.reservation.id;
 				reservationTemp.serviceId = res.reservation.serviceId;
 				reservationTemp.startDate = res.reservation.startDate;
 				reservationTemp.pax = res.reservation.pax;
+				reservationTemp.seatingTime = res.reservation.seatingTime;
 				reservationTemp.notes = res.reservation.notes;
 				contact.civility = res.reservation.contact?.civility ?? null;
 				contact.countryCode = res.reservation.contact?.countryCode ?? null;

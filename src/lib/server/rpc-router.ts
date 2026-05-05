@@ -14,7 +14,11 @@ import { shiftToLegacyService, type LiveDay } from '$lib/server/api/adapters/ser
 import { filterByPax, slotToLegacySlot } from '$lib/server/api/adapters/slot-state';
 import { resolveBookingStatus } from '$lib/server/api/adapters/booking-status';
 import { ApiReturnStatus } from '$lib/api-types';
-import type { BookingStatus, CreateBookingRequestDTO } from '$lib/server/api/types';
+import type {
+	BookingStatus,
+	CreateBookingRequestDTO,
+	UpdateBookingRequestDTO
+} from '$lib/server/api/types';
 
 // PRD §7 Phase 4: the rpc dispatcher runs at /api/<method> so it has no
 // :restaurantId path param. The browser client sets `X-RESTO` (see
@@ -116,6 +120,11 @@ export const router = {
 					restaurantId: string(),
 					serviceId: string(),
 					pax: number(),
+					// Required only on the update path. The API derives seating_time
+					// from service rules on create; on update it must be sent back
+					// as-is (or with the new desired duration). The widget sources it
+					// from getBooking via loadReservation.
+					seatingTime: optional(number()),
 					date: object({ date: string(), time: string() }),
 					notes: optional(string()),
 					contact: object({
@@ -194,25 +203,39 @@ export const router = {
 				}
 			}
 
-			const body: CreateBookingRequestDTO = {
-				pax: r.pax,
-				status: resolvedStatus,
-				date: dateStr,
-				time: timeStr,
-				source: 'web',
-				note: r.notes ?? null,
-				civility: r.contact.civility,
-				countryCode: r.contact.countryCode,
-				firstName: r.contact.firstName ?? null,
-				lastName: r.contact.lastName,
-				email: r.contact.email,
-				phone: r.contact.phone,
-				paymentIntentId: input.paymentIntentId ?? null
-			};
-
 			const result = r.id
-				? await api.updateBooking(Number(r.id), body)
-				: await api.createBooking(body);
+				? await api.updateBooking(Number(r.id), {
+						// PUT shape: seatingTime required (API derives it on create
+						// only); status / paymentIntentId rejected — use PATCH /status
+						// or the standalone-payment route for those transitions.
+						pax: r.pax,
+						date: dateStr,
+						time: timeStr,
+						seatingTime: r.seatingTime ?? 0,
+						source: 'web',
+						note: r.notes ?? null,
+						civility: r.contact.civility,
+						countryCode: r.contact.countryCode,
+						firstName: r.contact.firstName ?? null,
+						lastName: r.contact.lastName,
+						email: r.contact.email,
+						phone: r.contact.phone
+					} satisfies UpdateBookingRequestDTO)
+				: await api.createBooking({
+						pax: r.pax,
+						status: resolvedStatus,
+						date: dateStr,
+						time: timeStr,
+						source: 'web',
+						note: r.notes ?? null,
+						civility: r.contact.civility,
+						countryCode: r.contact.countryCode,
+						firstName: r.contact.firstName ?? null,
+						lastName: r.contact.lastName,
+						email: r.contact.email,
+						phone: r.contact.phone,
+						paymentIntentId: input.paymentIntentId ?? null
+					} satisfies CreateBookingRequestDTO);
 			if (!result.ok) {
 				if (result.error.code === 'customer_already_booked_service') {
 					return { status: ApiReturnStatus.CUSTOMER_ALREADY_BOOKED_SERVICE };

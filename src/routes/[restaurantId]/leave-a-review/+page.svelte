@@ -84,7 +84,6 @@
 			</form>
 		</div>
 
-		<!-- Reservation Details (Below Card) -->
 		{#if data.reservation}
 			<div class="text-xs text-gray-500 text-center mt-4 max-w-md">
 				Réservation du {formatSlotDate(data.reservation.startDate.date, 'DD/MM/YYYY')}

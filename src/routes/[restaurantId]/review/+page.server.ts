@@ -9,6 +9,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	}
 
 	const rating = url.searchParams.get('rating');
+	const reservationId = url.searchParams.get('reservationId');
 
 	// PRD §6.3: redirect threshold + Google Maps URL come from the REST
 	// aggregate (`.review.reviewRedirectThreshold`, `.review.reviewUrl`).
@@ -19,7 +20,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	if (!rating) {
 		return {
 			restaurantName,
-			reservation: null
+			reservation: null,
+			reservationId
 		};
 	}
 
@@ -32,5 +34,6 @@ export const load: PageServerLoad = async ({ params, url }) => {
 
 	const leaveReviewUrl = new URL(`/${params.restaurantId}/leave-a-review`, url.origin);
 	leaveReviewUrl.searchParams.set('rating', rating);
+	if (reservationId) leaveReviewUrl.searchParams.set('reservationId', reservationId);
 	throw redirect(302, leaveReviewUrl.pathname + leaveReviewUrl.search);
 };

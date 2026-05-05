@@ -38,6 +38,7 @@
 				restaurantId: widget.restaurantId,
 				serviceId: selection.service.id,
 				pax: selection.pax,
+				seatingTime: reservation?.seatingTime,
 				date: { date: selection.slot.date, time: selection.slot.time },
 				notes: contact.notes,
 				contact: {

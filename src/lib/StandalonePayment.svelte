@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, setContext } from 'svelte';
 	import type { SlotTimestamp } from '$lib/api-types';
-	import { parseSlotDateAsCalendarDate } from '$lib/utils/slotFormat';
+	import { formatSlotDate } from '$lib/utils/slotFormat';
 	import Payment from './Widget/Payment.svelte';
 	import { paymentIntent } from './states/paymentIntent.svelte';
 	import { contact } from './states/contact.svelte';
@@ -77,11 +77,10 @@
 			contact.phone = data.reservation.contact.phone || '';
 		}
 
-		// Populate selection for summary display
+		// Populate selection + reservation for summary display. Slot timestamps
+		// are carried as-is via `reservation.startDate` ({date,time} strings) so
+		// the time isn't lost to a browser-local midnight Date conversion.
 		if (data.reservation) {
-			selection.date = data.reservation.startDate
-				? parseSlotDateAsCalendarDate(data.reservation.startDate.date)
-				: null;
 			selection.pax = data.reservation.pax ?? null;
 			// Standalone mode: Payment.svelte reads `reservation.id` to call
 			// `setBookingStatus` after Stripe authorizes the card. The booking
@@ -105,18 +104,6 @@
 
 		mounted = true;
 	});
-
-	const formatDate = (date: Date | null) => {
-		if (!date) return '';
-		return new Intl.DateTimeFormat('fr-FR', {
-			weekday: 'long',
-			day: 'numeric',
-			month: 'long',
-			year: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		}).format(date);
-	};
 
 	const formatAmount = (amount: number | null) => {
 		if (!amount) return '0.00';
@@ -169,12 +156,15 @@
 						</div>
 					{/if}
 
-					{#if selection.date}
+					{#if reservation.startDate}
 						<div class="flex items-start gap-3">
 							<Calendar size={24} class="text-gray-400 mt-0.5 flex-shrink-0" />
 							<div>
 								<p class="text-sm text-gray-500 mb-0.5">Date et heure</p>
-								<p class="text-gray-900 font-medium">{formatDate(selection.date)}</p>
+								<p class="text-gray-900 font-medium">
+									{formatSlotDate(reservation.startDate.date, 'dddd D MMMM YYYY')} à
+									{reservation.startDate.time}
+								</p>
 							</div>
 						</div>
 					{/if}
@@ -221,12 +211,15 @@
 							Votre réservation
 						</h2>
 
-						{#if selection.date}
+						{#if reservation.startDate}
 							<div class="flex items-start gap-3">
 								<Calendar size={24} class="text-indigo-500 mt-0.5 flex-shrink-0" />
 								<div>
 									<p class="text-sm text-gray-500 mb-0.5">Date et heure</p>
-									<p class="text-gray-900 font-medium">{formatDate(selection.date)}</p>
+									<p class="text-gray-900 font-medium">
+										{formatSlotDate(reservation.startDate.date, 'dddd D MMMM YYYY')} à
+										{reservation.startDate.time}
+									</p>
 								</div>
 							</div>
 						{/if}

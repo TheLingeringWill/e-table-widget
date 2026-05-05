@@ -10,6 +10,7 @@ export type LegacyReservationToUpdate = {
 	serviceId: string | null;
 	startDate: SlotTimestamp | null;
 	pax: number;
+	seatingTime: number;
 	notes?: string | null;
 	contact: {
 		civility?: BookingCivility | null;
@@ -30,6 +31,7 @@ export function bookingToLegacyReservation(
 		serviceId: dto.shiftSlot?.shift.id ? String(dto.shiftSlot.shift.id) : null,
 		startDate: dto.date && dto.time ? { date: dto.date, time: dto.time } : null,
 		pax: dto.pax,
+		seatingTime: dto.seatingTime,
 		notes: dto.note ?? null,
 		contact: {
 			civility: dto.civility ?? null,

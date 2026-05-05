@@ -5,12 +5,14 @@ export const reservation: {
 	serviceId: string | undefined;
 	startDate: SlotTimestamp | undefined;
 	pax: number | undefined;
+	seatingTime: number | undefined;
 	notes: string | undefined;
 } = $state({
 	id: undefined,
 	serviceId: undefined,
 	startDate: undefined,
 	pax: undefined,
+	seatingTime: undefined,
 	notes: undefined
 });
 
@@ -19,6 +21,7 @@ export const resetReservation = () => {
 	reservation.serviceId = undefined;
 	reservation.startDate = undefined;
 	reservation.pax = undefined;
+	reservation.seatingTime = undefined;
 	reservation.notes = undefined;
 };
 
@@ -27,12 +30,14 @@ export const reservationTemp: {
 	serviceId: string | null;
 	startDate: SlotTimestamp | null;
 	pax: number | null;
+	seatingTime: number | null;
 	notes: string | null;
 } = $state({
 	id: null,
 	serviceId: null,
 	startDate: null,
 	pax: null,
+	seatingTime: null,
 	notes: null
 });
 

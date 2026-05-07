@@ -116,6 +116,7 @@ export interface BookingDetailResponseDTO {
 	status: BookingStatus;
 	source: BookingSource;
 	note?: string | null;
+	comment?: string | null;
 	civility?: BookingCivility | null;
 	countryCode?: string | null;
 	firstName?: string | null;
@@ -137,6 +138,7 @@ export interface CreateBookingRequestDTO {
 	time: string;
 	source: BookingSource;
 	note?: string | null;
+	comment?: string | null;
 	civility?: BookingCivility | null;
 	countryCode?: string | null;
 	firstName?: string | null;
@@ -162,6 +164,7 @@ export interface UpdateBookingRequestDTO {
 	seatingTime: number;
 	source: BookingSource;
 	note?: string | null;
+	comment?: string | null;
 	civility?: BookingCivility | null;
 	countryCode?: string | null;
 	firstName?: string | null;

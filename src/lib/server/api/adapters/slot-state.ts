@@ -60,6 +60,11 @@ export function slotToLegacySlot(dto: SlotAvailabilityResponseDTO, pax: number):
 		pax,
 		state: deriveSlotState(dto, pax),
 		waitlistEnabled: dto.waitlistEnabled,
-		possibleGuests: dto.possibleGuests
+		possibleGuests: dto.possibleGuests,
+		captureEnabled: dto.captureEnabled,
+		captureAmountPerPax: dto.captureAmountPerPax,
+		captureThreshold: dto.captureThreshold,
+		foreignCaptureEnabled: dto.foreignCaptureEnabled,
+		foreignCaptureAmountPerPax: dto.foreignCaptureAmountPerPax
 	};
 }

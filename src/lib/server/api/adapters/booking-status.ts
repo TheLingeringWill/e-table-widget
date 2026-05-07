@@ -17,12 +17,14 @@ export function resolveBookingStatus(args: {
 	shiftAutoConfirm: boolean;
 	shiftAutoConfirmMaxPax: number | null;
 	shiftWaitlistEnabled: boolean;
+	shiftMarkedAsFull: boolean;
 	shiftCaptureEnabled: boolean;
 	shiftForeignCaptureEnabled: boolean;
 	slot: SlotOverrides;
 	pax: number;
 	hasPaymentIntentId: boolean;
 	hasReservationId: boolean;
+	joiningWaitlist: boolean;
 }): BookingStatus {
 	const captureEnabled = args.slot.captureEnabled ?? args.shiftCaptureEnabled;
 	const foreignCaptureEnabled = args.slot.foreignCaptureEnabled ?? args.shiftForeignCaptureEnabled;
@@ -35,9 +37,19 @@ export function resolveBookingStatus(args: {
 		return args.hasReservationId ? 'reconfirmed' : 'confirmed';
 	}
 
-	const slotIsFull = args.slot.markedAsFull || args.slot.slotPax >= args.slot.slotMaxPax;
 	const waitlistEnabled = args.slot.waitlistEnabled ?? args.shiftWaitlistEnabled;
-	if (slotIsFull && waitlistEnabled) {
+	// Honor explicit user intent: the widget classifies a slot as FULL on three
+	// conditions (markedAsFull, slotPax≥slotMaxPax, and pax∉possibleGuests), but
+	// the third — "full for this party size" — depends on possibleGuests, which
+	// this resolver doesn't see. Trusting joiningWaitlist when waitlist is
+	// configured covers all three uniformly without re-deriving them server-side.
+	if (args.joiningWaitlist && waitlistEnabled) {
+		return 'waiting_list';
+	}
+
+	const slotIsFull = args.slot.markedAsFull || args.slot.slotPax >= args.slot.slotMaxPax;
+	const isFull = args.shiftMarkedAsFull || slotIsFull;
+	if (isFull && waitlistEnabled) {
 		return 'waiting_list';
 	}
 

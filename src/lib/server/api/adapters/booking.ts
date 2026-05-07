@@ -32,7 +32,7 @@ export function bookingToLegacyReservation(
 		startDate: dto.date && dto.time ? { date: dto.date, time: dto.time } : null,
 		pax: dto.pax,
 		seatingTime: dto.seatingTime,
-		notes: dto.note ?? null,
+		notes: dto.comment ?? null,
 		contact: {
 			civility: dto.civility ?? null,
 			countryCode: dto.countryCode ?? null,

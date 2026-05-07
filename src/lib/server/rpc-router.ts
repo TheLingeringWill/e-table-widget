@@ -170,9 +170,15 @@ export const router = {
 			// 'confirmed'/'reconfirmed' because the widget only attaches a PI
 			// after createPaymentIntent succeeds, which itself only happens when
 			// capture is required — so PI presence is a reliable capture signal
-			// even if the post-hoc availabilities lookup fails.
+			// even if the post-hoc availabilities lookup fails. A waitlist
+			// opt-in falls back to 'waiting_list' so a missed availabilities
+			// lookup doesn't strand a waitlist user on 'to_confirm'.
 			const piFallback: BookingStatus = r.id ? 'reconfirmed' : 'confirmed';
-			let resolvedStatus: BookingStatus = input.paymentIntentId ? piFallback : 'to_confirm';
+			let resolvedStatus: BookingStatus = input.paymentIntentId
+				? piFallback
+				: input.joiningWaitlist
+					? 'waiting_list'
+					: 'to_confirm';
 			const availResult = await api.getAvailabilities({
 				startDate: dateStr,
 				endDate: dateStr
@@ -186,6 +192,7 @@ export const router = {
 						shiftAutoConfirm: shift.autoConfirm ?? false,
 						shiftAutoConfirmMaxPax: shift.autoConfirmMaxPax ?? null,
 						shiftWaitlistEnabled: shift.waitlistEnabled,
+						shiftMarkedAsFull: shift.markedAsFull ?? false,
 						shiftCaptureEnabled: shift.captureEnabled ?? false,
 						shiftForeignCaptureEnabled: shift.foreignCaptureEnabled ?? false,
 						slot: {
@@ -198,7 +205,8 @@ export const router = {
 						},
 						pax: r.pax,
 						hasPaymentIntentId: !!input.paymentIntentId,
-						hasReservationId: !!r.id
+						hasReservationId: !!r.id,
+						joiningWaitlist: input.joiningWaitlist ?? false
 					});
 				}
 			}
@@ -213,7 +221,7 @@ export const router = {
 						time: timeStr,
 						seatingTime: r.seatingTime ?? 0,
 						source: 'web',
-						note: r.notes ?? null,
+						comment: r.notes ?? null,
 						civility: r.contact.civility,
 						countryCode: r.contact.countryCode,
 						firstName: r.contact.firstName ?? null,
@@ -227,7 +235,7 @@ export const router = {
 						date: dateStr,
 						time: timeStr,
 						source: 'web',
-						note: r.notes ?? null,
+						comment: r.notes ?? null,
 						civility: r.contact.civility,
 						countryCode: r.contact.countryCode,
 						firstName: r.contact.firstName ?? null,

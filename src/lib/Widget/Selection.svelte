@@ -193,6 +193,9 @@
 	};
 
 	const onPaxChange = async () => {
+		selection.slot = null;
+		resetWaitlist();
+
 		if (selection.date && selection.service && selection.pax) {
 			await getServiceSlots();
 		}

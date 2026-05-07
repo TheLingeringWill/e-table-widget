@@ -22,6 +22,7 @@ export type LiveShiftDTO = {
 	maxPaxPerBooking: number;
 	bookable: boolean;
 	waitlistEnabled: boolean;
+	markedAsFull?: boolean;
 	autoConfirm?: boolean;
 	autoConfirmMaxPax?: number | null;
 	captureEnabled?: boolean;

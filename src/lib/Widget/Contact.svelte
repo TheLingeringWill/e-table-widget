@@ -1,14 +1,14 @@
 <script lang="ts">
 	import TextInput from 'maket/TextInput';
-	import { CaretLeft, Check } from 'phosphor-svelte';
+	import { CaretLeft, Check, ClockCounterClockwise, Info } from 'phosphor-svelte';
 	import Button from './Button.svelte';
 	import { onMount, untrack } from 'svelte';
 	import intlTelInput from 'intl-tel-input';
 	import 'intl-tel-input/build/css/intlTelInput.css';
 	import { contact, rememberMe, prefilled } from '$lib/states/contact.svelte';
+	import { selection } from '$lib/states/selection.svelte';
 	import { nextStep, previousStep } from '$lib/states/step.svelte';
 	import { waitlist } from '$lib/states/waitlist.svelte';
-	import { ClockCounterClockwise } from 'phosphor-svelte';
 	import {
 		formatPhoneAsYouType,
 		convertToE164,
@@ -24,6 +24,23 @@
 	let phoneErrors: string[] = $state([]);
 	let civilityErrors: string[] = $state([]);
 	let iti: ReturnType<typeof intlTelInput> | undefined = $state();
+
+	const showPreAuthNotice = $derived.by(() => {
+		const svc = selection.service;
+		const slot = selection.slot;
+		const pax = selection.pax;
+		if (!svc || !slot || !pax) return false;
+		const captureEnabled =
+			(slot as { captureEnabled?: boolean | null }).captureEnabled ??
+			(svc as { captureEnabled?: boolean }).captureEnabled ??
+			false;
+		if (!captureEnabled) return false;
+		const threshold =
+			((slot as { captureThreshold?: number | null }).captureThreshold ??
+				(svc as { captureThreshold?: number | null }).captureThreshold) ??
+			0;
+		return pax >= threshold;
+	});
 
 	const CIVILITY_OPTIONS = [
 		{ value: 'mrs', label: 'Madame' },
@@ -186,6 +203,17 @@
 				>
 					<Check size={16} weight="bold" />
 					<span>Vos informations ont été pré-remplies</span>
+				</div>
+			{/if}
+			{#if showPreAuthNotice}
+				<div
+					class="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded text-blue-800 text-sm"
+				>
+					<Info size={16} weight="bold" />
+					<span
+						>Cette réservation nécessite une pré-autorisation par carte. Aucun débit ne sera
+						effectué.</span
+					>
 				</div>
 			{/if}
 			{#if waitlist.isWaitlist}

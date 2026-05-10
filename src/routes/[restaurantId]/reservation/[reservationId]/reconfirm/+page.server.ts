@@ -1,59 +1,83 @@
-import { error } from '@sveltejs/kit';
+import { error, fail, type Actions } from '@sveltejs/kit';
 import { createWidgetApi } from '$lib/server/api/widget-api';
+import type { BookingStatus } from '$lib/api-types';
+import type { PageServerLoad } from './$types';
 
-export const load = async ({ params }) => {
-	const { reservationId, restaurantId } = params;
-	const rid = Number(restaurantId);
-	const numericId = Number(reservationId);
+export const load: PageServerLoad = async ({ params }) => {
+	const rid = Number(params.restaurantId);
+	const numericId = Number(params.reservationId);
 	if (!Number.isFinite(rid) || !Number.isFinite(numericId)) {
 		error(404);
 	}
 
 	const api = createWidgetApi(rid);
-	const result = await api.getBooking(numericId);
-	if (!result.ok) {
-		error(404);
-	}
-	const booking = result.data;
-
-	// PRD §6.6: drive button visibility from `availableTransitions`. If
-	// 'reconfirmed' is allowed, perform the transition; if not, the page
-	// renders the booking in whatever its current state is.
-	if (booking.availableTransitions?.includes('reconfirmed')) {
-		const transitionResult = await api.setBookingStatus(numericId, 'reconfirmed');
-		if (!transitionResult.ok) {
-			// Surface the API's own error rather than masking it; cancel-
-			// too-late and similar concurrency races land here.
-			error(409, transitionResult.error.message);
-		}
-	}
-
-	// Re-fetch to return the post-transition booking shape to the page.
-	const after = await api.getBooking(numericId);
-	if (!after.ok) {
+	const [bookingRes, aggregateRes] = await Promise.all([
+		api.getBooking(numericId),
+		api.getAggregate()
+	]);
+	if (!bookingRes.ok) {
 		error(404);
 	}
 
-	// Aggregate carries the restaurant name the +page.svelte template reads.
-	const aggregate = await api.getAggregate();
+	const b = bookingRes.data;
+	const r = aggregateRes.ok ? aggregateRes.data.restaurant : null;
 
 	return {
-		// Mirror the legacy reservation shape the +page.svelte template reads.
-		// startDate stays as the REST date+time pair (already in restaurant
-		// local clock) so display can format directly without a tz round-trip.
 		reservation: {
-			id: String(after.data.id),
-			restaurantId: String(after.data.restaurantId),
-			startDate: { date: after.data.date, time: after.data.time },
-			pax: after.data.pax,
-			status: after.data.status,
-			restaurant: {
-				name: aggregate.ok ? aggregate.data.restaurant.name : ''
-			},
-			customer: {
-				firstName: after.data.firstName ?? '',
-				lastName: after.data.lastName ?? ''
-			}
+			id: String(b.id),
+			startDate: { date: b.date, time: b.time },
+			pax: b.pax,
+			status: b.status,
+			availableTransitions: b.availableTransitions ?? [],
+			customer: { firstName: b.firstName ?? '' }
+		},
+		restaurant: {
+			name: r?.name ?? '',
+			address: [r?.addressLine1, r?.city].filter(Boolean).join(', ')
 		}
 	};
+};
+
+async function transition(target: BookingStatus, params: Partial<Record<string, string>>) {
+	const rid = Number(params.restaurantId);
+	const numericId = Number(params.reservationId);
+	if (!Number.isFinite(rid) || !Number.isFinite(numericId)) {
+		return fail(400, { success: false as const, code: 'bad_request' });
+	}
+
+	const api = createWidgetApi(rid);
+
+	// Pre-flight: pulls fresh status + transitions so we can short-circuit on
+	// idempotent re-submits and surface a clear error when the booking has
+	// moved into a state that no longer allows the requested transition.
+	const current = await api.getBooking(numericId);
+	if (!current.ok) {
+		return fail(404, { success: false as const, code: 'not_found' });
+	}
+
+	const action = target === 'reconfirmed' ? 'confirm' : 'cancel';
+
+	if (current.data.status === target) {
+		return { success: true as const, action };
+	}
+
+	if (!current.data.availableTransitions?.includes(target)) {
+		return fail(409, { success: false as const, code: 'transition_not_allowed' });
+	}
+
+	const result = await api.setBookingStatus(numericId, target);
+	if (!result.ok) {
+		return fail(409, {
+			success: false as const,
+			code: result.error.code ?? 'transition_failed',
+			message: result.error.message
+		});
+	}
+
+	return { success: true as const, action };
+}
+
+export const actions: Actions = {
+	confirm: ({ params }) => transition('reconfirmed', params),
+	cancel: ({ params }) => transition('canceled', params)
 };

@@ -1,8 +1,8 @@
-name: CI/CD
+name: CD (production)
 
 on:
   push:
-  pull_request:
+    tags: ['v*.*.*']
 
 permissions:
   contents: read
@@ -37,15 +37,14 @@ jobs:
       #  run: pnpm check
 
   cd:
-    name: Deploy
+    name: Deploy (production)
     needs: [ci]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
     concurrency:
-      group: deploy-staging-widget
+      group: deploy-production-widget
       cancel-in-progress: false
-    environment: staging
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -68,8 +67,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/e-table-widget:${{ github.sha }}
-            ${{ steps.login-ecr.outputs.registry }}/e-table-widget:latest
+            ${{ steps.login-ecr.outputs.registry }}/e-table-widget:prod-${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/e-table-widget:prod-latest
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/e-table-widget:cache
           cache-to: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/e-table-widget:cache,mode=max,image-manifest=true
 
@@ -77,23 +76,24 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ecs/staging.json
+          task-definition: ecs/prod.json
           container-name: widget
-          image: ${{ steps.login-ecr.outputs.registry }}/e-table-widget:${{ github.sha }}
+          image: ${{ steps.login-ecr.outputs.registry }}/e-table-widget:prod-${{ github.sha }}
 
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: e-table-staging-widget
-          cluster: e-table-staging
+          service: e-table-prod-widget
+          cluster: e-table-prod
           wait-for-service-stability: true
 
       - name: Summary
         run: |
           cat >> "$GITHUB_STEP_SUMMARY" <<EOF
-          ### Deployment Summary
-          - **Image:** \`${{ steps.login-ecr.outputs.registry }}/e-table-widget:${{ github.sha }}\`
-          - **Cluster:** e-table-staging
-          - **Service:** e-table-staging-widget
+          ### Production Deployment
+          - **Tag:** \`${{ github.ref_name }}\`
+          - **Image:** \`${{ steps.login-ecr.outputs.registry }}/e-table-widget:prod-${{ github.sha }}\`
+          - **Cluster:** e-table-prod
+          - **Service:** e-table-prod-widget
           EOF

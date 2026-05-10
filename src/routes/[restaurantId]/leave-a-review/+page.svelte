@@ -61,6 +61,9 @@
 				{#if data.reservationId}
 					<input type="hidden" name="reservationId" value={data.reservationId} />
 				{/if}
+				{#if data.arg}
+					<input type="hidden" name="arg" value={data.arg} />
+				{/if}
 
 				<div class="space-y-4">
 					<textarea

@@ -8,4 +8,5 @@
 	restaurantName={data.restaurantName}
 	reservation={data.reservation}
 	reservationId={data.reservationId}
+	arg={data.arg}
 />

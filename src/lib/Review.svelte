@@ -5,12 +5,21 @@
 	let {
 		restaurantName,
 		reservation,
-		reservationId = null
+		reservationId = null,
+		arg = null
 	}: {
 		restaurantName: string;
 		reservation: { id: string; startDate: SlotTimestamp; pax: number } | null;
 		reservationId?: string | null;
+		arg?: string | null;
 	} = $props();
+
+	function starHref(star: number) {
+		const p = new URLSearchParams({ rating: String(star) });
+		if (reservationId) p.set('reservationId', reservationId);
+		if (arg) p.set('arg', arg);
+		return `?${p}`;
+	}
 </script>
 
 {#snippet starIcon(filled: boolean)}
@@ -39,9 +48,7 @@
 		<div class="flex justify-center gap-2">
 			{#each [1, 2, 3, 4, 5] as star}
 				<a
-					href={reservationId
-						? `?rating=${star}&reservationId=${reservationId}`
-						: `?rating=${star}`}
+					href={starHref(star)}
 					class="size-12 flex items-center justify-center transition-transform active:scale-90 select-none touch-manipulation"
 					aria-label="Note {star} étoile{star > 1 ? 's' : ''}"
 				>

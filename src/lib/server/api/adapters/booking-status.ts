@@ -53,13 +53,14 @@ export function resolveBookingStatus(args: {
 		return 'waiting_list';
 	}
 
-	// Auto-confirm requires both autoConfirm=true AND a numeric cap that
-	// admits the requested pax. A missing/null cap is treated as "no admission"
-	// per the spec literal `pax <= autoConfirmMaxPax` — null cannot satisfy.
+	// Auto-confirm honors the shift's autoConfirm flag. autoConfirmMaxPax is
+	// an OPTIONAL pax cap: when set, pax must be <= cap; when null/undefined,
+	// there is no cap and all party sizes auto-confirm. Mirrors the management
+	// UI in app/.../tab-automation.tsx where the cap is a separate optional
+	// switch on top of the base autoConfirm toggle.
 	if (
 		args.shiftAutoConfirm &&
-		typeof args.shiftAutoConfirmMaxPax === 'number' &&
-		args.pax <= args.shiftAutoConfirmMaxPax
+		(args.shiftAutoConfirmMaxPax == null || args.pax <= args.shiftAutoConfirmMaxPax)
 	) {
 		return 'confirmed';
 	}

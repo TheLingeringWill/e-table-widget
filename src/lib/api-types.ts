@@ -182,6 +182,7 @@ export interface UpsertReviewRequestDTO {
 	bookingId?: number | null;
 	customerSheetId?: number | null;
 	comment?: string | null;
+	arg?: string | null;
 }
 
 export interface PaymentIntentResponseDTO {

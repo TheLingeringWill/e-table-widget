@@ -5,12 +5,14 @@ import { createWidgetApi } from '$lib/server/api/widget-api';
 export const load: PageServerLoad = async ({ params, url }) => {
 	const rating = url.searchParams.get('rating');
 	const reservationId = url.searchParams.get('reservationId');
+	const arg = url.searchParams.get('arg');
 	const rid = Number(params.restaurantId);
 	if (!Number.isFinite(rid)) {
 		return {
 			restaurantName: '',
 			rating: rating ? parseFloat(rating) : null,
 			reservationId,
+			arg,
 			reservation: null
 		};
 	}
@@ -42,6 +44,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		restaurantName,
 		rating: rating ? parseFloat(rating) : null,
 		reservationId,
+		arg,
 		reservation
 	};
 };
@@ -52,6 +55,7 @@ export const actions: Actions = {
 		const rating = parseFloat(formData.get('rating') as string);
 		const comment = (formData.get('comment') as string) || undefined;
 		const reservationIdRaw = formData.get('reservationId') as string | null;
+		const arg = (formData.get('arg') as string) || null;
 
 		if (!rating || rating < 1 || rating > 5) {
 			return fail(400, { error: 'Note invalide' });
@@ -73,7 +77,8 @@ export const actions: Actions = {
 		const upsertResult = await createWidgetApi(rid).upsertReview({
 			rating,
 			bookingId,
-			comment: comment && comment.length > 0 ? comment : null
+			comment: comment && comment.length > 0 ? comment : null,
+			arg
 		});
 		if (!upsertResult.ok) {
 			return fail(500, { error: upsertResult.error.message });

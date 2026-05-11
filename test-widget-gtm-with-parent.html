@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Test Widget GTM (With Parent GTM)</title>
+		<style>
+			body {
+				font-family:
+					-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+					sans-serif;
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 20px;
+				background: #f5f5f5;
+			}
+			.header {
+				background: white;
+				padding: 30px;
+				border-radius: 12px;
+				margin-bottom: 30px;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+			}
+			.header h1 {
+				margin: 0 0 10px 0;
+				color: #333;
+			}
+			.header p {
+				margin: 5px 0;
+				color: #666;
+			}
+			.widget-container {
+				background: white;
+				padding: 20px;
+				border-radius: 12px;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+			}
+			.debug-panel {
+				background: #1e1e1e;
+				color: #d4d4d4;
+				padding: 20px;
+				border-radius: 12px;
+				margin-top: 30px;
+				font-family: 'Monaco', 'Courier New', monospace;
+				font-size: 13px;
+				max-height: 400px;
+				overflow-y: auto;
+			}
+			.debug-panel h3 {
+				margin-top: 0;
+				color: #4ec9b0;
+			}
+			.event-log {
+				margin: 10px 0;
+				padding: 10px;
+				background: #252526;
+				border-left: 3px solid #4ec9b0;
+				border-radius: 4px;
+			}
+			.event-name {
+				color: #dcdcaa;
+				font-weight: bold;
+			}
+			.event-data {
+				color: #ce9178;
+				margin-left: 15px;
+			}
+			.status {
+				display: inline-block;
+				padding: 4px 12px;
+				border-radius: 4px;
+				font-size: 12px;
+				font-weight: 600;
+				margin-left: 10px;
+			}
+			.status.success {
+				background: #4caf50;
+				color: white;
+			}
+			.status.error {
+				background: #f44336;
+				color: white;
+			}
+			.clear-btn {
+				background: #007acc;
+				color: white;
+				border: none;
+				padding: 8px 16px;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 12px;
+				margin-top: 10px;
+			}
+			.clear-btn:hover {
+				background: #005a9e;
+			}
+		</style>
+
+		<!-- Google Tag Manager -->
+		<script>
+			(function (w, d, s, l, i) {
+				w[l] = w[l] || [];
+				w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+				var f = d.getElementsByTagName(s)[0],
+					j = d.createElement(s),
+					dl = l != 'dataLayer' ? '&l=' + l : '';
+				j.async = true;
+				j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+				f.parentNode.insertBefore(j, f);
+			})(window, document, 'script', 'dataLayer', 'GTM-WTPCQ35M');
+		</script>
+		<!-- End Google Tag Manager -->
+		<!-- In production, this would be the actual GTM script tag:
+    <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-XXXXXXX"></script>
+    -->
+	</head>
+	<body>
+		<!-- Google Tag Manager (noscript) -->
+		<noscript
+			><iframe
+				src="https://www.googletagmanager.com/ns.html?id=GTM-WTPCQ35M"
+				height="0"
+				width="0"
+				style="display: none; visibility: hidden"
+			></iframe
+		></noscript>
+		<!-- End Google Tag Manager (noscript) -->
+		<div class="header">
+			<h1>Widget GTM Test Page (With Parent GTM)</h1>
+			<p><strong>Widget ID:</strong> 01KC9J5K5X7T2ZX5A0XH1TC1GW</p>
+			<p><strong>Restaurant ID:</strong> TEST</p>
+			<p id="gtm-status">
+				<strong>Parent GTM Status:</strong>
+				<span id="gtm-indicator" class="status">Checking...</span>
+			</p>
+			<p id="config-status">
+				<strong>E-table Config:</strong>
+				<span id="config-indicator" class="status">Checking...</span>
+			</p>
+			<p>
+				<strong>Expected Behavior:</strong> SDK should detect parent GTM and NOT inject its own.
+				Widget events forwarded via postMessage.
+			</p>
+			<p><strong>Instructions:</strong> Open Browser Console (F12) to see detailed logs</p>
+		</div>
+
+		<div class="widget-container">
+			<!-- The widget will be injected into this div -->
+			<div id="widget-target"></div>
+		</div>
+
+		<div class="debug-panel">
+			<h3>GTM Events Monitor (Live)</h3>
+			<button class="clear-btn" onclick="clearEventLog()">Clear Events</button>
+			<div id="event-log"></div>
+		</div>
+
+		<!-- Widget Script - This is what customers embed on their site -->
+		<script
+			id="cooking"
+			data-element="widget-target"
+			src="https://jonathan-widget-local.e-table.co/1/script"
+		></script>
+
+		<!-- Debug Script to Monitor GTM Events -->
+		<script>
+			// Check GTM and E-table config
+			setTimeout(() => {
+				const gtmIndicator = document.getElementById('gtm-indicator');
+				const configIndicator = document.getElementById('config-indicator');
+
+				// Check parent GTM (should be present in this test)
+				const hasParentGtm =
+					window.dataLayer && window.dataLayer.some((item) => item && item['gtm.start']);
+				if (hasParentGtm) {
+					gtmIndicator.textContent = 'Installed (expected)';
+					gtmIndicator.className = 'status success';
+					console.log('[Test] Parent GTM detected - this is expected');
+				} else {
+					gtmIndicator.textContent = 'Not Found (unexpected!)';
+					gtmIndicator.className = 'status error';
+					console.error('[Test] Parent GTM NOT detected - this is unexpected!');
+				}
+
+				// Check E-table config
+				if (window.__etableGtmConfig) {
+					const detected = window.__etableGtmConfig.parentHasGTM;
+					configIndicator.textContent = detected ? 'Detected Parent GTM' : 'Did NOT detect parent';
+					configIndicator.className = detected ? 'status success' : 'status error';
+					console.log('[Test] E-table GTM Config:', window.__etableGtmConfig);
+				} else {
+					configIndicator.textContent = 'Not Found';
+					configIndicator.className = 'status error';
+				}
+			}, 1500);
+
+			// Monitor dataLayer pushes
+			const eventLogDiv = document.getElementById('event-log');
+			let eventCount = 0;
+
+			// Intercept dataLayer.push to display events
+			const originalPush = window.dataLayer.push;
+			window.dataLayer.push = function (...args) {
+				args.forEach((event) => {
+					if (event && typeof event === 'object') {
+						eventCount++;
+						displayEvent(event);
+						console.log(`[GTM Event #${eventCount}]`, event);
+					}
+				});
+				return originalPush.apply(this, args);
+			};
+
+			// Listen for events from widget iframe
+			window.addEventListener('message', (e) => {
+				if (e.data && e.data.type === 'gtm_event') {
+					console.log('[Widget -> Parent] GTM Event via postMessage:', e.data.event);
+				}
+			});
+
+			function displayEvent(event) {
+				const eventDiv = document.createElement('div');
+				eventDiv.className = 'event-log';
+
+				const timestamp = new Date().toLocaleTimeString();
+				const eventName = event.event || 'unknown';
+
+				let html = `
+                <div class="event-name">[${timestamp}] ${eventName}</div>
+            `;
+
+				// Display relevant data
+				const dataKeys = Object.keys(event).filter((k) => k !== 'event');
+				if (dataKeys.length > 0) {
+					html += '<div class="event-data">';
+					dataKeys.forEach((key) => {
+						const value =
+							typeof event[key] === 'object' ? JSON.stringify(event[key], null, 2) : event[key];
+						html += `${key}: ${value}<br>`;
+					});
+					html += '</div>';
+				}
+
+				eventDiv.innerHTML = html;
+				eventLogDiv.insertBefore(eventDiv, eventLogDiv.firstChild);
+			}
+
+			function clearEventLog() {
+				eventLogDiv.innerHTML = '';
+				eventCount = 0;
+				console.clear();
+				console.log('Event log cleared');
+			}
+
+			// Log initial page load
+			console.log('Test page loaded (WITH Parent GTM scenario)');
+			console.log(
+				'Widget script source: http://localhost:8987/TEST/01KC9J5K5X7T2ZX5A0XH1TC1GW/script'
+			);
+			console.log('');
+			console.log('Expected behavior:');
+			console.log('  1. Parent GTM is initialized BEFORE widget loads');
+			console.log('  2. SDK detects parent GTM (gtm.start in dataLayer)');
+			console.log('  3. SDK does NOT inject its own GTM');
+			console.log('  4. Widget sends events via postMessage');
+			console.log('  5. SDK receives postMessage and pushes to parent dataLayer');
+			console.log('');
+			console.log('Expected events in dataLayer:');
+			console.log('  - gtm.js (from parent GTM init)');
+			console.log('  - etable_widget_loaded (from SDK, gtm_detected: true)');
+			console.log('  - widget_step_* events (forwarded from widget iframe)');
+		</script>
+	</body>
+</html>

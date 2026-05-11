@@ -1,4 +1,3 @@
-import { dev } from '$app/environment';
 import type { RequestEvent } from '@sveltejs/kit';
 import { createWidgetApi } from '$lib/server/api/widget-api';
 
@@ -63,9 +62,7 @@ export const GET = async (event: RequestEvent): Promise<Response> => {
 	// Only generate GTM detection script if tracking is enabled
 	const gtmScript = gtmEnabled ? generateGtmDetectionScript(restaurantId!) : '';
 
-	const iframeSrc = dev
-		? `"http://localhost:8987/${restaurantId}?embedded=true"`
-		: `"https://widget.e-table.co/${restaurantId}?embedded=true"`;
+	const iframeSrc = JSON.stringify(`${event.url.origin}/${restaurantId}?embedded=true`);
 
 	const script = /*javascript*/ `
   (function() {

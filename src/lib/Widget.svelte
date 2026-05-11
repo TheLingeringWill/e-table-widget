@@ -521,7 +521,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 				transition: border-radius 0.2s ease-in-out;
 			}
 			#page {
-			background: ${builder ? theme.backgroundColor : '#222'};
+			background: ${isEmbedded ? 'transparent' : '#222'};
 			color: ${theme.fontColor} !important;
 			/*font-size: ${theme.fontSize}px;*/
 		}
@@ -598,7 +598,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		}
 
 		body {
-			background: ${builder ? 'transparent' : '#222'};
+			background: ${isEmbedded ? 'transparent' : '#222'};
 			--sb-track-color: transparent;
 			--sb-thumb-color: #222222;
 			--sb-size: 6px;

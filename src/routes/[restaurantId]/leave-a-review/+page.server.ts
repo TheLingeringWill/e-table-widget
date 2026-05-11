@@ -74,7 +74,8 @@ export const actions: Actions = {
 			bookingId = numericReservationId;
 		}
 
-		const upsertResult = await createWidgetApi(rid).upsertReview({
+		const api = createWidgetApi(rid);
+		const upsertResult = await api.upsertReview({
 			rating,
 			bookingId,
 			comment: comment && comment.length > 0 ? comment : null,
@@ -82,6 +83,14 @@ export const actions: Actions = {
 		});
 		if (!upsertResult.ok) {
 			return fail(500, { error: upsertResult.error.message });
+		}
+
+		if (arg) {
+			try {
+				await api.trackReviewArgVisit({ arg, formSubmit: true });
+			} catch {
+				// tracking is best-effort — never surface as a form error
+			}
 		}
 
 		return { success: true };

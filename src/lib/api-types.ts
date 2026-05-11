@@ -46,6 +46,13 @@ export interface ReviewSettingsResponseDTO {
 	reviewUrl?: string | null;
 }
 
+export interface TrackReviewArgVisitRequestDTO {
+	arg: string;
+	linkClick?: boolean;
+	externalRedirect?: boolean;
+	formSubmit?: boolean;
+}
+
 export interface WidgetResponseDTO {
 	id: number;
 	restaurantId: number;

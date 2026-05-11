@@ -14,6 +14,15 @@ export interface GtmEvent {
 }
 
 let isEmbeddedMode: boolean | null = null;
+let widgetRestaurantId: string | null = null;
+
+/**
+ * Set the restaurant id stamped onto every emitted GTM event.
+ * Call once during widget bootstrap.
+ */
+export function setGtmRestaurantId(restaurantId: string): void {
+	widgetRestaurantId = restaurantId;
+}
 
 /**
  * Detect if running in embedded mode (iframe)
@@ -61,6 +70,7 @@ export function pushGtmEvent(eventName: string, eventData: Record<string, any> =
 	const gtmEvent: GtmEvent = {
 		event: eventName,
 		timestamp: new Date().toISOString(),
+		...(widgetRestaurantId !== null && { restaurant_id: widgetRestaurantId }),
 		...eventData
 	};
 

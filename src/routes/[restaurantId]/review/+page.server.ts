@@ -12,13 +12,22 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	const reservationId = url.searchParams.get('reservationId');
 	const arg = url.searchParams.get('arg');
 
+	const api = createWidgetApi(rid);
+
 	// PRD §6.3: redirect threshold + Google Maps URL come from the REST
 	// aggregate (`.review.reviewRedirectThreshold`, `.review.reviewUrl`).
-	const aggregate = await createWidgetApi(rid).getAggregate();
+	const aggregate = await api.getAggregate();
 	const restaurantName = aggregate.ok ? aggregate.data.restaurant.name : '';
 	const reviewSettings = aggregate.ok ? aggregate.data.review : undefined;
 
 	if (!rating) {
+		if (arg) {
+			try {
+				await api.trackReviewArgVisit({ arg, linkClick: true });
+			} catch {
+				// tracking is best-effort — never block the rating-picker view
+			}
+		}
 		return {
 			restaurantName,
 			reservation: null,
@@ -29,9 +38,22 @@ export const load: PageServerLoad = async ({ params, url }) => {
 
 	const ratingNum = parseFloat(rating);
 	const threshold = reviewSettings?.reviewRedirectThreshold ?? 4;
+	const externalBranch = ratingNum >= threshold && !!reviewSettings?.reviewUrl;
 
-	if (ratingNum >= threshold && reviewSettings?.reviewUrl) {
-		throw redirect(302, reviewSettings.reviewUrl);
+	if (arg) {
+		try {
+			await api.trackReviewArgVisit({
+				arg,
+				linkClick: true,
+				externalRedirect: externalBranch
+			});
+		} catch {
+			// tracking is best-effort — never block the redirect
+		}
+	}
+
+	if (externalBranch) {
+		throw redirect(302, reviewSettings!.reviewUrl!);
 	}
 
 	const leaveReviewUrl = new URL(`/${params.restaurantId}/leave-a-review`, url.origin);

@@ -41,7 +41,8 @@
 		pushEcommerceEvent,
 		trackStep,
 		trackError,
-		trackBookingConfirmed
+		trackBookingConfirmed,
+		setGtmRestaurantId
 	} from './gtm.svelte';
 
 	let { data: widget, builder, isEmbedded } = $props();
@@ -278,6 +279,8 @@
 	};
 
 	onMount(() => {
+		setGtmRestaurantId(widget.restaurantId);
+
 		// GTM mode logging (dev only)
 		if (import.meta.env.DEV) {
 			if (builder) {

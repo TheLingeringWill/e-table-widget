@@ -13,6 +13,7 @@ import type {
 	PaymentIntentResponseDTO,
 	RestaurantAggregateResponseDTO,
 	ReviewSettingsResponseDTO,
+	TrackReviewArgVisitRequestDTO,
 	UpdateBookingRequestDTO,
 	UpsertReviewRequestDTO,
 	WidgetResponseDTO
@@ -77,6 +78,13 @@ export function createWidgetApi(restaurantId: number) {
 		},
 		getReviewSettings(): Promise<RestResult<ReviewSettingsResponseDTO>> {
 			return restCall(`/restaurants/${restaurantId}/review-settings`, { restaurantId });
+		},
+		trackReviewArgVisit(body: TrackReviewArgVisitRequestDTO): Promise<RestResult<void>> {
+			return restCall(`/restaurants/${restaurantId}/review-args/track`, {
+				restaurantId,
+				method: 'POST',
+				body
+			});
 		},
 		getPaymentIntent(id: string): Promise<RestResult<PaymentIntentResponseDTO>> {
 			return restCall(`/restaurants/${restaurantId}/payment-intents/${id}`, { restaurantId });

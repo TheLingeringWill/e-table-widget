@@ -76,7 +76,7 @@
 	<div class="stack" aria-live="polite">
 		{#if resolvedAction === 'confirm'}
 			<span class="hero-icon" aria-hidden="true">
-				<Check size={36} weight="thin" color="#0042DB" />
+				<Check size={36} weight="thin" color="#16a34a" />
 			</span>
 			<h1 class="hero-title">Réservation confirmée</h1>
 
@@ -232,6 +232,8 @@
 		--hair: #d6d3cb;
 		--brand: #0042db;
 		--rose: #8a1f2b;
+		--success: #16a34a;
+		--success-hover: #15803d;
 
 		min-height: 100vh;
 		background: #ffffff;
@@ -421,12 +423,12 @@
 	}
 
 	.btn[data-variant='confirm'] {
-		background: var(--brand);
+		background: var(--success);
 		color: #ffffff;
 	}
 
 	.btn[data-variant='confirm']:hover:not(:disabled) {
-		background: #0036b8;
+		background: var(--success-hover);
 	}
 
 	.btn[data-variant='cancel'] {

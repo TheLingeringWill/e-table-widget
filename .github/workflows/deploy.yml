@@ -2,6 +2,8 @@ name: CI/CD
 
 on:
   push:
+    branches: ["**"]
+    tags: ["v*.*.*"]
   pull_request:
 
 permissions:
@@ -10,6 +12,7 @@ permissions:
 jobs:
   ci:
     name: CI
+    if: github.ref_type != 'tag'
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 15
     steps:
@@ -36,16 +39,16 @@ jobs:
       #- name: Svelte check
       #  run: pnpm check
 
-  cd:
-    name: Deploy
+  deploy-staging:
+    name: Deploy to staging
     needs: [ci]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
-    concurrency:
-      group: deploy-staging-widget
-      cancel-in-progress: false
     environment: staging
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
 
@@ -91,9 +94,89 @@ jobs:
 
       - name: Summary
         run: |
-          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
-          ### Deployment Summary
-          - **Image:** \`${{ steps.login-ecr.outputs.registry }}/e-table-widget:${{ github.sha }}\`
-          - **Cluster:** e-table-staging
-          - **Service:** e-table-staging-widget
-          EOF
+          {
+            echo "### Staging deployment"
+            echo "- **Image:** \`${{ steps.login-ecr.outputs.registry }}/e-table-widget:${{ github.sha }}\`"
+            echo "- **Cluster:** e-table-staging"
+            echo "- **Service:** e-table-staging-widget"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-production:
+    name: Deploy to production
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-3
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Promote staging image to release tag
+        run: |
+          set -euo pipefail
+          REPO=e-table-widget
+          SRC_TAG="${GITHUB_SHA}"
+          DST_TAG="${GITHUB_REF_NAME}"
+
+          MANIFEST=$(aws ecr batch-get-image \
+            --repository-name "$REPO" \
+            --image-ids imageTag="$SRC_TAG" \
+            --query 'images[0].imageManifest' \
+            --output text)
+
+          if [ -z "$MANIFEST" ] || [ "$MANIFEST" = "None" ]; then
+            echo "::error::No image found in ECR for commit $SRC_TAG. The tag must point at a commit previously merged to main (which builds the image)."
+            exit 1
+          fi
+
+          if PUT_OUTPUT=$(aws ecr put-image \
+            --repository-name "$REPO" \
+            --image-tag "$DST_TAG" \
+            --image-manifest "$MANIFEST" 2>&1); then
+            echo "Promoted $SRC_TAG -> $DST_TAG in $REPO"
+          elif echo "$PUT_OUTPUT" | grep -q ImageAlreadyExistsException; then
+            echo "Tag $DST_TAG already points to this image — promotion is a no-op"
+          else
+            echo "$PUT_OUTPUT" >&2
+            exit 1
+          fi
+
+      - name: Render task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ecs/prod.json
+          container-name: widget
+          image: ${{ steps.login-ecr.outputs.registry }}/e-table-widget:${{ github.ref_name }}
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: e-table-prod-widget
+          cluster: e-table-prod
+          wait-for-service-stability: true
+
+      - name: Summary
+        run: |
+          {
+            echo "### Production deployment"
+            echo "- **Release tag:** \`${GITHUB_REF_NAME}\`"
+            echo "- **Commit:** \`${GITHUB_SHA}\`"
+            echo "- **Image:** \`${{ steps.login-ecr.outputs.registry }}/e-table-widget:${GITHUB_REF_NAME}\` (promoted from \`${GITHUB_SHA}\`)"
+            echo "- **Cluster:** e-table-prod"
+            echo "- **Service:** e-table-prod-widget"
+          } >> "$GITHUB_STEP_SUMMARY"

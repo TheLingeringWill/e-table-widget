@@ -24,7 +24,7 @@ function getBaseUrl(): string {
 }
 
 function buildUrl(path: string, query?: Record<string, string | number | undefined>): string {
-	const url = new URL(`${getBaseUrl()}${path}`);
+	const url = new URL(`${getBaseUrl()}/v1${path}`);
 	if (query) {
 		for (const [k, v] of Object.entries(query)) {
 			if (v === undefined) continue;

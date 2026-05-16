@@ -8,6 +8,8 @@ import {
 	type GenericSchema,
 	type InferOutput
 } from 'valibot';
+import type { CountryCode } from 'libphonenumber-js';
+import { convertToE164 } from '$lib/utils/phone';
 import { createWidgetApi } from '$lib/server/api/widget-api';
 import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
 import { shiftToLegacyService, type LiveDay } from '$lib/server/api/adapters/service';
@@ -160,6 +162,16 @@ export const router = {
 			}
 			const r = input.reservation;
 
+			// BFF is the chokepoint for E.164: client-side conversion in Contact.svelte
+			// falls through to the raw input when parsing fails (and a future non-widget
+			// caller may not convert at all), so normalize here using the contact's
+			// countryCode. convertToE164 itself falls through on parse failure, so
+			// malformed input still reaches the API as-is (the API rejects it).
+			const normalizedPhone = convertToE164(
+				r.contact.phone,
+				r.contact.countryCode as CountryCode
+			);
+
 			const dateStr = r.date.date;
 			const timeStr = r.date.time;
 			const api = createWidgetApi(rid);
@@ -227,7 +239,7 @@ export const router = {
 						firstName: r.contact.firstName ?? null,
 						lastName: r.contact.lastName,
 						email: r.contact.email,
-						phone: r.contact.phone
+						phone: normalizedPhone
 					} satisfies UpdateBookingRequestDTO)
 				: await api.createBooking({
 						pax: r.pax,
@@ -241,7 +253,7 @@ export const router = {
 						firstName: r.contact.firstName ?? null,
 						lastName: r.contact.lastName,
 						email: r.contact.email,
-						phone: r.contact.phone,
+						phone: normalizedPhone,
 						paymentIntentId: input.paymentIntentId ?? null
 					} satisfies CreateBookingRequestDTO);
 			if (!result.ok) {

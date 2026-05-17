@@ -62,14 +62,28 @@ export const GET = async (event: RequestEvent): Promise<Response> => {
 	// Only generate GTM detection script if tracking is enabled
 	const gtmScript = gtmEnabled ? generateGtmDetectionScript(restaurantId!) : '';
 
-	const iframeSrc = JSON.stringify(`${event.url.origin}/${restaurantId}?embedded=true`);
+	const baseIframeSrc = `${event.url.origin}/${restaurantId}?embedded=true`;
+	const baseIframeSrcJson = JSON.stringify(baseIframeSrc);
+	// Supported locales are also enforced server-side by hooks.server.ts; the
+	// inline list here just avoids appending `?lang=` for unknown values. If
+	// the parent omits `data-lang`, the iframe self-detects (URL > cookie >
+	// Accept-Language > 'fr') — see src/lib/i18n/detect.ts.
+	const supportedLocales = JSON.stringify(['en', 'fr']);
 
 	const script = /*javascript*/ `
   (function() {
     ${gtmScript}
 
+    // \`document.currentScript\` must be read synchronously (it's null once
+    // the script finishes loading) and lets multiple embeds coexist on one
+    // page. The id="cooking" fallback covers legacy embed snippets.
+    var script = document.currentScript || document.getElementById('cooking');
+
     const onLoaded = () => {
-      const script = document.getElementById('cooking');
+      if (!script) {
+        console.warn('[E-table Widget] Could not locate embed <script> tag');
+        return;
+      }
       let target = script.getAttribute('data-element');
       const targetElement = target === "[ID]" ? document.querySelector("main") : document.getElementById(target) || document.querySelector(target);
       if(!targetElement){
@@ -79,8 +93,21 @@ export const GET = async (event: RequestEvent): Promise<Response> => {
 
       const iframe = document.createElement('iframe');
 
-      // Message handler for iframe communication
+      // Optional parent language hint: <script data-lang="en"|"fr">. The
+      // iframe does its own detection if this is missing or unsupported.
+      var lang = (script.getAttribute('data-lang') || '').toLowerCase();
+      var supported = ${supportedLocales};
+      var iframeSrc = ${baseIframeSrcJson};
+      if (supported.indexOf(lang) !== -1) {
+        iframeSrc += '&lang=' + lang;
+      }
+
+      // Message handler for iframe communication. The global \`message\` event
+      // fires for every iframe on the page, so we filter by \`event.source\`
+      // to avoid one widget instance reacting to another's resize/GTM events
+      // when several embeds coexist on the same page.
       window.addEventListener('message', (event) => {
+        if (event.source !== iframe.contentWindow) return;
         if (!event.data || typeof event.data !== 'object') return;
 
         const { type, data } = event.data;
@@ -96,7 +123,7 @@ export const GET = async (event: RequestEvent): Promise<Response> => {
         }
       });
 
-      iframe.src = ${iframeSrc};
+      iframe.src = iframeSrc;
       iframe.frameBorder = "0";
       iframe.style.setProperty('width', '100%');
       iframe.style.setProperty('border', 'none');

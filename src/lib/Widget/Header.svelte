@@ -6,6 +6,8 @@
 	import { reservation } from '$lib/states/reservation.svelte';
 	import { useWidget, getTranslation } from '$lib/context.svelte.js';
 	import { formatSlotDate } from '$lib/utils/slotFormat';
+	import * as m from '$lib/paraglide/messages';
+	import LanguageSwitcher from './LanguageSwitcher.svelte';
 	let {
 		theme,
 		showSummary = false
@@ -18,11 +20,24 @@
 
 	const title = $derived(getTranslation(widget.title));
 	const description = $derived(getTranslation(widget.description));
+
+	// The switcher rides along on screens where the user is actively choosing
+	// or filling in a booking. We deliberately omit it from DONE/ERROR/PAYMENT
+	// to keep terminal states focused.
+	const showLanguageSwitcher = $derived(
+		step.step === 'SELECTION' || step.step === 'CONTACT' || step.step === 'BOOKING'
+	);
 </script>
 
-<div class="py-3 px-4 top-0 bg-primary flex flex-col space-y-3">
-	<div class="flex items-center justify-center gap-5">
-		<h1 class="font-normal font-serif text-center" id="title">{title}</h1>
+<div class="py-3 px-4 bg-primary flex flex-col space-y-3">
+	<div class="flex items-center justify-between gap-3 min-h-[40px]">
+		<div class="w-10 shrink-0" aria-hidden="true"></div>
+		<h1 class="font-normal font-serif text-center flex-1" id="title">{title}</h1>
+		{#if showLanguageSwitcher}
+			<LanguageSwitcher />
+		{:else}
+			<div class="w-10 shrink-0" aria-hidden="true"></div>
+		{/if}
 	</div>
 	{#if description?.length && step.step === 'SELECTION'}
 		<div id="description" style:white-space="pre-line" class="text-center" transition:slide>
@@ -34,12 +49,11 @@
 			class="bg-yellow-100 border rounded-lg px-3 py-2 border-yellow-800 text-sm font-normal text-yellow-900"
 			transition:slide
 		>
-			Modification de votre réservation du <b
-				>{formatSlotDate(reservation.startDate.date, 'DD/MM/YYYY')}</b
-			>
-			à
-			<b>{reservation.startDate.time}</b> pour <b>{reservation.pax}</b>
-			personne{(reservation.pax ?? 0) > 1 ? 's' : ''}
+			{m.common_modificationBanner({
+				date: formatSlotDate(reservation.startDate.date, 'DD/MM/YYYY'),
+				time: reservation.startDate.time,
+				pax: reservation.pax ?? 0
+			})}
 		</div>
 	{/if}
 	{#if showSummary}
@@ -52,7 +66,7 @@
 			>
 				<div class="flex items-center gap-1">
 					<ForkKnife size={24} />
-					<b>{selection.pax} {selection.pax > 1 ? 'personnes' : 'personne'}</b>
+					<b>{m.header_paxCount({ pax: selection.pax })}</b>
 				</div>
 			</button>
 			<button
@@ -69,7 +83,7 @@
 				onclick={() => previousStep('SELECTION', 2)}
 			>
 				<div class="flex items-center gap-1">
-					<Clock size={24} /><b>{selection.slot?.time ?? 'Sélectionnez un horaire'}</b>
+					<Clock size={24} /><b>{selection.slot?.time ?? m.header_pickTime()}</b>
 				</div>
 			</button>
 		</div>

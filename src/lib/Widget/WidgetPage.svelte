@@ -9,8 +9,7 @@
 	useWidget(data.widget);
 	useZonedDateUtils(
 		new ZonedDateUtils(
-			data.widget.restaurant?.timezone ? tz(data.widget.restaurant.timezone) : 'Europe/Paris',
-			'fr'
+			data.widget.restaurant?.timezone ? tz(data.widget.restaurant.timezone) : 'Europe/Paris'
 		)
 	);
 </script>

@@ -5,6 +5,7 @@
 	import { paymentIntent } from '$lib/states/paymentIntent.svelte';
 	import { resetReservation } from '$lib/states/reservation.svelte';
 	import { formatSlotDate } from '$lib/utils/slotFormat';
+	import * as m from '$lib/paraglide/messages';
 	import { onMount } from 'svelte';
 
 	const cameFromPayment = $derived(!!paymentIntent.id);
@@ -17,24 +18,20 @@
 <div class="flex flex-col gap-4 items-center justify-center">
 	<Check size={80} color="green" />
 	{#if cameFromPayment}
-		<p>Carte autorisée — vous recevrez une confirmation par email d'ici quelques instants.</p>
-		{#if selection.slot}
-			<p>
-				Réservation du <b>{formatSlotDate(selection.slot.date, 'dddd DD MMMM')}</b> à
-				<b>{selection.slot.time}</b>
-				pour <b>{selection.pax}</b> personne{(selection.pax ?? 0) > 1 ? 's' : ''}.
-			</p>
-		{/if}
-	{:else}
-		{#if selection.slot}
-			<p>
-				Votre réservation du <b>{formatSlotDate(selection.slot.date, 'dddd DD MMMM')}</b> à
-				<b>{selection.slot.time}</b>
-				pour <b>{selection.pax}</b> personne{(selection.pax ?? 0) > 1 ? 's' : ''} a été reçue.
-			</p>
-		{/if}
+		<p>{m.done_cardAuthorized()}</p>
+	{/if}
+	{#if selection.slot}
 		<p>
-			Un email vous a été envoyé à {contact.email}.
+			{m.done_reservationLine({
+				date: formatSlotDate(selection.slot.date, 'dddd DD MMMM'),
+				time: selection.slot.time,
+				pax: selection.pax ?? 0
+			})}
+		</p>
+	{/if}
+	{#if !cameFromPayment}
+		<p>
+			{m.done_emailSent({ email: contact.email ?? '' })}
 		</p>
 	{/if}
 </div>

@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { formatSlotDate } from '$lib/utils/slotFormat';
 	import { Check } from 'phosphor-svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let { data, form } = $props();
 
@@ -26,14 +27,14 @@
 		<!-- Success State -->
 		<div class="flex flex-col gap-4 items-center justify-center mt-20">
 			<Check size={80} color="green" />
-			<div class="text-center text-lg font-medium">Merci pour votre avis !</div>
+			<div class="text-center text-lg font-medium">{m.leaveReview_thankYou()}</div>
 		</div>
 	{:else}
 		<!-- Above card -->
 		<h1 class="text-xl font-semibold text-gray-900 text-center">{data.restaurantName}</h1>
 
 		<p class="text-base text-gray-500 text-center mt-6">
-			Nous regrettons que votre expérience n'ait pas été à la hauteur de vos attentes.
+			{m.leaveReview_apology()}
 		</p>
 
 		{#if data.rating}
@@ -68,7 +69,7 @@
 				<div class="space-y-4">
 					<textarea
 						name="comment"
-						placeholder="Partagez votre avis..."
+						placeholder={m.leaveReview_placeholder()}
 						class="w-full min-h-[120px] p-3 border border-gray-300 rounded-lg resize-y text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
 					></textarea>
 
@@ -77,7 +78,7 @@
 						disabled={submitting}
 						class="flex items-center gap-2 transition-all w-full text-center py-3 border-none text-sm font-semibold justify-center hover:brightness-90 focus:brightness-75 text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 font-medium disabled:cursor-not-allowed disabled:opacity-50"
 					>
-						{submitting ? 'Envoi en cours...' : 'Envoyer'}
+						{submitting ? m.leaveReview_sending() : m.leaveReview_submit()}
 					</button>
 				</div>
 
@@ -89,9 +90,11 @@
 
 		{#if data.reservation}
 			<div class="text-xs text-gray-500 text-center mt-4 max-w-md">
-				Réservation du {formatSlotDate(data.reservation.startDate.date, 'DD/MM/YYYY')}
-				à {data.reservation.startDate.time}
-				pour {data.reservation.pax} personne(s)
+				{m.leaveReview_reservationLine({
+					date: formatSlotDate(data.reservation.startDate.date, 'DD/MM/YYYY'),
+					time: data.reservation.startDate.time,
+					pax: data.reservation.pax
+				})}
 			</div>
 		{/if}
 	{/if}

@@ -14,6 +14,7 @@
 	import ZonedCalendarInput from '$lib/utils/ZonedCalendarInput.svelte';
 	import { parseSlotDateAsCalendarDate, slotKey } from '$lib/utils/slotFormat';
 	import { pushGtmEvent } from '../gtm.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let {
 		restaurantId,
@@ -316,14 +317,14 @@
 				icon: Calendar,
 				title: selection.date
 					? zonedDateUtils.format('dddd DD MMMM', selection.date)
-					: 'Sélectionnez une date',
+					: m.selection_pickDate(),
 				contentClass: 'flex flex-wrap gap-2 justify-center px-5 py-2',
 				loading: loadingDates
 			},
 			{
 				id: 'service',
 				icon: CallBell,
-				title: selection.service?.name[0].value || 'Sélectionnez un service',
+				title: selection.service?.name[0].value || m.selection_pickService(),
 				loading: loadingServices,
 				contentClass: 'flex flex-wrap gap-2 justify-center',
 				disabled: !selection.date
@@ -331,7 +332,7 @@
 			{
 				id: 'pax',
 				icon: ForkKnife,
-				title: selection.pax ? `${selection.pax} couverts` : 'Sélectionnez un nombre de couverts',
+				title: selection.pax ? m.selection_paxCount({ pax: selection.pax }) : m.selection_pickPax(),
 				contentClass: 'flex flex-wrap gap-2 justify-center pt-2 pb-5 px-5',
 				loading: loadingServices,
 				disabled: !selection.date || !selection.service
@@ -339,7 +340,7 @@
 			{
 				id: 'slots',
 				icon: Clock,
-				title: `${selection.slot ? selection.slot.time : 'Sélectionnez un horaire'}`,
+				title: `${selection.slot ? selection.slot.time : m.selection_pickTime()}`,
 				loading: loadingSlots,
 				contentClass: 'flex flex-wrap gap-2 justify-center',
 				disabled: !selection.date || !selection.service || !selection.pax
@@ -429,11 +430,11 @@
 							class="absolute top-0 left-0 flex flex-col items-center justify-center w-full h-full gap-5 p-10 bg-white bg-opacity-10"
 						>
 							{#if !loadingServices}
-								<div class="">Aucun service pour ce jour.</div>
+								<div class="">{m.selection_noServiceToday()}</div>
 								<Button
 									onclick={() => {
 										openedAccordion.index = 0;
-									}}>Séléctionner un autre jour</Button
+									}}>{m.selection_chooseAnotherDay()}</Button
 								>
 							{/if}
 						</div>
@@ -467,16 +468,18 @@
 						{@const alternatives = getAlternativeSlots(waitlist.selectedUnavailableSlot)}
 						<div class="flex flex-col gap-3 px-5 py-3">
 							<div class="text-center">
-								<p class="text-sm font-medium mb-1">Ce créneau est actuellement indisponible</p>
+								<p class="text-sm font-medium mb-1">{m.selection_slotUnavailable()}</p>
 								<p class="text-xs opacity-60">
-									{waitlist.selectedUnavailableSlot.time} - {selection.pax}
-									couverts
+									{m.selection_slotUnavailableDetails({
+										time: waitlist.selectedUnavailableSlot.time,
+										pax: selection.pax ?? 0
+									})}
 								</p>
 							</div>
 
 							{#if alternatives.length > 0}
 								<div class="flex flex-col gap-2">
-									<p class="text-xs opacity-70 text-center">Créneaux alternatifs disponibles :</p>
+									<p class="text-xs opacity-70 text-center">{m.selection_alternativeSlots()}</p>
 									<div class="flex flex-col gap-2 max-h-[200px] overflow-auto">
 										{#each alternatives as altSlot}
 											<button
@@ -491,7 +494,7 @@
 
 								<div class="flex items-center w-full py-1">
 									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
-									<span class="px-2 text-xs opacity-30">ou</span>
+									<span class="px-2 text-xs opacity-30">{m.selection_or()}</span>
 									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
 								</div>
 							{/if}
@@ -500,14 +503,14 @@
 								onclick={handleJoinWaitlist}
 								class="w-full px-4 py-3 rounded border border-white border-opacity-30 hover:bg-white hover:bg-opacity-10 transition-all text-sm font-medium"
 							>
-								Rejoindre la liste d'attente
+								{m.selection_joinWaitlist()}
 							</button>
 
 							<button
 								onclick={handleBackFromWaitlist}
 								class="w-full px-4 py-2 text-sm opacity-70 hover:opacity-100 transition-all"
 							>
-								Retour à la sélection
+								{m.selection_backToSelection()}
 							</button>
 						</div>
 					{:else if slots.length > 0}
@@ -557,12 +560,14 @@
 							{#if loadingAlternative}
 								<div class="flex flex-col items-center justify-center gap-2 py-4">
 									<Spinner />
-									<div class="text-xs text-center opacity-70">Recherche d'alternatives...</div>
+									<div class="text-xs text-center opacity-70">
+										{m.selection_searchingAlternatives()}
+									</div>
 								</div>
 							{:else if alternativeRestaurant?.found}
 								<div class="flex items-center w-full px-4 py-2">
 									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
-									<span class="px-2 text-xs opacity-30">ou</span>
+									<span class="px-2 text-xs opacity-30">{m.selection_or()}</span>
 									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
 								</div>
 
@@ -575,9 +580,9 @@
 													alternative_restaurant_id: alternativeRestaurant.restaurant.id,
 													alternative_restaurant_name: alternativeRestaurant.restaurant.name,
 													slot_time: slotKey(
-													alternativeRestaurant.slot.date,
-													alternativeRestaurant.slot.time
-												)
+														alternativeRestaurant.slot.date,
+														alternativeRestaurant.slot.time
+													)
 												});
 												window.location.href = buildAlternativeWidgetUrl(alternativeRestaurant);
 											}
@@ -597,9 +602,7 @@
 												<div
 													class="flex items-center gap-1.5 px-2 py-1 rounded bg-white bg-opacity-10"
 												>
-													<span class="text-xs font-medium"
-														>{alternativeRestaurant.slot.time}</span
-													>
+													<span class="text-xs font-medium">{alternativeRestaurant.slot.time}</span>
 												</div>
 												<ArrowRight size={14} class="opacity-40 group-hover:opacity-70" />
 											</div>
@@ -616,16 +619,18 @@
 							{:else if loadingAlternative}
 								<div class="flex flex-col items-center justify-center gap-2 py-4">
 									<Spinner />
-									<div class="text-xs text-center opacity-70">Recherche d'alternatives...</div>
+									<div class="text-xs text-center opacity-70">
+										{m.selection_searchingAlternatives()}
+									</div>
 								</div>
 							{:else if alternativeRestaurant?.found}
 								<div class="flex flex-col items-center py-3 px-4 w-full">
-									<p class="text-sm font-medium mb-1">Aucun créneau disponible</p>
+									<p class="text-sm font-medium mb-1">{m.selection_noSlotsAvailable()}</p>
 									<p class="text-xs text-center opacity-50 mb-3">
-										Aucune table pour {selection.pax} pers. le {zonedDateUtils.format(
-											'DD MMM',
-											selection.date
-										)}
+										{m.selection_noTablesForDate({
+											pax: selection.pax ?? 0,
+											date: zonedDateUtils.format('DD MMM', selection.date)
+										})}
 									</p>
 								</div>
 
@@ -638,7 +643,7 @@
 									>
 										<div class="flex items-center gap-2">
 											<Calendar size={16} class="opacity-60" />
-											<span class="text-xs">Choisir une autre date</span>
+											<span class="text-xs">{m.selection_chooseAnotherDate()}</span>
 										</div>
 										<ArrowRight size={14} class="opacity-40" />
 									</button>
@@ -646,7 +651,7 @@
 
 								<div class="flex items-center w-full px-4 py-2">
 									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
-									<span class="px-2 text-xs opacity-30">ou</span>
+									<span class="px-2 text-xs opacity-30">{m.selection_or()}</span>
 									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
 								</div>
 
@@ -659,9 +664,9 @@
 													alternative_restaurant_id: alternativeRestaurant.restaurant.id,
 													alternative_restaurant_name: alternativeRestaurant.restaurant.name,
 													slot_time: slotKey(
-													alternativeRestaurant.slot.date,
-													alternativeRestaurant.slot.time
-												)
+														alternativeRestaurant.slot.date,
+														alternativeRestaurant.slot.time
+													)
 												});
 												window.location.href = buildAlternativeWidgetUrl(alternativeRestaurant);
 											}
@@ -681,9 +686,7 @@
 												<div
 													class="flex items-center gap-1.5 px-2 py-1 rounded bg-white bg-opacity-10"
 												>
-													<span class="text-xs font-medium"
-														>{alternativeRestaurant.slot.time}</span
-													>
+													<span class="text-xs font-medium">{alternativeRestaurant.slot.time}</span>
 												</div>
 												<ArrowRight size={14} class="opacity-40 group-hover:opacity-70" />
 											</div>
@@ -692,9 +695,9 @@
 								</div>
 							{:else}
 								<div class="flex flex-col items-center py-4 px-4 w-full">
-									<p class="text-sm font-medium mb-1">Aucun créneau disponible</p>
+									<p class="text-sm font-medium mb-1">{m.selection_noSlotsAvailable()}</p>
 									<p class="text-xs text-center opacity-50 mb-3">
-										Aucune table disponible. Essayez une autre date.
+										{m.selection_noTablesTryAnotherDate()}
 									</p>
 									<button
 										onclick={() => {
@@ -704,7 +707,7 @@
 									>
 										<div class="flex items-center gap-2">
 											<Calendar size={16} class="opacity-60" />
-											<span class="text-xs">Choisir une autre date</span>
+											<span class="text-xs">{m.selection_chooseAnotherDate()}</span>
 										</div>
 										<ArrowRight size={14} class="opacity-40" />
 									</button>
@@ -727,7 +730,8 @@
 					!waitlist.isWaitlist) ||
 				loadingDates ||
 				loadingSlots ||
-				loadingServices}>{reservation.id ? 'Modifier ma réservation' : 'Réserver'}</Button
+				loadingServices}
+			>{reservation.id ? m.selection_modifyButton() : m.selection_bookButton()}</Button
 		>
 	</div>
 </div>

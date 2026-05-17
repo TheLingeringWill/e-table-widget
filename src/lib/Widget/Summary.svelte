@@ -3,6 +3,7 @@
 	import { gotoSelection, selection } from '$lib/states/selection.svelte';
 	import { step } from '$lib/states/step.svelte';
 	import { formatSlotDate } from '$lib/utils/slotFormat';
+	import * as m from '$lib/paraglide/messages';
 	import { Calendar, CallBell, Clock, ForkKnife, PencilSimple } from 'phosphor-svelte';
 	import { onDestroy, onMount } from 'svelte';
 
@@ -68,7 +69,7 @@
 <div
 	class="flex flex-col md:gap-4 gap-3 flex-shrink text-black md:border md:rounded-lg md:p-5 p-4 bg-gray-100"
 >
-	<div class="font-light text-md">Votre réservation :</div>
+	<div class="font-light text-md">{m.summary_yourReservation()}</div>
 	<div class="flex flex-col gap-1" id="summary">
 		{@render button(
 			0,
@@ -76,12 +77,8 @@
 			Calendar
 		)}
 		{@render button(1, selection.service?.name[0].value, CallBell)}
-		{@render button(
-			2,
-			`${selection.pax} personne${(selection?.pax ?? 0 > 1) ? 's' : ''}`,
-			ForkKnife
-		)}
-		{@render button(3, selection.slot?.time ?? 'Sélectionnez un horaire', Clock)}
+		{@render button(2, m.summary_paxCount({ pax: selection.pax ?? 0 }), ForkKnife)}
+		{@render button(3, selection.slot?.time ?? m.summary_pickTime(), Clock)}
 	</div>
 
 	{#if widget.summaryText?.length > 0}

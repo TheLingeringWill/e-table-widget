@@ -5,16 +5,23 @@
 // `.tz(restaurantTimezone)` would shift the underlying instant and corrupt
 // the display when the browser tz differs from the restaurant's. So we
 // parse them as plain local-clock literals (no zone) and format directly.
+//
+// Locale is read from the reactive `currentLocale` $state at call time, so
+// language switches re-render dates wherever these helpers are used inside
+// `.svelte` template expressions. Both locales are eagerly imported below
+// so dayjs can switch synchronously.
 
 import dayjs from 'dayjs';
+import 'dayjs/locale/en';
 import 'dayjs/locale/fr';
+import { currentLocale } from '$lib/states/locale.svelte';
 
 export function formatSlotDateTime(date: string, time: string, format: string): string {
-	return dayjs(`${date}T${time}`).locale('fr').format(format);
+	return dayjs(`${date}T${time}`).locale(currentLocale.value).format(format);
 }
 
 export function formatSlotDate(date: string, format: string): string {
-	return dayjs(date).locale('fr').format(format);
+	return dayjs(date).locale(currentLocale.value).format(format);
 }
 
 export function slotKey(date: string, time: string): string {

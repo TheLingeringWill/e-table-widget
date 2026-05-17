@@ -1,7 +1,15 @@
 <script lang="ts">
 	import Theme from 'maket/Theme';
 	import '../app.css';
-	let { children } = $props();
+	import { initLocale } from '$lib/states/locale.svelte';
+
+	let { children, data } = $props();
+
+	// Seed the client-side locale store from the server-detected value so the
+	// first client render (and Paraglide's client runtime) matches SSR. Done
+	// inline (not in onMount) so $derived bindings already reflect the right
+	// locale on the initial paint.
+	initLocale(data.locale);
 </script>
 
 <svelte:head>

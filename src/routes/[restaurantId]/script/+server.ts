@@ -74,8 +74,16 @@ export const GET = async (event: RequestEvent): Promise<Response> => {
   (function() {
     ${gtmScript}
 
+    // \`document.currentScript\` must be read synchronously (it's null once
+    // the script finishes loading) and lets multiple embeds coexist on one
+    // page. The id="cooking" fallback covers legacy embed snippets.
+    var script = document.currentScript || document.getElementById('cooking');
+
     const onLoaded = () => {
-      const script = document.getElementById('cooking');
+      if (!script) {
+        console.warn('[E-table Widget] Could not locate embed <script> tag');
+        return;
+      }
       let target = script.getAttribute('data-element');
       const targetElement = target === "[ID]" ? document.querySelector("main") : document.getElementById(target) || document.querySelector(target);
       if(!targetElement){
@@ -94,8 +102,12 @@ export const GET = async (event: RequestEvent): Promise<Response> => {
         iframeSrc += '&lang=' + lang;
       }
 
-      // Message handler for iframe communication
+      // Message handler for iframe communication. The global \`message\` event
+      // fires for every iframe on the page, so we filter by \`event.source\`
+      // to avoid one widget instance reacting to another's resize/GTM events
+      // when several embeds coexist on the same page.
       window.addEventListener('message', (event) => {
+        if (event.source !== iframe.contentWindow) return;
         if (!event.data || typeof event.data !== 'object') return;
 
         const { type, data } = event.data;

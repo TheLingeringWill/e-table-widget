@@ -1,4 +1,8 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"common_modificationBanner": "Modification de votre réservation du {date} à {time} pour {pax} personne(s)"
+	"booking_alreadyBooked": "Vous avez déjà réservé pour ce service.",
+	"booking_civilityRequired": "La civilité est requise.",
+	"booking_phoneCountryRequired": "Le code pays du téléphone est requis.",
+	"common_modificationBanner": "Modification de votre réservation du {date} à {time} pour {pax} personne(s)",
+	"error_generic": "Une erreur est survenue lors de la réservation.\nVeuillez réessayer."
 }

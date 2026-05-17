@@ -1,4 +1,8 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"common_modificationBanner": "Editing your reservation for {date} at {time} for {pax} guest(s)"
+	"booking_alreadyBooked": "You've already booked this service.",
+	"booking_civilityRequired": "Title is required.",
+	"booking_phoneCountryRequired": "Phone country code is required.",
+	"common_modificationBanner": "Editing your reservation for {date} at {time} for {pax} guest(s)",
+	"error_generic": "An error occurred during booking.\nPlease try again."
 }

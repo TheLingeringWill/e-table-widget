@@ -1,9 +1,21 @@
 import type { Handle, RequestEvent } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { stringify as devalueStringify, parse as devalueParse } from 'devalue';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { router } from '$lib/server/rpc-router';
 import { pickLocale } from '$lib/i18n/detect';
-import { overwriteGetLocale } from '$lib/paraglide/runtime';
+import * as paraglideRuntime from '$lib/paraglide/runtime';
+
+// Initialize Paraglide's per-request locale store ONCE. Without this, the
+// runtime falls back to the module-global `overwriteGetLocale`, which leaks
+// across concurrent requests — e.g. three iframes loaded at once on the same
+// parent page would all render in whichever locale resolved last.
+// We read `paraglideRuntime.serverAsyncLocalStorage` via namespace access (not
+// a named import) so we always see the live binding, even when bundlers
+// snapshot named imports at module load.
+if (!paraglideRuntime.serverAsyncLocalStorage) {
+	paraglideRuntime.overwriteServerAsyncLocalStorage(new AsyncLocalStorage());
+}
 
 const corsHandle: Handle = async ({ event, resolve }) => {
 	if (event.url.pathname.startsWith('/')) {
@@ -123,8 +135,9 @@ const localsHandle: Handle = async ({ event, resolve }) => {
 // We persist explicit user choice (URL override) to the cookie with
 // iframe-friendly attributes (SameSite=None + Secure) so the widget keeps
 // the language across reloads when embedded on a third-party origin.
-// `overwriteGetLocale` aligns Paraglide's server runtime with our pick so
-// `m.*()` renders the right strings during SSR.
+// We then run `resolve()` inside Paraglide's AsyncLocalStorage so `m.*()`
+// reads the right locale during SSR — without leaking across concurrent
+// requests (which `overwriteGetLocale` would).
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 400; // ~400 days, mirrors Paraglide default
 
 const localeHandle: Handle = async ({ event, resolve }) => {
@@ -135,7 +148,6 @@ const localeHandle: Handle = async ({ event, resolve }) => {
 	});
 
 	event.locals.locale = locale;
-	overwriteGetLocale(() => locale);
 
 	// Persist explicit user choice (only when ?lang= was set to a supported value).
 	if (urlOverride && urlOverride !== event.cookies.get('widget_lang')) {
@@ -148,9 +160,15 @@ const localeHandle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
-	return resolve(event, {
-		transformPageChunk: ({ html }) => html.replace('%paraglide.lang%', locale)
-	});
+	const render = () =>
+		resolve(event, {
+			transformPageChunk: ({ html }) => html.replace('%paraglide.lang%', locale)
+		});
+
+	const store = paraglideRuntime.serverAsyncLocalStorage;
+	return store
+		? store.run({ locale, origin: event.url.origin, messageCalls: undefined }, render)
+		: render();
 };
 
 export const handle: Handle = sequence(corsHandle, localsHandle, localeHandle, rpcHandle);

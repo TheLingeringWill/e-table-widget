@@ -1,5 +1,8 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"booking_alreadyBooked": "You've already booked this service.",
+	"booking_civilityRequired": "Title is required.",
+	"booking_phoneCountryRequired": "Phone country code is required.",
 	"common_modificationBanner": "Editing your reservation for {date} at {time} for {pax} guest(s)",
 	"contact_civilityLabel": "* Title:",
 	"contact_civilityMr": "Mr",
@@ -21,6 +24,7 @@
 	"contact_rememberMe": "Remember me",
 	"contact_rememberMeHelper": "Your information is stored only on this device.",
 	"contact_waitlistNotice": "You'll be added to the waitlist for this slot",
+	"error_generic": "An error occurred during booking.\nPlease try again.",
 	"header_paxCount": "{pax} guest(s)",
 	"header_pickTime": "Pick a time",
 	"selection_alternativeSlots": "Alternative slots available:",

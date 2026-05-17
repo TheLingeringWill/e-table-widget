@@ -1,5 +1,8 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"booking_alreadyBooked": "Vous avez déjà réservé pour ce service.",
+	"booking_civilityRequired": "La civilité est requise.",
+	"booking_phoneCountryRequired": "Le code pays du téléphone est requis.",
 	"common_modificationBanner": "Modification de votre réservation du {date} à {time} pour {pax} personne(s)",
 	"contact_civilityLabel": "* Civilité :",
 	"contact_civilityMr": "Monsieur",
@@ -21,6 +24,7 @@
 	"contact_rememberMe": "Se souvenir de moi",
 	"contact_rememberMeHelper": "Vos informations sont stockées uniquement sur cet appareil.",
 	"contact_waitlistNotice": "Vous serez ajouté à la liste d'attente pour ce créneau",
+	"error_generic": "Une erreur est survenue lors de la réservation.\nVeuillez réessayer.",
 	"header_paxCount": "{pax} personne(s)",
 	"header_pickTime": "Sélectionnez un horaire",
 	"selection_alternativeSlots": "Créneaux alternatifs disponibles :",

@@ -23,10 +23,10 @@
 		loading = true;
 
 		if (!contact.civility) {
-			return gotoError('La civilité est requise.', 'CIVILITY_REQUIRED');
+			return gotoError(null, 'CIVILITY_REQUIRED');
 		}
 		if (!contact.countryCode) {
-			return gotoError('Le code pays du téléphone est requis.', 'COUNTRY_CODE_REQUIRED');
+			return gotoError(null, 'COUNTRY_CODE_REQUIRED');
 		}
 
 		// Build the full reservation payload up front: both branches below need
@@ -96,7 +96,7 @@
 		if (res.status === 'OK') {
 			nextStep();
 		} else if (res.status === ApiReturnStatus.CUSTOMER_ALREADY_BOOKED_SERVICE) {
-			gotoError('Vous avez déjà réservé pour ce service.');
+			gotoError(null, ApiReturnStatus.CUSTOMER_ALREADY_BOOKED_SERVICE);
 		} else {
 			gotoError(res.message ?? null, res.status);
 		}

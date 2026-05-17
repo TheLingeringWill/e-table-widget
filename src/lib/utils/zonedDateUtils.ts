@@ -7,15 +7,20 @@
 import dayjs from 'dayjs';
 import timezoned from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
+import 'dayjs/locale/en';
 import 'dayjs/locale/fr';
+import { currentLocale } from '$lib/states/locale.svelte';
 
 export class ZonedDateUtils {
 	readonly timezone: string;
-	private formatLocale: string;
+	private formatLocale: string | undefined;
 
+	// `formatLocale` left undefined → defer to the reactive `currentLocale`
+	// at format time so language switches re-render dates without rebuilding
+	// the instance. An explicit constructor arg still wins.
 	constructor(timezone: string, formatLocale?: string) {
 		this.timezone = timezone;
-		this.formatLocale = formatLocale ?? new Intl.DateTimeFormat().resolvedOptions().locale;
+		this.formatLocale = formatLocale;
 		dayjs.extend(utc);
 		dayjs.extend(timezoned);
 	}
@@ -105,7 +110,7 @@ export class ZonedDateUtils {
 	format(format: string, date?: Date, locale?: string, timezone?: string): string {
 		return dayjs(date ?? new Date())
 			.tz(timezone ?? this.timezone)
-			.locale(locale ?? this.formatLocale)
+			.locale(locale ?? this.formatLocale ?? currentLocale.value)
 			.format(format);
 	}
 }

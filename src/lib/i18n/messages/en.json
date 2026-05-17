@@ -1,4 +1,11 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"common_modificationBanner": "Editing your reservation for {date} at {time} for {pax} guest(s)"
+	"common_modificationBanner": "Editing your reservation for {date} at {time} for {pax} guest(s)",
+	"done_cardAuthorized": "Card authorized — you'll receive an email confirmation shortly.",
+	"done_emailSent": "An email has been sent to {email}.",
+	"done_reservationLine": "Reservation on {date} at {time} for {pax} guest(s).",
+	"payment_heading": "Payment",
+	"payment_preAuthIntro": "To confirm your reservation, we are processing a simple pre-authorization of {amount}. No charge will be made — your card will only be validated.",
+	"payment_securedBy": "Secured payment by",
+	"payment_validateButton": "Validate"
 }

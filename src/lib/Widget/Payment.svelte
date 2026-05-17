@@ -7,6 +7,7 @@
 		type StripeElements
 	} from '@stripe/stripe-js';
 	import { getContext, onMount } from 'svelte';
+	import { currentLocale } from '$lib/states/locale.svelte';
 
 	type StripeState = {
 		stripe: Stripe | null;
@@ -33,7 +34,10 @@
 
 			if (stripe) {
 				stripeState.stripe = stripe;
-				stripeState.elements = stripe.elements();
+				// Pass the active widget locale to Stripe Elements so its
+				// built-in UI (card placeholders, inline validation messages)
+				// renders in the same language as our own chrome.
+				stripeState.elements = stripe.elements({ locale: currentLocale.value });
 
 				register(stripe);
 			}
@@ -60,6 +64,7 @@
 		clearPendingReservation
 	} from '$lib/states/reservation.svelte';
 	import { api } from '$lib/widget-rpc-client';
+	import * as m from '$lib/paraglide/messages';
 
 	let {
 		widget,
@@ -289,13 +294,13 @@
 		<button onclick={() => previousStep()}>
 			<CaretLeft size={28} />
 		</button>
-		<h2 class="text-md font-normal">Paiement</h2>
+		<h2 class="text-md font-normal">{m.payment_heading()}</h2>
 	</div>
 	<div class="flex flex-col gap-2">
 		<div>
-			Pour confirmer votre réservation, nous procédons à une simple pré-autorisation de <b
-				>{paymentIntent.amount / 100}€</b
-			>. Aucun débit ne sera effectué, votre carte sera juste validée.
+			{@html m.payment_preAuthIntro({
+				amount: `<b>${paymentIntent.amount / 100}€</b>`
+			})}
 		</div>
 	</div>
 	<div class="relative w-full h-full">
@@ -327,7 +332,7 @@
 			</div>
 			<Separator>
 				<div class="flex items-center gap-1 bg-white px-5">
-					Paiement sécurisé par
+					{m.payment_securedBy()}
 					<!-- <div class="font-bold text-success">stripe</div> -->
 					<img
 						src="https://media.licdn.com/dms/image/D4D12AQEH143bZ1Q92g/article-cover_image-shrink_600_2000/0/1709625955980?e=2147483647&v=beta&t=q80rz-ZJ7Lz7e1q917_Vt080e6037qT96r9ZLuKHklY"
@@ -336,7 +341,7 @@
 					/>
 				</div>
 			</Separator>
-			<Button {loading} revert onclick={submitStripe}>Valider</Button>
+			<Button {loading} revert onclick={submitStripe}>{m.payment_validateButton()}</Button>
 		</div>
 	</div>
 </div>

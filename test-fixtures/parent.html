@@ -10,10 +10,15 @@
 				margin: 2rem auto;
 				padding: 0 1rem;
 			}
-			main {
+			main,
+			#widget-en {
 				min-height: 600px;
 				border: 1px solid #ccc;
 				margin-top: 1rem;
+			}
+			h2 {
+				margin-top: 2rem;
+				font-size: 1rem;
 			}
 			#log {
 				font-family: monospace;
@@ -35,7 +40,10 @@
 			iframe sends so Chrome MCP can read them via
 			<code>read_console_messages({pattern: 'resize|gtm_event'})</code>.
 		</p>
+		<h2>Default (no data-lang &rarr; iframe self-detects)</h2>
 		<main></main>
+		<h2>Explicit data-lang="en" (parent override)</h2>
+		<div id="widget-en"></div>
 		<div id="log"></div>
 		<script>
 			// Mirror every message from the widget iframe to console.log so
@@ -51,5 +59,6 @@
 			});
 		</script>
 		<script id="cooking" data-element="main" src="http://localhost:8987/1/script"></script>
+		<script data-element="widget-en" data-lang="en" src="http://localhost:8987/1/script"></script>
 	</body>
 </html>

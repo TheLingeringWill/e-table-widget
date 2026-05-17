@@ -29,13 +29,14 @@
 	);
 </script>
 
-<div class="py-3 px-4 top-0 bg-primary flex flex-col space-y-3">
-	<div class="relative flex items-center justify-center gap-5">
-		<h1 class="font-normal font-serif text-center" id="title">{title}</h1>
+<div class="py-3 px-4 bg-primary flex flex-col space-y-3">
+	<div class="flex items-center justify-between gap-3 min-h-[40px]">
+		<div class="w-10 shrink-0" aria-hidden="true"></div>
+		<h1 class="font-normal font-serif text-center flex-1" id="title">{title}</h1>
 		{#if showLanguageSwitcher}
-			<div class="absolute right-0 top-1/2 -translate-y-1/2">
-				<LanguageSwitcher />
-			</div>
+			<LanguageSwitcher />
+		{:else}
+			<div class="w-10 shrink-0" aria-hidden="true"></div>
 		{/if}
 	</div>
 	{#if description?.length && step.step === 'SELECTION'}

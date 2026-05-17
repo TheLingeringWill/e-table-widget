@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CaretDown } from 'phosphor-svelte';
+	import { Check } from 'phosphor-svelte';
 	import {
 		currentLocale,
 		setLocale,
@@ -13,65 +13,111 @@
 	};
 
 	let open = $state(false);
-	let containerEl: HTMLDivElement | undefined = $state();
+	let triggerEl: HTMLButtonElement | undefined = $state();
+	let menuEl: HTMLDivElement | undefined = $state();
+	let pos = $state({ top: 0, right: 0 });
+
+	const computePos = () => {
+		if (!triggerEl) return;
+		const r = triggerEl.getBoundingClientRect();
+		pos = {
+			top: r.bottom + 4,
+			right: window.innerWidth - r.right
+		};
+	};
+
+	const toggle = (event: MouseEvent) => {
+		event.stopPropagation();
+		if (open) {
+			open = false;
+		} else {
+			computePos();
+			open = true;
+		}
+	};
 
 	const choose = (locale: Locale) => {
 		open = false;
 		setLocale(locale);
 	};
 
-	// Outside-click handler. Attached to `document` only while the dropdown
-	// is open so we don't pay for the listener on every click otherwise.
-	// The button's own onclick calls `event.stopPropagation()` so opening
-	// the dropdown doesn't immediately race against this listener.
-	$effect(() => {
-		if (!open) return;
-		const onDocClick = (event: MouseEvent) => {
-			const target = event.target;
-			if (target instanceof Node && containerEl && !containerEl.contains(target)) {
-				open = false;
+	// Portal action: relocate the menu out of `#widget` (which has
+	// `md:overflow-hidden`) so the dropdown isn't silently clipped.
+	const portal = (node: HTMLElement) => {
+		document.body.appendChild(node);
+		return {
+			destroy: () => {
+				if (node.parentNode === document.body) document.body.removeChild(node);
 			}
 		};
-		document.addEventListener('click', onDocClick);
-		return () => document.removeEventListener('click', onDocClick);
+	};
+
+	$effect(() => {
+		if (!open) return;
+
+		const onDocPointerDown = (event: PointerEvent) => {
+			const target = event.target;
+			if (!(target instanceof Node)) return;
+			if (triggerEl?.contains(target)) return;
+			if (menuEl?.contains(target)) return;
+			open = false;
+		};
+		const onKeydown = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') open = false;
+		};
+
+		document.addEventListener('pointerdown', onDocPointerDown);
+		document.addEventListener('keydown', onKeydown);
+		window.addEventListener('scroll', computePos, { passive: true, capture: true });
+		window.addEventListener('resize', computePos);
+
+		return () => {
+			document.removeEventListener('pointerdown', onDocPointerDown);
+			document.removeEventListener('keydown', onKeydown);
+			window.removeEventListener('scroll', computePos, { capture: true });
+			window.removeEventListener('resize', computePos);
+		};
 	});
 </script>
 
-<div bind:this={containerEl} class="relative">
-	<button
-		type="button"
-		aria-haspopup="listbox"
-		aria-expanded={open}
-		aria-label="Change language"
-		onclick={(event) => {
-			event.stopPropagation();
-			open = !open;
-		}}
-		class="flex items-center gap-1 rounded px-2 py-1 text-sm font-semibold uppercase hover:bg-white hover:bg-opacity-10 focus:bg-white focus:bg-opacity-10 transition-colors"
-	>
-		<span>{currentLocale.value}</span>
-		<CaretDown size={14} weight="bold" />
-	</button>
+<button
+	bind:this={triggerEl}
+	type="button"
+	aria-haspopup="menu"
+	aria-expanded={open}
+	aria-label="Change language"
+	onclick={toggle}
+	class="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-semibold uppercase tracking-wide text-white text-opacity-80 hover:bg-white hover:bg-opacity-10 focus:outline-none focus-visible:bg-white focus-visible:bg-opacity-10 transition-colors data-[open=true]:bg-white data-[open=true]:bg-opacity-15"
+	data-open={open}
+>
+	{currentLocale.value}
+</button>
 
-	{#if open}
-		<ul
-			role="listbox"
-			class="absolute right-0 top-full mt-1 min-w-[8rem] rounded-lg border border-white border-opacity-20 bg-primary shadow-lg z-10 overflow-hidden"
-		>
-			{#each SUPPORTED_LOCALES as locale (locale)}
-				<li role="presentation">
-					<button
-						type="button"
-						role="option"
-						aria-selected={currentLocale.value === locale}
-						onclick={() => choose(locale)}
-						class="block w-full text-left px-3 py-2 text-sm hover:bg-white hover:bg-opacity-10 transition-colors data-[active=true]:bg-white data-[active=true]:bg-opacity-20"
-						data-active={currentLocale.value === locale}
-					>
-						{LABELS[locale]}
-					</button>
-				</li>
-			{/each}
-		</ul>
-	{/if}
-</div>
+{#if open}
+	<div
+		bind:this={menuEl}
+		use:portal
+		role="menu"
+		aria-label="Language"
+		style:top="{pos.top}px"
+		style:right="{pos.right}px"
+		style:z-index="9999"
+		class="fixed w-60 overflow-hidden rounded-lg border border-[#e0e0e1] bg-white p-1 shadow-[0_1px_12px_rgba(29,31,32,0.08),0_1px_2px_rgba(232,232,232,0.12)]"
+	>
+		{#each SUPPORTED_LOCALES as locale (locale)}
+			{@const active = currentLocale.value === locale}
+			<button
+				type="button"
+				role="menuitem"
+				aria-current={active ? 'true' : undefined}
+				onclick={() => choose(locale)}
+				class="flex h-10 w-full items-center justify-between gap-2 rounded-md px-3 text-[13px] text-[#2c2e30] hover:bg-black hover:bg-opacity-5 focus:outline-none focus-visible:bg-black focus-visible:bg-opacity-5 transition-colors"
+			>
+				<span>{LABELS[locale]}</span>
+				{#if active}
+					<Check size={16} weight="bold" />
+				{/if}
+			</button>
+		{/each}
+	</div>
+{/if}

@@ -1,4 +1,24 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"common_modificationBanner": "Modification de votre réservation du {date} à {time} pour {pax} personne(s)"
+	"common_modificationBanner": "Modification de votre réservation du {date} à {time} pour {pax} personne(s)",
+	"selection_alternativeSlots": "Créneaux alternatifs disponibles :",
+	"selection_backToSelection": "Retour à la sélection",
+	"selection_bookButton": "Réserver",
+	"selection_chooseAnotherDate": "Choisir une autre date",
+	"selection_chooseAnotherDay": "Séléctionner un autre jour",
+	"selection_joinWaitlist": "Rejoindre la liste d'attente",
+	"selection_modifyButton": "Modifier ma réservation",
+	"selection_noServiceToday": "Aucun service pour ce jour.",
+	"selection_noSlotsAvailable": "Aucun créneau disponible",
+	"selection_noTablesForDate": "Aucune table pour {pax} pers. le {date}",
+	"selection_noTablesTryAnotherDate": "Aucune table disponible. Essayez une autre date.",
+	"selection_or": "ou",
+	"selection_paxCount": "{pax} couverts",
+	"selection_pickDate": "Sélectionnez une date",
+	"selection_pickPax": "Sélectionnez un nombre de couverts",
+	"selection_pickService": "Sélectionnez un service",
+	"selection_pickTime": "Sélectionnez un horaire",
+	"selection_searchingAlternatives": "Recherche d'alternatives...",
+	"selection_slotUnavailable": "Ce créneau est actuellement indisponible",
+	"selection_slotUnavailableDetails": "{time} - {pax} couverts"
 }

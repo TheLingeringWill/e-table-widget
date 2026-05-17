@@ -11,6 +11,7 @@
 	import { error } from './states/error.svelte';
 	import { Check, Warning, Calendar, ForkKnife, User, Info } from 'phosphor-svelte';
 	import Spinner from './Spinner.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	type PageData = {
 		paymentIntent?: {
@@ -58,7 +59,7 @@
 
 		if (!data.paymentIntent) {
 			gotoStep('ERROR');
-			error.message = 'Le paiement ne peut pas être chargé.';
+			error.message = m.error_loadPaymentIntent();
 			mounted = true;
 			return;
 		}
@@ -112,7 +113,11 @@
 </script>
 
 <svelte:head>
-	<title>Paiement - {data.restaurant?.name || 'Réservation'}</title>
+	<title
+		>{m.standalonePayment_pageTitle({
+			name: data.restaurant?.name || m.standalonePayment_fallbackName()
+		})}</title
+	>
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -121,7 +126,7 @@
 			<!-- Loading state -->
 			<div class="bg-white rounded-2xl shadow-lg p-12 text-center">
 				<Spinner size={48} width={4} />
-				<p class="mt-6 text-gray-600 font-medium">Chargement...</p>
+				<p class="mt-6 text-gray-600 font-medium">{m.common_loading()}</p>
 			</div>
 		{:else if step.step === 'ERROR'}
 			<!-- Error state -->
@@ -129,9 +134,9 @@
 				<div class="mx-auto w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6">
 					<Warning size={48} class="text-red-500" weight="regular" />
 				</div>
-				<h1 class="text-2xl font-semibold text-gray-900 mb-3">Une erreur est survenue</h1>
+				<h1 class="text-2xl font-semibold text-gray-900 mb-3">{m.common_errorOccurred()}</h1>
 				<p class="text-gray-600 text-base leading-relaxed">
-					{error.message || data.error || 'Impossible de charger le paiement.'}
+					{error.message || data.error || m.standalonePayment_loadFailedFallback()}
 				</p>
 			</div>
 		{:else if step.step === 'DONE'}
@@ -143,15 +148,19 @@
 					>
 						<Check size={48} class="text-green-500" weight="bold" />
 					</div>
-					<h1 class="text-2xl font-semibold text-gray-900 mb-2">Paiement autorisé</h1>
-					<p class="text-gray-600">Votre réservation est confirmée.</p>
+					<h1 class="text-2xl font-semibold text-gray-900 mb-2">
+						{m.standalonePayment_authorized()}
+					</h1>
+					<p class="text-gray-600">{m.standalonePayment_confirmed()}</p>
 				</div>
 
 				<!-- Success summary -->
 				<div class="bg-gray-50 rounded-xl p-6 space-y-4">
 					{#if data.restaurant?.name}
 						<div class="text-center pb-4 border-b border-gray-200">
-							<p class="text-sm text-gray-500 uppercase tracking-wider mb-1">Restaurant</p>
+							<p class="text-sm text-gray-500 uppercase tracking-wider mb-1">
+								{m.common_restaurant()}
+							</p>
 							<p class="text-lg font-semibold text-gray-900">{data.restaurant.name}</p>
 						</div>
 					{/if}
@@ -160,7 +169,7 @@
 						<div class="flex items-start gap-3">
 							<Calendar size={24} class="text-gray-400 mt-0.5 flex-shrink-0" />
 							<div>
-								<p class="text-sm text-gray-500 mb-0.5">Date et heure</p>
+								<p class="text-sm text-gray-500 mb-0.5">{m.common_dateAndTime()}</p>
 								<p class="text-gray-900 font-medium">
 									{formatSlotDate(reservation.startDate.date, 'dddd D MMMM YYYY')} à
 									{reservation.startDate.time}
@@ -173,9 +182,9 @@
 						<div class="flex items-start gap-3">
 							<ForkKnife size={24} class="text-gray-400 mt-0.5 flex-shrink-0" />
 							<div>
-								<p class="text-sm text-gray-500 mb-0.5">Nombre de personnes</p>
+								<p class="text-sm text-gray-500 mb-0.5">{m.common_paxLabel()}</p>
 								<p class="text-gray-900 font-medium">
-									{selection.pax} personne{selection.pax > 1 ? 's' : ''}
+									{m.common_paxCount({ pax: selection.pax })}
 								</p>
 							</div>
 						</div>
@@ -184,9 +193,7 @@
 					{#if contact.email}
 						<div class="pt-4 border-t border-gray-200">
 							<p class="text-sm text-gray-600">
-								Un email de confirmation a été envoyé à <span class="font-medium text-gray-900"
-									>{contact.email}</span
-								>
+								{m.standalonePayment_emailConfirmation({ email: contact.email })}
 							</p>
 						</div>
 					{/if}
@@ -198,9 +205,9 @@
 				<!-- Header with gradient -->
 				<div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white px-8 py-6">
 					<h1 class="text-2xl font-serif font-normal text-center mb-1">
-						{data.restaurant?.name || 'Réservation'}
+						{data.restaurant?.name || m.standalonePayment_fallbackName()}
 					</h1>
-					<p class="text-gray-300 text-sm text-center">Finalisation de votre réservation</p>
+					<p class="text-gray-300 text-sm text-center">{m.standalonePayment_finalizing()}</p>
 				</div>
 
 				<!-- Main content -->
@@ -208,14 +215,14 @@
 					<!-- Reservation summary card -->
 					<div class="bg-gray-50 rounded-xl p-6 space-y-4">
 						<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-							Votre réservation
+							{m.common_yourReservation()}
 						</h2>
 
 						{#if reservation.startDate}
 							<div class="flex items-start gap-3">
 								<Calendar size={24} class="text-indigo-500 mt-0.5 flex-shrink-0" />
 								<div>
-									<p class="text-sm text-gray-500 mb-0.5">Date et heure</p>
+									<p class="text-sm text-gray-500 mb-0.5">{m.common_dateAndTime()}</p>
 									<p class="text-gray-900 font-medium">
 										{formatSlotDate(reservation.startDate.date, 'dddd D MMMM YYYY')} à
 										{reservation.startDate.time}
@@ -228,9 +235,9 @@
 							<div class="flex items-start gap-3">
 								<ForkKnife size={24} class="text-indigo-500 mt-0.5 flex-shrink-0" />
 								<div>
-									<p class="text-sm text-gray-500 mb-0.5">Nombre de personnes</p>
+									<p class="text-sm text-gray-500 mb-0.5">{m.common_paxLabel()}</p>
 									<p class="text-gray-900 font-medium">
-										{selection.pax} personne{selection.pax > 1 ? 's' : ''}
+										{m.common_paxCount({ pax: selection.pax })}
 									</p>
 								</div>
 							</div>
@@ -240,7 +247,7 @@
 							<div class="flex items-start gap-3">
 								<User size={24} class="text-indigo-500 mt-0.5 flex-shrink-0" />
 								<div>
-									<p class="text-sm text-gray-500 mb-0.5">Nom</p>
+									<p class="text-sm text-gray-500 mb-0.5">{m.common_nameLabel()}</p>
 									<p class="text-gray-900 font-medium">{contact.firstName} {contact.lastName}</p>
 								</div>
 							</div>
@@ -251,8 +258,8 @@
 					<div class="border-2 border-indigo-100 rounded-xl p-6 bg-indigo-50/30">
 						<div class="flex justify-between items-start mb-3">
 							<div>
-								<p class="text-sm text-gray-600 mb-1">Empreinte bancaire</p>
-								<p class="text-xs text-gray-500">Aucun prélèvement ne sera effectué</p>
+								<p class="text-sm text-gray-600 mb-1">{m.standalonePayment_bankImprint()}</p>
+								<p class="text-xs text-gray-500">{m.standalonePayment_noCharge()}</p>
 							</div>
 							<div class="text-right">
 								<p class="text-3xl font-bold text-gray-900">
@@ -266,8 +273,7 @@
 						>
 							<Info size={20} class="text-blue-600 mt-0.5 flex-shrink-0" />
 							<p class="text-xs text-blue-900 leading-relaxed">
-								Ce montant sera uniquement autorisé sur votre carte et ne sera prélevé qu'en cas de
-								non-présentation ou d'annulation tardive.
+								{m.standalonePayment_authorizationNotice()}
 							</p>
 						</div>
 					</div>

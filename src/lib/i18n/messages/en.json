@@ -1,4 +1,24 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"common_modificationBanner": "Editing your reservation for {date} at {time} for {pax} guest(s)"
+	"common_modificationBanner": "Editing your reservation for {date} at {time} for {pax} guest(s)",
+	"selection_alternativeSlots": "Alternative slots available:",
+	"selection_backToSelection": "Back to selection",
+	"selection_bookButton": "Book",
+	"selection_chooseAnotherDate": "Choose another date",
+	"selection_chooseAnotherDay": "Choose another day",
+	"selection_joinWaitlist": "Join the waitlist",
+	"selection_modifyButton": "Update my reservation",
+	"selection_noServiceToday": "No service available this day.",
+	"selection_noSlotsAvailable": "No slots available",
+	"selection_noTablesForDate": "No tables for {pax} guests on {date}",
+	"selection_noTablesTryAnotherDate": "No tables available. Try another date.",
+	"selection_or": "or",
+	"selection_paxCount": "{pax} guests",
+	"selection_pickDate": "Pick a date",
+	"selection_pickPax": "Pick number of guests",
+	"selection_pickService": "Pick a service",
+	"selection_pickTime": "Pick a time",
+	"selection_searchingAlternatives": "Searching alternatives...",
+	"selection_slotUnavailable": "This slot is currently unavailable",
+	"selection_slotUnavailableDetails": "{time} - {pax} guests"
 }

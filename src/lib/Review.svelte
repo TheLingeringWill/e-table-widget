@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { SlotTimestamp } from '$lib/api-types';
 	import { formatSlotDate } from '$lib/utils/slotFormat';
+	import * as m from '$lib/paraglide/messages';
 
 	let {
 		restaurantName,
@@ -38,11 +39,11 @@
 <div class="flex flex-col items-center w-full min-h-screen bg-gray-50 px-4 py-6">
 	<!-- Above card -->
 	<h1 class="text-xl font-semibold text-gray-900 text-center">{restaurantName}</h1>
-	<p class="text-base text-gray-500 text-center mt-16">Merci pour votre visite !</p>
+	<p class="text-base text-gray-500 text-center mt-16">{m.review_thankYou()}</p>
 
 	<!-- White Card Container -->
 	<div class="w-full max-w-md bg-white rounded-2xl shadow-md p-6 mt-6 space-y-6">
-		<p class="text-base text-gray-700 text-center">Évaluez votre expérience</p>
+		<p class="text-base text-gray-700 text-center">{m.review_rateExperience()}</p>
 
 		<!-- Star Rating as Links -->
 		<div class="flex justify-center gap-2">
@@ -50,7 +51,7 @@
 				<a
 					href={starHref(star)}
 					class="size-12 flex items-center justify-center transition-transform active:scale-90 select-none touch-manipulation"
-					aria-label="Note {star} étoile{star > 1 ? 's' : ''}"
+					aria-label={m.review_starAriaLabel({ star })}
 				>
 					{@render starIcon(false)}
 				</a>
@@ -61,9 +62,11 @@
 	<!-- Reservation Details (Below Card) -->
 	{#if reservation}
 		<div class="text-xs text-gray-500 text-center mt-4 max-w-md">
-			Réservation du {formatSlotDate(reservation.startDate.date, 'DD/MM/YYYY')}
-			à {reservation.startDate.time}
-			pour {reservation.pax} personne(s)
+			{m.review_reservationLine({
+				date: formatSlotDate(reservation.startDate.date, 'DD/MM/YYYY'),
+				time: reservation.startDate.time,
+				pax: reservation.pax
+			})}
 		</div>
 	{/if}
 </div>

@@ -1,4 +1,14 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"common_modificationBanner": "Editing your reservation for {date} at {time} for {pax} guest(s)"
+	"common_modificationBanner": "Editing your reservation for {date} at {time} for {pax} guest(s)",
+	"leaveReview_apology": "We're sorry your experience didn't meet your expectations.",
+	"leaveReview_placeholder": "Share your review...",
+	"leaveReview_reservationLine": "Reservation on {date} at {time} for {pax} guest(s)",
+	"leaveReview_sending": "Sending...",
+	"leaveReview_submit": "Submit",
+	"leaveReview_thankYou": "Thank you for your review!",
+	"review_rateExperience": "Rate your experience",
+	"review_reservationLine": "Reservation on {date} at {time} for {pax} guest(s)",
+	"review_starAriaLabel": "Rating {star} star(s)",
+	"review_thankYou": "Thank you for your visit!"
 }

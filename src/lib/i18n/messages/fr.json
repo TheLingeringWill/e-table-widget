@@ -1,4 +1,24 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"common_modificationBanner": "Modification de votre réservation du {date} à {time} pour {pax} personne(s)"
+	"common_modificationBanner": "Modification de votre réservation du {date} à {time} pour {pax} personne(s)",
+	"contact_civilityLabel": "* Civilité :",
+	"contact_civilityMr": "Monsieur",
+	"contact_civilityMrs": "Madame",
+	"contact_civilityOther": "Autre",
+	"contact_civilityRequired": "La civilité est requise",
+	"contact_continue": "Continuer",
+	"contact_emailInvalid": "L'adresse e-mail est invalide",
+	"contact_emailLabel": "* Adresse e-mail",
+	"contact_emailRequired": "L'adresse e-mail est requise",
+	"contact_firstNameLabel": "Prénom :",
+	"contact_heading": "Informations de contact",
+	"contact_lastNameLabel": "* Nom :",
+	"contact_lastNameRequired": "Le nom est requis",
+	"contact_notesLabel": "Notes pour notre équipe :",
+	"contact_phoneLabel": "* Numéro de téléphone :",
+	"contact_preauthNotice": "Cette réservation nécessite une pré-autorisation par carte. Aucun débit ne sera effectué.",
+	"contact_prefillNotice": "Vos informations ont été pré-remplies",
+	"contact_rememberMe": "Se souvenir de moi",
+	"contact_rememberMeHelper": "Vos informations sont stockées uniquement sur cet appareil.",
+	"contact_waitlistNotice": "Vous serez ajouté à la liste d'attente pour ce créneau"
 }

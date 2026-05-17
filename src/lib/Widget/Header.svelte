@@ -6,6 +6,8 @@
 	import { reservation } from '$lib/states/reservation.svelte';
 	import { useWidget, getTranslation } from '$lib/context.svelte.js';
 	import { formatSlotDate } from '$lib/utils/slotFormat';
+	import * as m from '$lib/paraglide/messages';
+	import LanguageSwitcher from './LanguageSwitcher.svelte';
 	let {
 		theme,
 		showSummary = false
@@ -18,11 +20,23 @@
 
 	const title = $derived(getTranslation(widget.title));
 	const description = $derived(getTranslation(widget.description));
+
+	// The switcher rides along on screens where the user is actively choosing
+	// or filling in a booking. We deliberately omit it from DONE/ERROR/PAYMENT
+	// to keep terminal states focused.
+	const showLanguageSwitcher = $derived(
+		step.step === 'SELECTION' || step.step === 'CONTACT' || step.step === 'BOOKING'
+	);
 </script>
 
 <div class="py-3 px-4 top-0 bg-primary flex flex-col space-y-3">
-	<div class="flex items-center justify-center gap-5">
+	<div class="relative flex items-center justify-center gap-5">
 		<h1 class="font-normal font-serif text-center" id="title">{title}</h1>
+		{#if showLanguageSwitcher}
+			<div class="absolute right-0 top-1/2 -translate-y-1/2">
+				<LanguageSwitcher />
+			</div>
+		{/if}
 	</div>
 	{#if description?.length && step.step === 'SELECTION'}
 		<div id="description" style:white-space="pre-line" class="text-center" transition:slide>
@@ -34,12 +48,11 @@
 			class="bg-yellow-100 border rounded-lg px-3 py-2 border-yellow-800 text-sm font-normal text-yellow-900"
 			transition:slide
 		>
-			Modification de votre réservation du <b
-				>{formatSlotDate(reservation.startDate.date, 'DD/MM/YYYY')}</b
-			>
-			à
-			<b>{reservation.startDate.time}</b> pour <b>{reservation.pax}</b>
-			personne{(reservation.pax ?? 0) > 1 ? 's' : ''}
+			{m.common_modificationBanner({
+				date: formatSlotDate(reservation.startDate.date, 'DD/MM/YYYY'),
+				time: reservation.startDate.time,
+				pax: reservation.pax ?? 0
+			})}
 		</div>
 	{/if}
 	{#if showSummary}

@@ -62,7 +62,13 @@ export const GET = async (event: RequestEvent): Promise<Response> => {
 	// Only generate GTM detection script if tracking is enabled
 	const gtmScript = gtmEnabled ? generateGtmDetectionScript(restaurantId!) : '';
 
-	const iframeSrc = JSON.stringify(`${event.url.origin}/${restaurantId}?embedded=true`);
+	const baseIframeSrc = `${event.url.origin}/${restaurantId}?embedded=true`;
+	const baseIframeSrcJson = JSON.stringify(baseIframeSrc);
+	// Supported locales are also enforced server-side by hooks.server.ts; the
+	// inline list here just avoids appending `?lang=` for unknown values. If
+	// the parent omits `data-lang`, the iframe self-detects (URL > cookie >
+	// Accept-Language > 'fr') — see src/lib/i18n/detect.ts.
+	const supportedLocales = JSON.stringify(['en', 'fr']);
 
 	const script = /*javascript*/ `
   (function() {
@@ -78,6 +84,15 @@ export const GET = async (event: RequestEvent): Promise<Response> => {
       }
 
       const iframe = document.createElement('iframe');
+
+      // Optional parent language hint: <script data-lang="en"|"fr">. The
+      // iframe does its own detection if this is missing or unsupported.
+      var lang = (script.getAttribute('data-lang') || '').toLowerCase();
+      var supported = ${supportedLocales};
+      var iframeSrc = ${baseIframeSrcJson};
+      if (supported.indexOf(lang) !== -1) {
+        iframeSrc += '&lang=' + lang;
+      }
 
       // Message handler for iframe communication
       window.addEventListener('message', (event) => {
@@ -96,7 +111,7 @@ export const GET = async (event: RequestEvent): Promise<Response> => {
         }
       });
 
-      iframe.src = ${iframeSrc};
+      iframe.src = iframeSrc;
       iframe.frameBorder = "0";
       iframe.style.setProperty('width', '100%');
       iframe.style.setProperty('border', 'none');

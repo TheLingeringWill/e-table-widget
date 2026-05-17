@@ -2,6 +2,8 @@ import type { Handle, RequestEvent } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { stringify as devalueStringify, parse as devalueParse } from 'devalue';
 import { router } from '$lib/server/rpc-router';
+import { pickLocale } from '$lib/i18n/detect';
+import { overwriteGetLocale } from '$lib/paraglide/runtime';
 
 const corsHandle: Handle = async ({ event, resolve }) => {
 	if (event.url.pathname.startsWith('/')) {
@@ -117,4 +119,38 @@ const localsHandle: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(corsHandle, localsHandle, rpcHandle);
+// Locale detection: ?lang= > widget_lang cookie > Accept-Language > 'fr'.
+// We persist explicit user choice (URL override) to the cookie with
+// iframe-friendly attributes (SameSite=None + Secure) so the widget keeps
+// the language across reloads when embedded on a third-party origin.
+// `overwriteGetLocale` aligns Paraglide's server runtime with our pick so
+// `m.*()` renders the right strings during SSR.
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 400; // ~400 days, mirrors Paraglide default
+
+const localeHandle: Handle = async ({ event, resolve }) => {
+	const { locale, urlOverride } = pickLocale({
+		url: event.url,
+		cookieValue: event.cookies.get('widget_lang'),
+		acceptLanguage: event.request.headers.get('accept-language')
+	});
+
+	event.locals.locale = locale;
+	overwriteGetLocale(() => locale);
+
+	// Persist explicit user choice (only when ?lang= was set to a supported value).
+	if (urlOverride && urlOverride !== event.cookies.get('widget_lang')) {
+		event.cookies.set('widget_lang', urlOverride, {
+			path: '/',
+			sameSite: 'none',
+			secure: true,
+			httpOnly: false,
+			maxAge: COOKIE_MAX_AGE
+		});
+	}
+
+	return resolve(event, {
+		transformPageChunk: ({ html }) => html.replace('%paraglide.lang%', locale)
+	});
+};
+
+export const handle: Handle = sequence(corsHandle, localsHandle, localeHandle, rpcHandle);

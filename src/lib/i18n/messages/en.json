@@ -1,0 +1,4 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"common_modificationBanner": "Editing your reservation for {date} at {time} for {pax} guest(s)"
+}

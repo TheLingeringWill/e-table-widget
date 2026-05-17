@@ -4,8 +4,11 @@
 // via REST (PRD §6.3 aggregate call). The +layout.svelte still reads
 // `data.countryCode` defensively; expose an empty default so the prop
 // type stays satisfied without re-introducing the legacy plumbing.
-export const load = async () => {
+import type { LayoutServerLoad } from './$types';
+
+export const load: LayoutServerLoad = async ({ locals }) => {
 	return {
-		countryCode: 'FR'
+		countryCode: 'FR',
+		locale: locals.locale
 	};
 };

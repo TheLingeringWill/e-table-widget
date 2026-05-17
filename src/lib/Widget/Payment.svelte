@@ -209,10 +209,7 @@
 			// admin needs to investigate.
 			const bookingId = reservation?.id;
 			if (!bookingId) {
-				gotoError(
-					'Réservation introuvable. Veuillez contacter le restaurant.',
-					'BOOKING_ID_MISSING'
-				);
+				gotoError(null, 'BOOKING_ID_MISSING');
 				return;
 			}
 			const [statusRes, statusErr] = await api.setBookingStatus({
@@ -220,10 +217,7 @@
 				status: 'reconfirmed'
 			});
 			if (statusErr || !statusRes?.ok) {
-				gotoError(
-					"Le paiement a été autorisé mais la réservation n'a pas pu être finalisée. Veuillez contacter le restaurant.",
-					'BOOKING_RECONFIRM_FAILED'
-				);
+				gotoError(null, 'BOOKING_RECONFIRM_FAILED');
 				return;
 			}
 
@@ -237,7 +231,7 @@
 		// previous webhook-driven path is gone.
 		const payload = pendingReservation.payload;
 		if (!payload) {
-			gotoError('Réservation introuvable. Veuillez recommencer.', 'RESERVATION_PAYLOAD_MISSING');
+			gotoError(null, 'RESERVATION_PAYLOAD_MISSING');
 			return;
 		}
 
@@ -252,12 +246,7 @@
 			// When the cancel endpoint lands, call it here before routing to
 			// ERROR.
 			clearPendingReservation();
-			gotoError(
-				bookRes && 'message' in bookRes && bookRes.message
-					? (bookRes.message as string)
-					: "La réservation n'a pas pu être finalisée. Veuillez contacter le restaurant.",
-				'BOOKING_CREATE_AFTER_PAYMENT_FAILED'
-			);
+			gotoError(null, 'BOOKING_CREATE_AFTER_PAYMENT_FAILED');
 			return;
 		}
 

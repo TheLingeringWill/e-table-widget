@@ -4,8 +4,6 @@
 	import { ApiReturnStatus } from '$lib/api-types';
 	import * as m from '$lib/paraglide/messages';
 
-	// Codes raised by Booking.svelte. Codes from other call sites (Widget.svelte,
-	// Payment.svelte) fall through to `error.message` until they're migrated.
 	const localizedByCode = (code: string | null): string | null => {
 		switch (code) {
 			case 'CIVILITY_REQUIRED':
@@ -14,6 +12,20 @@
 				return m.booking_phoneCountryRequired();
 			case ApiReturnStatus.CUSTOMER_ALREADY_BOOKED_SERVICE:
 				return m.booking_alreadyBooked();
+			case 'LOAD_RESERVATION_ERROR':
+				return m.error_loadReservation();
+			case 'RESERVATION_NOT_FOUND':
+				return m.error_reservationNotFound();
+			case 'LOAD_PAYMENT_INTENT_ERROR':
+				return m.error_loadPaymentIntent();
+			case 'BOOKING_ID_MISSING':
+				return m.payment_reservationNotFound();
+			case 'BOOKING_RECONFIRM_FAILED':
+				return m.payment_bookingReconfirmFailed();
+			case 'RESERVATION_PAYLOAD_MISSING':
+				return m.payment_reservationPayloadMissing();
+			case 'BOOKING_CREATE_AFTER_PAYMENT_FAILED':
+				return m.payment_createBookingFailed();
 			default:
 				return null;
 		}

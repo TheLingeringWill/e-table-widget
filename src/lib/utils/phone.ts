@@ -20,13 +20,15 @@ export function formatPhoneNumberForDisplay(value: string, country: CountryCode 
 	return parsed?.formatNational() ?? value;
 }
 
+export type PhoneValidationError = 'PHONE_REQUIRED' | 'PHONE_INVALID';
+
 export function getPhoneValidationError(
 	value: string | undefined | null,
 	country: CountryCode = 'FR'
-): string | null {
-	if (!value) return 'Numéro de téléphone requis';
+): PhoneValidationError | null {
+	if (!value) return 'PHONE_REQUIRED';
 	const parsed = parsePhoneNumberFromString(value, country);
-	if (!parsed) return 'Numéro de téléphone invalide';
-	if (!parsed.isValid()) return 'Numéro de téléphone invalide';
+	if (!parsed) return 'PHONE_INVALID';
+	if (!parsed.isValid()) return 'PHONE_INVALID';
 	return null;
 }

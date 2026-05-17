@@ -108,8 +108,10 @@
 		const country = getSelectedCountry();
 		// Validate against E.164 format or raw display
 		const toValidate = phoneE164 || phoneDisplay;
-		const error = getPhoneValidationError(toValidate, country);
-		phoneErrors = error ? [error] : [];
+		const code = getPhoneValidationError(toValidate, country);
+		phoneErrors = code
+			? [code === 'PHONE_REQUIRED' ? m.contact_phoneRequired() : m.contact_phoneInvalid()]
+			: [];
 	};
 
 	const validate = () => {

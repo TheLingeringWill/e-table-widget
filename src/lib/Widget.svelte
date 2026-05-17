@@ -103,10 +103,7 @@
 			console.error(error);
 			if (error) {
 				// Show error page with the error message
-				gotoError(
-					error.message || 'Cette réservation ne peut pas être chargée.',
-					'LOAD_RESERVATION_ERROR'
-				);
+				gotoError(null, 'LOAD_RESERVATION_ERROR');
 				return;
 			}
 			if (res) {
@@ -130,7 +127,7 @@
 				contact.phone = res.contact.phone || '';
 			} else {
 				// No result and no error - shouldn't happen but show error anyway
-				gotoError('Cette réservation ne peut pas être trouvée.', 'RESERVATION_NOT_FOUND');
+				gotoError(null, 'RESERVATION_NOT_FOUND');
 			}
 		}
 	};
@@ -140,10 +137,7 @@
 			const [res, error] = await api.loadPaymentIntent(paymentIntentId);
 			if (error) {
 				// Show error page with the error message
-				gotoError(
-					error.message || 'Le paiement ne peut pas être chargé.',
-					'LOAD_PAYMENT_INTENT_ERROR'
-				);
+				gotoError(null, 'LOAD_PAYMENT_INTENT_ERROR');
 				return;
 			}
 			if (res.paymentIntent) {

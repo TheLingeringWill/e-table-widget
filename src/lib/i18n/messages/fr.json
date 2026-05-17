@@ -21,6 +21,8 @@
 	"contact_rememberMe": "Se souvenir de moi",
 	"contact_rememberMeHelper": "Vos informations sont stockées uniquement sur cet appareil.",
 	"contact_waitlistNotice": "Vous serez ajouté à la liste d'attente pour ce créneau",
+	"header_paxCount": "{pax} personne(s)",
+	"header_pickTime": "Sélectionnez un horaire",
 	"selection_alternativeSlots": "Créneaux alternatifs disponibles :",
 	"selection_backToSelection": "Retour à la sélection",
 	"selection_bookButton": "Réserver",
@@ -40,5 +42,8 @@
 	"selection_pickTime": "Sélectionnez un horaire",
 	"selection_searchingAlternatives": "Recherche d'alternatives...",
 	"selection_slotUnavailable": "Ce créneau est actuellement indisponible",
-	"selection_slotUnavailableDetails": "{time} - {pax} couverts"
+	"selection_slotUnavailableDetails": "{time} - {pax} couverts",
+	"summary_paxCount": "{pax} personne(s)",
+	"summary_pickTime": "Sélectionnez un horaire",
+	"summary_yourReservation": "Votre réservation :"
 }

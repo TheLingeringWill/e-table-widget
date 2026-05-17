@@ -21,6 +21,8 @@
 	"contact_rememberMe": "Remember me",
 	"contact_rememberMeHelper": "Your information is stored only on this device.",
 	"contact_waitlistNotice": "You'll be added to the waitlist for this slot",
+	"header_paxCount": "{pax} guest(s)",
+	"header_pickTime": "Pick a time",
 	"selection_alternativeSlots": "Alternative slots available:",
 	"selection_backToSelection": "Back to selection",
 	"selection_bookButton": "Book",
@@ -40,5 +42,8 @@
 	"selection_pickTime": "Pick a time",
 	"selection_searchingAlternatives": "Searching alternatives...",
 	"selection_slotUnavailable": "This slot is currently unavailable",
-	"selection_slotUnavailableDetails": "{time} - {pax} guests"
+	"selection_slotUnavailableDetails": "{time} - {pax} guests",
+	"summary_paxCount": "{pax} guest(s)",
+	"summary_pickTime": "Pick a time",
+	"summary_yourReservation": "Your reservation:"
 }

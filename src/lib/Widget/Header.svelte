@@ -65,7 +65,7 @@
 			>
 				<div class="flex items-center gap-1">
 					<ForkKnife size={24} />
-					<b>{selection.pax} {selection.pax > 1 ? 'personnes' : 'personne'}</b>
+					<b>{m.header_paxCount({ pax: selection.pax })}</b>
 				</div>
 			</button>
 			<button
@@ -82,7 +82,7 @@
 				onclick={() => previousStep('SELECTION', 2)}
 			>
 				<div class="flex items-center gap-1">
-					<Clock size={24} /><b>{selection.slot?.time ?? 'Sélectionnez un horaire'}</b>
+					<Clock size={24} /><b>{selection.slot?.time ?? m.header_pickTime()}</b>
 				</div>
 			</button>
 		</div>

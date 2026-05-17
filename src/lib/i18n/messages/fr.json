@@ -1,4 +1,9 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"common_modificationBanner": "Modification de votre réservation du {date} à {time} pour {pax} personne(s)"
+	"common_modificationBanner": "Modification de votre réservation du {date} à {time} pour {pax} personne(s)",
+	"header_paxCount": "{pax} personne(s)",
+	"header_pickTime": "Sélectionnez un horaire",
+	"summary_paxCount": "{pax} personne(s)",
+	"summary_pickTime": "Sélectionnez un horaire",
+	"summary_yourReservation": "Votre réservation :"
 }

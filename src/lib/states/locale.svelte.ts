@@ -29,13 +29,13 @@ export const currentLocale = $state<{ value: Locale }>({ value: DEFAULT_LOCALE }
 export const initLocale = (locale: Locale | undefined) => {
 	const next = locale && isSupportedLocale(locale) ? locale : DEFAULT_LOCALE;
 	currentLocale.value = next;
-	// Pin Paraglide's client-side `getLocale()` to the server-decided locale.
-	// Otherwise Paraglide falls back to its cookie strategy, and the
-	// `widget_lang` cookie is shared across same-origin iframes — so if a
-	// sibling iframe on the same parent page wrote a different locale just
-	// before, this iframe would re-render in that sibling's language during
-	// hydration even though SSR rendered it correctly.
-	overwriteGetLocale(() => next);
+	// Pin Paraglide's client-side `getLocale()` to the server-decided locale so
+	// post-hydration message rendering doesn't fall back to its cookie strategy
+	// (the `widget_lang` cookie is shared across same-origin iframes, so a
+	// sibling iframe could otherwise force this one into the wrong language).
+	if (browser) {
+		overwriteGetLocale(() => next);
+	}
 };
 
 export const setLocale = (next: Locale) => {

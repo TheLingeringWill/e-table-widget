@@ -17,6 +17,8 @@
 	} from '$lib/utils/phone';
 	import { page } from '$app/state';
 	import type { CountryCode } from 'libphonenumber-js';
+	import type { BookingCivility } from '$lib/api-types';
+	import * as m from '$lib/paraglide/messages';
 
 	let lastNameErrors: string[] = $state([]);
 	let firstNameErrors: string[] = $state([]);
@@ -42,11 +44,11 @@
 		return pax >= threshold;
 	});
 
-	const CIVILITY_OPTIONS = [
-		{ value: 'mrs', label: 'Madame' },
-		{ value: 'mr', label: 'Monsieur' },
-		{ value: 'other', label: 'Autre' }
-	] as const;
+	const CIVILITY_OPTIONS = $derived<{ value: BookingCivility; label: string }[]>([
+		{ value: 'mrs', label: m.contact_civilityMrs() },
+		{ value: 'mr', label: m.contact_civilityMr() },
+		{ value: 'other', label: m.contact_civilityOther() }
+	]);
 
 	const EMAIL_REGEX =
 		/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
@@ -112,20 +114,20 @@
 
 	const validate = () => {
 		if (!contact.civility) {
-			civilityErrors = ['La civilité est requise'];
+			civilityErrors = [m.contact_civilityRequired()];
 		} else {
 			civilityErrors = [];
 		}
 		if (!contact.lastName) {
-			lastNameErrors = ['Le nom est requis'];
+			lastNameErrors = [m.contact_lastNameRequired()];
 		} else {
 			lastNameErrors = [];
 		}
 		normalizeEmail();
 		if (!contact.email) {
-			emailErrors = ["L'adresse e-mail est requise"];
+			emailErrors = [m.contact_emailRequired()];
 		} else if (!EMAIL_REGEX.test(contact.email)) {
-			emailErrors = ["L'adresse e-mail est invalide"];
+			emailErrors = [m.contact_emailInvalid()];
 		} else {
 			emailErrors = [];
 		}
@@ -195,14 +197,14 @@
 				<button onclick={() => previousStep()}>
 					<CaretLeft size={28} />
 				</button>
-				<h2 class="text-md font-normal">Informations de contact</h2>
+				<h2 class="text-md font-normal">{m.contact_heading()}</h2>
 			</div>
 			{#if prefilled.value}
 				<div
 					class="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded text-green-800 text-sm"
 				>
 					<Check size={16} weight="bold" />
-					<span>Vos informations ont été pré-remplies</span>
+					<span>{m.contact_prefillNotice()}</span>
 				</div>
 			{/if}
 			{#if showPreAuthNotice}
@@ -210,10 +212,7 @@
 					class="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded text-blue-800 text-sm"
 				>
 					<Info size={16} weight="bold" />
-					<span
-						>Cette réservation nécessite une pré-autorisation par carte. Aucun débit ne sera
-						effectué.</span
-					>
+					<span>{m.contact_preauthNotice()}</span>
 				</div>
 			{/if}
 			{#if waitlist.isWaitlist}
@@ -221,12 +220,12 @@
 					class="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded text-orange-800 text-base font-bold"
 				>
 					<ClockCounterClockwise size={20} weight="bold" />
-					<span>Vous serez ajouté à la liste d'attente pour ce créneau</span>
+					<span>{m.contact_waitlistNotice()}</span>
 				</div>
 			{/if}
 			<div class="flex flex-col md:gap-4 gap-3">
 				<div class="flex flex-col gap-2">
-					<span class="text-sm">* Civilité :</span>
+					<span class="text-sm">{m.contact_civilityLabel()}</span>
 					<div class="flex gap-2">
 						{#each CIVILITY_OPTIONS as option (option.value)}
 							<button
@@ -252,18 +251,26 @@
 					id="phone"
 					inputContainerClass="p-0"
 					errors={phoneErrors}
-					label="* Numéro de téléphone :"
+					label={m.contact_phoneLabel()}
 					bind:value={phoneDisplay}
 				/>
 				<TextInput
 					id="email"
 					errors={emailErrors}
-					label="* Adresse e-mail"
+					label={m.contact_emailLabel()}
 					bind:value={contact.email}
 				/>
-				<TextInput errors={lastNameErrors} label="* Nom :" bind:value={contact.lastName} />
-				<TextInput errors={firstNameErrors} label="Prénom :" bind:value={contact.firstName} />
-				<TextInput label="Notes pour notre équipe :" bind:value={contact.notes} />
+				<TextInput
+					errors={lastNameErrors}
+					label={m.contact_lastNameLabel()}
+					bind:value={contact.lastName}
+				/>
+				<TextInput
+					errors={firstNameErrors}
+					label={m.contact_firstNameLabel()}
+					bind:value={contact.firstName}
+				/>
+				<TextInput label={m.contact_notesLabel()} bind:value={contact.notes} />
 				<div class="flex flex-col gap-1">
 					<button
 						type="button"
@@ -279,15 +286,15 @@
 								<Check size={14} weight="bold" color="white" />
 							{/if}
 						</div>
-						<span class="text-sm">Se souvenir de moi</span>
+						<span class="text-sm">{m.contact_rememberMe()}</span>
 					</button>
 					<p class="text-xs text-gray-500 ml-7">
-						Vos informations sont stockées uniquement sur cet appareil.
+						{m.contact_rememberMeHelper()}
 					</p>
 				</div>
 			</div>
 			<div class="flex items-center gap-8">
-				<Button onclick={validate} revert>Continuer</Button>
+				<Button onclick={validate} revert>{m.contact_continue()}</Button>
 			</div>
 		</div>
 	</form>

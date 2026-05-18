@@ -147,6 +147,7 @@ export interface CreateBookingRequestDTO {
 	note?: string | null;
 	comment?: string | null;
 	civility?: BookingCivility | null;
+	language?: string | null;
 	countryCode?: string | null;
 	firstName?: string | null;
 	lastName?: string | null;

@@ -249,6 +249,7 @@ export const router = {
 						source: 'web',
 						comment: r.notes ?? null,
 						civility: r.contact.civility,
+						language: event.locals.locale,
 						countryCode: r.contact.countryCode,
 						firstName: r.contact.firstName ?? null,
 						lastName: r.contact.lastName,

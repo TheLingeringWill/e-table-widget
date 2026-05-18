@@ -131,7 +131,7 @@ const localsHandle: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-// Locale detection: ?lang= > widget_lang cookie > Accept-Language > 'fr'.
+// Locale detection: ?lang= > widget_lang cookie > Accept-Language > 'en'.
 // We persist explicit user choice (URL override) to the cookie with
 // iframe-friendly attributes (SameSite=None + Secure) so the widget keeps
 // the language across reloads when embedded on a third-party origin.

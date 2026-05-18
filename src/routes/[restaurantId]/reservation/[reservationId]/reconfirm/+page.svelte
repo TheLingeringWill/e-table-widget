@@ -3,6 +3,7 @@
 	import HourglassSimple from 'phosphor-svelte/lib/HourglassSimple';
 	import Check from 'phosphor-svelte/lib/Check';
 	import X from 'phosphor-svelte/lib/X';
+	import * as m from '$lib/paraglide/messages';
 
 	let { data } = $props();
 
@@ -12,11 +13,11 @@
 
 	const errorCopy = $derived(
 		data.errorCode === 'transition_not_allowed'
-			? 'Cette réservation a déjà été traitée.'
+			? m.reconfirm_alreadyProcessed()
 			: data.errorCode === 'not_found'
-				? 'Cette réservation est introuvable.'
+				? m.error_reservationNotFound()
 				: data.errorCode
-					? 'Une erreur est survenue. Merci de réessayer.'
+					? m.reconfirm_genericError()
 					: ''
 	);
 
@@ -26,7 +27,7 @@
 	const timeShort = $derived(
 		formatSlotDateTime(reservation.startDate.date, reservation.startDate.time, 'HH:mm')
 	);
-	const paxLabel = $derived(`${reservation.pax} personne${reservation.pax > 1 ? 's' : ''}`);
+	const paxLabel = $derived(m.common_paxCount({ pax: reservation.pax }));
 
 	const directionsUrl = $derived(
 		restaurant.address
@@ -38,7 +39,7 @@
 </script>
 
 <svelte:head>
-	<title>Confirmer ma réservation — {restaurant.name}</title>
+	<title>{m.reconfirm_pageTitle({ name: restaurant.name })}</title>
 </svelte:head>
 
 <main class="page">
@@ -47,7 +48,7 @@
 			<span class="hero-icon" aria-hidden="true">
 				<Check size={36} weight="thin" color="#16a34a" />
 			</span>
-			<h1 class="hero-title">Réservation confirmée</h1>
+			<h1 class="hero-title">{m.reconfirm_confirmedHeading()}</h1>
 
 			<section class="card">
 				<div class="card-section">
@@ -59,26 +60,26 @@
 				<hr class="rule" />
 				<div class="details">
 					<div class="cell">
-						<p class="label">Date</p>
+						<p class="label">{m.common_date()}</p>
 						<p class="value">{dateShort}</p>
 					</div>
 					<div class="cell">
-						<p class="label">Heure</p>
+						<p class="label">{m.common_time()}</p>
 						<p class="value">{timeShort}</p>
 					</div>
 					<div class="cell">
-						<p class="label">Personnes</p>
+						<p class="label">{m.common_guests()}</p>
 						<p class="value">{paxLabel}</p>
 					</div>
 				</div>
 			</section>
 
-			<p class="footnote">À très bientôt chez {restaurant.name}.</p>
+			<p class="footnote">{m.reconfirm_seeYouSoon({ name: restaurant.name })}</p>
 		{:else if displayState === 'canceled'}
 			<span class="hero-icon" aria-hidden="true">
 				<X size={36} weight="thin" color="#1A1A1A" />
 			</span>
-			<h1 class="hero-title">Réservation annulée</h1>
+			<h1 class="hero-title">{m.reconfirm_canceledHeading()}</h1>
 
 			<section class="card">
 				<div class="card-section">
@@ -90,26 +91,26 @@
 				<hr class="rule" />
 				<div class="details">
 					<div class="cell">
-						<p class="label">Date</p>
+						<p class="label">{m.common_date()}</p>
 						<p class="value">{dateShort}</p>
 					</div>
 					<div class="cell">
-						<p class="label">Heure</p>
+						<p class="label">{m.common_time()}</p>
 						<p class="value">{timeShort}</p>
 					</div>
 					<div class="cell">
-						<p class="label">Personnes</p>
+						<p class="label">{m.common_guests()}</p>
 						<p class="value">{paxLabel}</p>
 					</div>
 				</div>
 			</section>
 
-			<p class="footnote">Merci de nous avoir prévenus.</p>
+			<p class="footnote">{m.reconfirm_thanksForLettingUsKnow()}</p>
 		{:else}
 			<span class="hero-icon" aria-hidden="true">
 				<HourglassSimple size={36} weight="thin" color="#1A1A1A" />
 			</span>
-			<h1 class="hero-title">Dernière étape</h1>
+			<h1 class="hero-title">{m.reconfirm_finalStep()}</h1>
 
 			<section class="card">
 				<div class="card-section">
@@ -119,24 +120,24 @@
 					{/if}
 					{#if directionsUrl}
 						<a class="directions" href={directionsUrl} target="_blank" rel="noopener noreferrer">
-							Obtenir l'itinéraire
+							{m.common_getDirections()}
 						</a>
 					{/if}
 				</div>
 
 				<hr class="rule" />
 
-				<div class="details" aria-label="Détails de la réservation">
+				<div class="details" aria-label={m.reconfirm_detailsAriaLabel()}>
 					<div class="cell">
-						<p class="label">Date</p>
+						<p class="label">{m.common_date()}</p>
 						<p class="value">{dateShort}</p>
 					</div>
 					<div class="cell">
-						<p class="label">Heure</p>
+						<p class="label">{m.common_time()}</p>
 						<p class="value">{timeShort}</p>
 					</div>
 					<div class="cell">
-						<p class="label">Personnes</p>
+						<p class="label">{m.common_guests()}</p>
 						<p class="value">{paxLabel}</p>
 					</div>
 				</div>
@@ -146,7 +147,7 @@
 				<p class="error" role="alert">{errorCopy}</p>
 			{/if}
 
-			<p class="muted">Cette réservation ne peut plus être modifiée.</p>
+			<p class="muted">{m.reconfirm_cannotModify()}</p>
 		{/if}
 	</div>
 </main>

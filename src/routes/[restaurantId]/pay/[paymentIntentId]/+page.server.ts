@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { createWidgetApi } from '$lib/server/api/widget-api';
 import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
+import * as m from '$lib/paraglide/messages';
 
 export const load = async ({ params }) => {
 	const { paymentIntentId, restaurantId } = params;
@@ -14,7 +15,7 @@ export const load = async ({ params }) => {
 	const piResult = await api.getPaymentIntent(paymentIntentId!);
 	if (!piResult.ok) {
 		return {
-			error: 'Le paiement ne peut pas être chargé.'
+			error: m.error_loadPaymentIntent()
 		};
 	}
 	const pi = piResult.data;

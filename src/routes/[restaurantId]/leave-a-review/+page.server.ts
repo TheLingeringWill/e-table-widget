@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { createWidgetApi } from '$lib/server/api/widget-api';
+import * as m from '$lib/paraglide/messages';
 
 export const load: PageServerLoad = async ({ params, url }) => {
 	const rating = url.searchParams.get('rating');
@@ -58,18 +59,18 @@ export const actions: Actions = {
 		const arg = (formData.get('arg') as string) || null;
 
 		if (!rating || rating < 1 || rating > 5) {
-			return fail(400, { error: 'Note invalide' });
+			return fail(400, { error: m.review_invalidRating() });
 		}
 		const rid = Number(params.restaurantId);
 		if (!Number.isFinite(rid)) {
-			return fail(400, { error: 'Restaurant introuvable' });
+			return fail(400, { error: m.error_restaurantNotFound() });
 		}
 
 		let bookingId: number | null = null;
 		if (reservationIdRaw) {
 			const numericReservationId = Number(reservationIdRaw);
 			if (!Number.isFinite(numericReservationId)) {
-				return fail(400, { error: 'Réservation introuvable' });
+				return fail(400, { error: m.error_reservationNotFound() });
 			}
 			bookingId = numericReservationId;
 		}

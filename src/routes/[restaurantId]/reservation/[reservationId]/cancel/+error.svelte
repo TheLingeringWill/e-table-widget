@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import Button from '$lib/Widget/Button.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	const error = $page.error;
 	const status = $page.status;
@@ -26,23 +27,23 @@
 				<!-- Error Title -->
 				<h1 class="text-2xl font-bold text-gray-900">
 					{#if status === 403}
-						Annulation impossible
+						{m.cancelError_notAllowed()}
 					{:else if status === 404}
-						Réservation introuvable
+						{m.error_reservationNotFound()}
 					{:else}
-						Une erreur est survenue
+						{m.common_errorOccurred()}
 					{/if}
 				</h1>
 
 				<!-- Error Message -->
 				<p class="text-gray-600 leading-relaxed">
-					{error?.message || "Nous n'avons pas pu traiter votre demande."}
+					{error?.message || m.cancelError_fallback()}
 				</p>
 
 				<!-- Error Code (optional) -->
 				{#if status}
 					<p class="text-sm text-gray-400">
-						Code erreur: {status}
+						{m.common_errorCode({ status })}
 					</p>
 				{/if}
 			</div>

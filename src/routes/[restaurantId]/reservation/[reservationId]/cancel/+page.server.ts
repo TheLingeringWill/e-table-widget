@@ -1,6 +1,7 @@
 import type { Actions } from '@sveltejs/kit';
 import { error } from '@sveltejs/kit';
 import { createWidgetApi } from '$lib/server/api/widget-api';
+import * as m from '$lib/paraglide/messages';
 
 export const load = async ({ params, url }) => {
 	const { reservationId, restaurantId } = params;
@@ -21,7 +22,7 @@ export const load = async ({ params, url }) => {
 	// `availableTransitions`. If 'canceled' isn't in the list, the booking
 	// is past its cancellation window or already terminal.
 	if (!booking.availableTransitions?.includes('canceled') && booking.status !== 'canceled') {
-		error(403, 'Cette réservation ne peut pas être annulée.');
+		error(403, m.cancel_notAllowedReason());
 	}
 
 	const aggregate = await api.getAggregate();

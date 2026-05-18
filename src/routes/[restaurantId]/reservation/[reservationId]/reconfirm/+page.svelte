@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { formatSlotDateTime } from '$lib/utils/slotFormat';
 	import HourglassSimple from 'phosphor-svelte/lib/HourglassSimple';
-	import Check from 'phosphor-svelte/lib/Check';
+	import CheckCircle from 'phosphor-svelte/lib/CheckCircle';
 	import X from 'phosphor-svelte/lib/X';
 	import * as m from '$lib/paraglide/messages';
 
@@ -46,18 +46,28 @@
 	<div class="stack" aria-live="polite">
 		{#if displayState === 'confirmed'}
 			<span class="hero-icon" aria-hidden="true">
-				<Check size={36} weight="thin" color="#16a34a" />
+				<CheckCircle size={64} weight="regular" color="#16a34a" />
 			</span>
-			<h1 class="hero-title">{m.reconfirm_confirmedHeading()}</h1>
+			<h1 class="hero-title">{m.reconfirm_thanksForReconfirming()}</h1>
 
-			<section class="card">
-				<div class="card-section">
-					<p class="resto-name">{restaurant.name}</p>
-					{#if restaurant.address}
-						<p class="resto-address">{restaurant.address}</p>
-					{/if}
-				</div>
-				<hr class="rule" />
+			<section class="card card--info">
+				<p class="resto-name">{restaurant.name}</p>
+				{#if restaurant.address}
+					<p class="resto-address">{restaurant.address}</p>
+				{/if}
+				{#if directionsUrl}
+					<a
+						class="directions"
+						href={directionsUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						{m.common_getDirections()}
+					</a>
+				{/if}
+			</section>
+
+			<section class="card card--details" aria-label={m.reconfirm_detailsAriaLabel()}>
 				<div class="details">
 					<div class="cell">
 						<p class="label">{m.common_date()}</p>
@@ -74,7 +84,20 @@
 				</div>
 			</section>
 
-			<p class="footnote">{m.reconfirm_seeYouSoon({ name: restaurant.name })}</p>
+			{#if restaurant.phone}
+				<div class="contact">
+					<p class="contact-heading">{m.reconfirm_forMoreInfo()}</p>
+					<a class="contact-phone" href={`tel:${restaurant.phone}`}>{restaurant.phone}</a>
+				</div>
+
+				<div class="footer-info">
+					<p class="footer-name">{restaurant.name}</p>
+					{#if restaurant.address}
+						<p class="footer-address">{restaurant.address}</p>
+					{/if}
+					<a class="contact-phone" href={`tel:${restaurant.phone}`}>{restaurant.phone}</a>
+				</div>
+			{/if}
 		{:else if displayState === 'canceled'}
 			<span class="hero-icon" aria-hidden="true">
 				<X size={36} weight="thin" color="#1A1A1A" />
@@ -168,16 +191,16 @@
 		min-height: 100vh;
 		background: #ffffff;
 		color: var(--ink);
-		font-size: 14px;
+		font-size: 16px;
 		line-height: 1.5;
 		display: flex;
 		justify-content: center;
-		padding: 40px 20px 56px;
+		padding: 56px 24px 72px;
 	}
 
 	.stack {
 		width: 100%;
-		max-width: 380px;
+		max-width: 520px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -187,15 +210,15 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		margin: 4px 0 12px;
+		margin: 4px 0 18px;
 	}
 
 	.hero-title {
-		margin: 0 0 28px;
+		margin: 0 0 36px;
 		font-weight: 700;
-		font-size: 18px;
-		line-height: 1.2;
-		letter-spacing: -0.005em;
+		font-size: 24px;
+		line-height: 1.25;
+		letter-spacing: -0.01em;
 		color: var(--ink);
 		text-align: center;
 	}
@@ -204,9 +227,21 @@
 		width: 100%;
 		background: #ffffff;
 		border: 1px solid var(--hair);
-		border-radius: 4px;
-		padding: 24px 22px;
-		margin: 0 0 28px;
+		border-radius: 10px;
+		padding: 28px 28px;
+		margin: 0 0 24px;
+	}
+
+	.card--info {
+		text-align: left;
+	}
+
+	.card--details {
+		padding: 22px 24px;
+	}
+
+	.card--details .label {
+		margin: 0 0 12px;
 	}
 
 	.card-section {
@@ -214,31 +249,31 @@
 	}
 
 	.resto-name {
-		margin: 0 0 12px;
-		font-size: 18px;
+		margin: 0 0 14px;
+		font-size: 22px;
 		font-weight: 700;
 		color: var(--ink);
 		line-height: 1.25;
 	}
 
 	.resto-address {
-		margin: 0 0 14px;
-		font-size: 14px;
+		margin: 0 0 18px;
+		font-size: 16px;
 		color: var(--ink);
-		line-height: 1.45;
+		line-height: 1.5;
 		white-space: pre-line;
 	}
 
 	.directions {
 		display: inline-block;
 		margin: 0;
-		font-size: 12px;
+		font-size: 13px;
 		font-weight: 700;
-		letter-spacing: 0.04em;
+		letter-spacing: 0.06em;
 		text-transform: uppercase;
 		color: var(--ink);
 		text-decoration: underline;
-		text-underline-offset: 3px;
+		text-underline-offset: 4px;
 	}
 
 	.directions:hover {
@@ -258,7 +293,7 @@
 	}
 
 	.cell {
-		padding: 4px 14px;
+		padding: 6px 18px;
 		text-align: left;
 		min-width: 0;
 	}
@@ -276,8 +311,8 @@
 	}
 
 	.label {
-		margin: 0 0 18px;
-		font-size: 12px;
+		margin: 0 0 22px;
+		font-size: 14px;
 		font-weight: 400;
 		color: var(--muted);
 		line-height: 1.2;
@@ -285,7 +320,7 @@
 
 	.value {
 		margin: 0;
-		font-size: 14px;
+		font-size: 17px;
 		font-weight: 700;
 		color: var(--ink);
 		line-height: 1.3;
@@ -320,9 +355,79 @@
 		line-height: 1.5;
 	}
 
-	@media (max-width: 420px) {
+	.contact {
+		width: 100%;
+		text-align: left;
+		margin: 12px 0 36px;
+	}
+
+	.contact-heading {
+		margin: 0 0 12px;
+		font-size: 17px;
+		font-weight: 700;
+		color: var(--ink);
+		line-height: 1.4;
+	}
+
+	.contact-phone {
+		display: inline-block;
+		font-size: 16px;
+		color: var(--ink);
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+
+	.contact-phone:hover {
+		color: var(--brand);
+	}
+
+	.footer-info {
+		width: 100%;
+		text-align: left;
+	}
+
+	.footer-name {
+		margin: 0 0 8px;
+		font-size: 17px;
+		font-weight: 700;
+		color: var(--ink);
+		line-height: 1.4;
+	}
+
+	.footer-address {
+		margin: 0 0 8px;
+		font-size: 15px;
+		color: var(--ink);
+		line-height: 1.5;
+	}
+
+	@media (max-width: 480px) {
+		.page {
+			padding: 32px 16px 56px;
+		}
+
+		.hero-title {
+			font-size: 20px;
+		}
+
+		.resto-name {
+			font-size: 19px;
+		}
+
+		.value {
+			font-size: 15px;
+		}
+
 		.cell {
 			padding: 4px 10px;
+		}
+
+		.card {
+			padding: 22px 20px;
+		}
+
+		.card--details {
+			padding: 18px 16px;
 		}
 	}
 </style>

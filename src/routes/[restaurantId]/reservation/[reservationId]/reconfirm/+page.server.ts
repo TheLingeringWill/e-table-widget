@@ -55,7 +55,8 @@ export const load: PageServerLoad = async ({ params }) => {
 		},
 		restaurant: {
 			name: r?.name ?? '',
-			address: [r?.addressLine1, r?.city].filter(Boolean).join(', ')
+			address: [r?.address, r?.zipCode, r?.city].filter(Boolean).join(' '),
+			phone: r?.phone ?? ''
 		}
 	};
 };

@@ -27,9 +27,15 @@ export interface RestaurantResponseDTO {
 	id: number;
 	name: string;
 	timezone: string;
-	addressLine1?: string | null;
-	addressLine2?: string | null;
-	city?: string | null;
+	address: string;
+	city: string;
+	zipCode?: string | null;
+	countryCode: string;
+	phone: string;
+	email: string;
+	websiteUrl?: string | null;
+	description?: string | null;
+	logoUrl?: string | null;
 }
 
 export interface PaymentResponseDTO {

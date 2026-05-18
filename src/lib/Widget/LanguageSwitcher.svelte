@@ -10,7 +10,8 @@
 	const LABELS: Record<Locale, string> = {
 		fr: 'Français',
 		en: 'English',
-		de: 'Deutsch'
+		de: 'Deutsch',
+		es: 'Español'
 	};
 
 	let open = $state(false);

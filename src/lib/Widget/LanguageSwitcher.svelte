@@ -11,7 +11,8 @@
 		fr: 'Français',
 		en: 'English',
 		de: 'Deutsch',
-		es: 'Español'
+		es: 'Español',
+		pt: 'Português'
 	};
 
 	let open = $state(false);

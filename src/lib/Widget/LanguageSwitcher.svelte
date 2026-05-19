@@ -12,7 +12,8 @@
 		en: 'English',
 		de: 'Deutsch',
 		es: 'Español',
-		pt: 'Português'
+		pt: 'Português',
+		it: 'Italiano'
 	};
 
 	let open = $state(false);

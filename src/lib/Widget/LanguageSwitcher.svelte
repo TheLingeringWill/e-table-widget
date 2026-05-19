@@ -13,7 +13,8 @@
 		de: 'Deutsch',
 		es: 'Español',
 		pt: 'Português',
-		it: 'Italiano'
+		it: 'Italiano',
+		nl: 'Nederlands'
 	};
 
 	let open = $state(false);

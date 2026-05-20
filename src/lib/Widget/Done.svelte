@@ -128,15 +128,17 @@
 	{#if selection.slot && category !== 'waitlist'}
 		<button
 			type="button"
-			class="mt-2 flex items-center justify-center gap-2 w-full py-4 text-base font-semibold transition-all hover:brightness-110 focus:brightness-95 focus:outline-none"
+			class="mt-2 w-full py-3 px-4 text-sm font-semibold text-center transition-all hover:brightness-110 focus:brightness-95 focus:outline-none"
 			style="background: {theme?.backgroundColor};
 			       color: {theme?.fontColor};
 			       border: 1px solid {theme?.backgroundColor};
 			       border-radius: {theme?.buttonBorderRadius ?? 8}px;"
 			onclick={downloadIcs}
 		>
-			<CalendarPlus size={20} weight="regular" />
-			{m.done_addToCalendar()}
+			<span class="inline-flex items-center gap-2 align-middle">
+				<CalendarPlus size={18} weight="regular" />
+				<span>{m.done_addToCalendar()}</span>
+			</span>
 		</button>
 	{/if}
 </div>

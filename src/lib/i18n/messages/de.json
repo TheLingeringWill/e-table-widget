@@ -5,7 +5,7 @@
 	"booking_phoneCountryRequired": "Die Telefonvorwahl ist erforderlich.",
 	"cancel_allowedUntil": "Sie können Ihre Reservierung bis {time} am {date} stornieren.",
 	"cancel_cancelButton": "Meine Reservierung stornieren",
-	"cancel_cancelIntro": "Klicken Sie auf die folgende Schaltfläche, um Ihre Reservierung zu stornieren:",
+	"cancel_cancelIntro": "Um Ihre Reservierung zu stornieren, geben Sie bitte einen Grund an und klicken Sie auf « Meine Reservierung stornieren ».",
 	"cancel_canceled": "Die Reservierung wurde storniert.",
 	"cancel_canceling": "Wird storniert...",
 	"cancel_error": "Bei der Stornierung ist ein Fehler aufgetreten.",

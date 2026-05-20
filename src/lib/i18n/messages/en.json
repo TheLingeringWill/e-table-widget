@@ -5,7 +5,7 @@
 	"booking_phoneCountryRequired": "Phone country code is required.",
 	"cancel_allowedUntil": "You can cancel your reservation until {time} on {date}.",
 	"cancel_cancelButton": "Cancel my reservation",
-	"cancel_cancelIntro": "To cancel your reservation, click the button below:",
+	"cancel_cancelIntro": "To cancel your reservation, please write your reason then click « Cancel my reservation ».",
 	"cancel_canceled": "The reservation has been canceled.",
 	"cancel_canceling": "Canceling...",
 	"cancel_error": "An error occurred during cancellation.",

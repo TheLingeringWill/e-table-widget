@@ -5,7 +5,7 @@
 	"booking_phoneCountryRequired": "Il prefisso telefonico è obbligatorio.",
 	"cancel_allowedUntil": "Puoi annullare la tua prenotazione fino al {date} alle {time}.",
 	"cancel_cancelButton": "Annulla la mia prenotazione",
-	"cancel_cancelIntro": "Per annullare la tua prenotazione, clicca sul pulsante seguente:",
+	"cancel_cancelIntro": "Per annullare la tua prenotazione, indica il motivo e clicca su « Annulla la mia prenotazione ».",
 	"cancel_canceled": "La prenotazione è stata annullata.",
 	"cancel_canceling": "Annullamento in corso...",
 	"cancel_error": "Si è verificato un errore durante l'annullamento.",

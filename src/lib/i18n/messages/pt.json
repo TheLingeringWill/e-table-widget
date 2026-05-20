@@ -5,7 +5,7 @@
 	"booking_phoneCountryRequired": "O indicativo telefónico é obrigatório.",
 	"cancel_allowedUntil": "Pode cancelar a sua reserva até {date} às {time}.",
 	"cancel_cancelButton": "Cancelar a minha reserva",
-	"cancel_cancelIntro": "Para cancelar a sua reserva, clique no botão seguinte:",
+	"cancel_cancelIntro": "Para cancelar a sua reserva, indique o motivo e clique em « Cancelar a minha reserva ».",
 	"cancel_canceled": "A reserva foi cancelada.",
 	"cancel_canceling": "A cancelar...",
 	"cancel_error": "Ocorreu um erro durante o cancelamento.",

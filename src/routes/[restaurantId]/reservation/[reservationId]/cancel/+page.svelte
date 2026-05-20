@@ -104,22 +104,39 @@
 					{m.cancel_makeAnother()}
 				</button>
 			{/if}
+		{:else if cancelFlow.inPast}
+			<div
+				class="rounded-lg bg-gray-50 border border-gray-200 text-gray-700 text-sm font-medium px-4 py-3 text-center"
+			>
+				{m.manage_pastBooking()}
+			</div>
+			{#if widget}
+				<button
+					type="button"
+					onclick={() => goto(`/${widget.id}`)}
+					class="w-full py-3 rounded-lg border border-gray-300 text-gray-900 font-semibold hover:bg-gray-50 transition-colors text-sm"
+				>
+					{m.cancel_makeAnother()}
+				</button>
+			{/if}
 		{:else}
-			<div class="space-y-2">
-				<p class="text-sm text-gray-700">{m.cancel_modifyIntro()}</p>
-
+			<div class="space-y-3">
 				{#if updateStatus.allowed}
-					<p class="text-xs text-gray-500">
+					<p class="text-sm font-semibold text-gray-900">
 						{m.manage_modifyAllowedUntil(fmtCutoff(updateStatus.cutoff))}
 					</p>
 				{:else if updateStatus.reason === 'past_cutoff'}
-					<p class="text-xs text-amber-700">
+					<p class="text-sm font-semibold text-amber-700">
 						{m.manage_modifyNoLongerPossible(fmtCutoff(updateStatus.cutoff))}
 					</p>
 				{:else if updateStatus.reason === 'in_past'}
-					<p class="text-xs text-gray-500">{m.manage_pastBooking()}</p>
+					<p class="text-sm font-semibold text-gray-900">{m.manage_pastBooking()}</p>
 				{:else}
-					<p class="text-xs text-gray-500">{m.manage_modifyNotAllowed()}</p>
+					<p class="text-sm font-semibold text-gray-900">{m.manage_modifyNotAllowed()}</p>
+				{/if}
+
+				{#if updateStatus.allowed}
+					<p class="text-[15px] font-semibold text-gray-900">{m.cancel_modifyIntro()}</p>
 				{/if}
 
 				<button
@@ -133,12 +150,10 @@
 			</div>
 
 			<div class="space-y-3">
-				<p class="text-sm text-gray-700">{m.cancel_cancelIntro()}</p>
-
 				{#if cancelFlow.masterDisabled}
-					<p class="text-xs text-gray-500">{m.cancel_notAllowed()}</p>
+					<p class="text-sm font-semibold text-gray-900">{m.cancel_notAllowed()}</p>
 				{:else if cancelFlow.inPast}
-					<p class="text-xs text-gray-500">{m.manage_pastBooking()}</p>
+					<p class="text-sm font-semibold text-gray-900">{m.manage_pastBooking()}</p>
 				{:else if cancelFlow.isLate && cancelFlow.cutoff}
 					{@const cutoffParts = fmtCutoff(cancelFlow.cutoff)}
 					<div
@@ -160,9 +175,13 @@
 						{/if}
 					</div>
 				{:else if cancelStatus.allowed}
-					<p class="text-xs text-gray-500">
+					<p class="text-sm font-semibold text-gray-900">
 						{m.cancel_allowedUntil(fmtCutoff(cancelStatus.cutoff))}
 					</p>
+				{/if}
+
+				{#if cancelFlow.canCancel}
+					<p class="text-[15px] font-semibold text-gray-900">{m.cancel_cancelIntro()}</p>
 				{/if}
 
 				{#if error}

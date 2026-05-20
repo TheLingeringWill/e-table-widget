@@ -4,7 +4,7 @@
 	"booking_civilityRequired": "Die Anrede ist erforderlich.",
 	"booking_phoneCountryRequired": "Die Telefonvorwahl ist erforderlich.",
 	"cancel_cancelButton": "Meine Reservierung stornieren",
-	"cancel_cancelIntro": "Um Ihre Reservierung zu stornieren wählen Sie bitte einen Stornierungsgrund und klicken Sie auf « Meine Reservierung stornieren »",
+	"cancel_cancelIntro": "Um Ihre Reservierung zu stornieren schreiben Sie bitte Ihren Stornierungsgrund und klicken Sie auf « Meine Reservierung stornieren »",
 	"cancel_canceled": "Die Reservierung wurde storniert.",
 	"cancel_canceling": "Wird storniert...",
 	"cancel_error": "Bei der Stornierung ist ein Fehler aufgetreten.",

@@ -4,7 +4,7 @@
 	"booking_civilityRequired": "Aanhef is verplicht.",
 	"booking_phoneCountryRequired": "Landcode van telefoonnummer is verplicht.",
 	"cancel_cancelButton": "Mijn reservering annuleren",
-	"cancel_cancelIntro": "Om uw reservering te annuleren kies een annuleringsreden en klik op « Mijn reservering annuleren »",
+	"cancel_cancelIntro": "Om uw reservering te annuleren schrijf uw annuleringsreden en klik op « Mijn reservering annuleren »",
 	"cancel_canceled": "De reservering is geannuleerd.",
 	"cancel_canceling": "Bezig met annuleren...",
 	"cancel_error": "Er is een fout opgetreden tijdens het annuleren.",

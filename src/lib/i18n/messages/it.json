@@ -4,7 +4,7 @@
 	"booking_civilityRequired": "Il titolo è obbligatorio.",
 	"booking_phoneCountryRequired": "Il prefisso telefonico è obbligatorio.",
 	"cancel_cancelButton": "Annulla la mia prenotazione",
-	"cancel_cancelIntro": "Per annullare la tua prenotazione scegli un motivo di annullamento e clicca su « Annulla la mia prenotazione »",
+	"cancel_cancelIntro": "Per annullare la tua prenotazione scrivi il tuo motivo di annullamento e clicca su « Annulla la mia prenotazione »",
 	"cancel_canceled": "La prenotazione è stata annullata.",
 	"cancel_canceling": "Annullamento in corso...",
 	"cancel_error": "Si è verificato un errore durante l'annullamento.",

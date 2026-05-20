@@ -4,7 +4,7 @@
 	"booking_civilityRequired": "Title is required.",
 	"booking_phoneCountryRequired": "Phone country code is required.",
 	"cancel_cancelButton": "Cancel my reservation",
-	"cancel_cancelIntro": "To cancel your reservation please choose a cancellation reason then click « Cancel my reservation »",
+	"cancel_cancelIntro": "To cancel your reservation please write your cancellation reason then click « Cancel my reservation »",
 	"cancel_canceled": "The reservation has been canceled.",
 	"cancel_canceling": "Canceling...",
 	"cancel_error": "An error occurred during cancellation.",

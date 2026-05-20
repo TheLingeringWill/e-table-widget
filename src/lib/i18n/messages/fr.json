@@ -4,7 +4,7 @@
 	"booking_civilityRequired": "La civilité est requise.",
 	"booking_phoneCountryRequired": "Le code pays du téléphone est requis.",
 	"cancel_cancelButton": "Annuler ma réservation",
-	"cancel_cancelIntro": "Pour annuler votre réservation veuillez choisir un motif d'annulation puis cliquer sur « Annuler ma réservation »",
+	"cancel_cancelIntro": "Pour annuler votre réservation veuillez écrire votre motif d'annulation puis cliquer sur « Annuler ma réservation »",
 	"cancel_canceled": "La réservation a été annulée.",
 	"cancel_canceling": "Annulation en cours...",
 	"cancel_error": "Une erreur s'est produite lors de l'annulation.",

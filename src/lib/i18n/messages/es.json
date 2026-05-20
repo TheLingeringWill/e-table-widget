@@ -4,7 +4,7 @@
 	"booking_civilityRequired": "El tratamiento es obligatorio.",
 	"booking_phoneCountryRequired": "El prefijo telefónico es obligatorio.",
 	"cancel_cancelButton": "Cancelar mi reserva",
-	"cancel_cancelIntro": "Para cancelar su reserva elija un motivo de cancelación y haga clic en « Cancelar mi reserva »",
+	"cancel_cancelIntro": "Para cancelar su reserva escriba su motivo de cancelación y haga clic en « Cancelar mi reserva »",
 	"cancel_canceled": "La reserva ha sido cancelada.",
 	"cancel_canceling": "Cancelando...",
 	"cancel_error": "Se ha producido un error durante la cancelación.",

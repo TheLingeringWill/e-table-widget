@@ -29,7 +29,7 @@
 	}
 </script>
 
-<div class="min-h-screen bg-[#23463D] flex md:items-center justify-center px-4 py-2 md:py-6 lg:py-8">
+<div class="min-h-screen bg-gray-50 flex md:items-center justify-center px-4 py-2 md:py-6 lg:py-8">
 	<div
 		class="max-w-md md:max-w-xl lg:max-w-2xl w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-6 lg:p-7 space-y-3 md:space-y-4 h-fit"
 	>
@@ -135,7 +135,7 @@
 					type="button"
 					disabled={!updateStatus.allowed}
 					onclick={() => goto(`/${restaurant.id}/reservation/${reservation.id}`)}
-					class="w-full py-2.5 md:py-3 rounded-lg border border-gray-300 text-gray-900 font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+					class="w-full py-2.5 md:py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
 				>
 					{m.cancel_modifyButton()}
 				</button>
@@ -213,7 +213,7 @@
 							<button
 								type="submit"
 								disabled={loading}
-								class="w-full py-2.5 md:py-3 rounded-lg border border-gray-300 text-gray-900 font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+								class="w-full py-2.5 md:py-3 rounded-lg bg-black text-white font-semibold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
 							>
 								{loading ? m.cancel_canceling() : m.cancel_cancelButton()}
 							</button>

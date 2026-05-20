@@ -426,7 +426,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 	id="widget"
 	class="flex rounded-lg flex-col {['CONTACT', 'PAYMENT', 'BOOKING'].includes(step.step)
 		? 'widget-max-w-large'
-		: 'widget-max-w-small'} w-full md:h-auto md:max-h-dvh h-dvh overflow-hidden"
+		: 'widget-max-w-small'} w-full md:h-auto md:max-h-[80vh] h-dvh overflow-hidden"
 >
 	<!-- Google Tag Manager (noscript) - Standalone Mode Only -->
 	{#if !isEmbedded && !builder && widget.gtmEnabled && widget.gtmId}

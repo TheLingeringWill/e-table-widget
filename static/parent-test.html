@@ -1,37 +1,65 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Embedded widget test harness</title>
-    <style>
-      body { font-family: system-ui; max-width: 900px; margin: 2rem auto; padding: 0 1rem; background: #fafafa; }
-      .pane { min-height: 500px; border: 2px solid #ccc; margin: 1rem 0; background: white; }
-      h2 { margin-top: 2rem; font-size: 1rem; color: #444; }
-      #log { font-family: monospace; font-size: 11px; white-space: pre-wrap; background: #1e1e1e; color: #eee; padding: 1rem; margin-top: 1rem; max-height: 200px; overflow: auto; }
-    </style>
-  </head>
-  <body>
-    <h1>Embedded widget test harness</h1>
-    <p>Two embedded widgets — one auto-detects the browser locale, the other gets <code>data-lang="en"</code> from the parent.</p>
-    <h2>Default (no data-lang, iframe auto-detects)</h2>
-    <div id="pane-auto" class="pane"></div>
-    <h2>Explicit data-lang="en" passed to the embed script</h2>
-    <div id="pane-en" class="pane"></div>
-    <h2>postMessage log (resize, gtm_event)</h2>
-    <div id="log"></div>
-    <script>
-      const log = document.getElementById('log');
-      window.addEventListener('message', (event) => {
-        if (!event.data || typeof event.data !== 'object') return;
-        const line = `[parent] postMessage type=${event.data.type} payload=${JSON.stringify(event.data).slice(0, 200)}`;
-        console.log(line);
-        log.textContent += line + '\n';
-      });
-    </script>
-    <script data-element="pane-auto" src="http://localhost:8987/403/script"></script>
-    <script data-element="pane-en" data-lang="en" src="http://localhost:8987/403/script"></script>
-    <h2>Explicit data-lang="fr"</h2>
-    <div id="pane-fr" class="pane"></div>
-    <script data-element="pane-fr" data-lang="fr" src="http://localhost:8987/403/script"></script>
-  </body>
+	<head>
+		<meta charset="utf-8" />
+		<title>Embedded widget test harness</title>
+		<style>
+			body {
+				font-family: system-ui;
+				max-width: 900px;
+				margin: 2rem auto;
+				padding: 0 1rem;
+				background: #fafafa;
+			}
+			.pane {
+				min-height: 500px;
+				border: 2px solid #ccc;
+				margin: 1rem 0;
+				background: white;
+			}
+			h2 {
+				margin-top: 2rem;
+				font-size: 1rem;
+				color: #444;
+			}
+			#log {
+				font-family: monospace;
+				font-size: 11px;
+				white-space: pre-wrap;
+				background: #1e1e1e;
+				color: #eee;
+				padding: 1rem;
+				margin-top: 1rem;
+				max-height: 200px;
+				overflow: auto;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Embedded widget test harness</h1>
+		<p>
+			Two embedded widgets — one auto-detects the browser locale, the other gets
+			<code>data-lang="en"</code> from the parent.
+		</p>
+		<h2>Default (no data-lang, iframe auto-detects)</h2>
+		<div id="pane-auto" class="pane"></div>
+		<h2>Explicit data-lang="en" passed to the embed script</h2>
+		<div id="pane-en" class="pane"></div>
+		<h2>postMessage log (resize, gtm_event)</h2>
+		<div id="log"></div>
+		<script>
+			const log = document.getElementById('log');
+			window.addEventListener('message', (event) => {
+				if (!event.data || typeof event.data !== 'object') return;
+				const line = `[parent] postMessage type=${event.data.type} payload=${JSON.stringify(event.data).slice(0, 200)}`;
+				console.log(line);
+				log.textContent += line + '\n';
+			});
+		</script>
+		<script data-element="pane-auto" src="http://localhost:8987/403/script"></script>
+		<script data-element="pane-en" data-lang="en" src="http://localhost:8987/403/script"></script>
+		<h2>Explicit data-lang="fr"</h2>
+		<div id="pane-fr" class="pane"></div>
+		<script data-element="pane-fr" data-lang="fr" src="http://localhost:8987/403/script"></script>
+	</body>
 </html>

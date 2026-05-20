@@ -114,9 +114,24 @@ export interface SlotAvailabilityResponseDTO {
 	foreignCaptureAmountPerPax?: number | null;
 }
 
+export type LeadTimeReferenceDTO = 'service' | 'booking';
+
+export interface BookingShiftResponseDTO {
+	id: number;
+	name: string;
+	startTime: string;
+	endTime: string;
+	cancellable: boolean;
+	cancellableBefore: number;
+	cancellableBeforeReference: LeadTimeReferenceDTO;
+	updatable: boolean;
+	updatableBefore: number;
+	updatableWithPayment: boolean;
+}
+
 export interface BookingShiftSlotResponseDTO {
 	slotId: number;
-	shift: { id: number; name: string; startTime: string; endTime: string };
+	shift: BookingShiftResponseDTO;
 }
 
 export interface BookingDetailResponseDTO {

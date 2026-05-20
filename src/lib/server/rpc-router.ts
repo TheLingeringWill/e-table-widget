@@ -167,10 +167,7 @@ export const router = {
 			// caller may not convert at all), so normalize here using the contact's
 			// countryCode. convertToE164 itself falls through on parse failure, so
 			// malformed input still reaches the API as-is (the API rejects it).
-			const normalizedPhone = convertToE164(
-				r.contact.phone,
-				r.contact.countryCode as CountryCode
-			);
+			const normalizedPhone = convertToE164(r.contact.phone, r.contact.countryCode as CountryCode);
 
 			const dateStr = r.date.date;
 			const timeStr = r.date.time;

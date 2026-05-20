@@ -56,12 +56,7 @@
 					<p class="resto-address">{restaurant.address}</p>
 				{/if}
 				{#if directionsUrl}
-					<a
-						class="directions"
-						href={directionsUrl}
-						target="_blank"
-						rel="noopener noreferrer"
-					>
+					<a class="directions" href={directionsUrl} target="_blank" rel="noopener noreferrer">
 						{m.common_getDirections()}
 					</a>
 				{/if}

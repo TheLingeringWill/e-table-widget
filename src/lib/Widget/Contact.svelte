@@ -7,6 +7,7 @@
 	import 'intl-tel-input/build/css/intlTelInput.css';
 	import { contact, rememberMe, prefilled } from '$lib/states/contact.svelte';
 	import { selection } from '$lib/states/selection.svelte';
+	import { reservation } from '$lib/states/reservation.svelte';
 	import { nextStep, previousStep } from '$lib/states/step.svelte';
 	import { waitlist } from '$lib/states/waitlist.svelte';
 	import {
@@ -28,6 +29,9 @@
 	let iti: ReturnType<typeof intlTelInput> | undefined = $state();
 
 	const showPreAuthNotice = $derived.by(() => {
+		// Modifications never hit createPaymentIntent (see Booking.svelte), so the
+		// pre-auth banner would mis-promise a Stripe step that won't happen.
+		if (reservation.id) return false;
 		const svc = selection.service;
 		const slot = selection.slot;
 		const pax = selection.pax;
@@ -38,8 +42,8 @@
 			false;
 		if (!captureEnabled) return false;
 		const threshold =
-			((slot as { captureThreshold?: number | null }).captureThreshold ??
-				(svc as { captureThreshold?: number | null }).captureThreshold) ??
+			(slot as { captureThreshold?: number | null }).captureThreshold ??
+			(svc as { captureThreshold?: number | null }).captureThreshold ??
 			0;
 		return pax >= threshold;
 	});

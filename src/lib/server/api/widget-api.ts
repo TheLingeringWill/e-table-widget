@@ -61,12 +61,16 @@ export function createWidgetApi(restaurantId: number) {
 		},
 		setBookingStatus(
 			id: number,
-			status: BookingStatus
+			status: BookingStatus,
+			options?: { comment?: string | null; cancelLate?: boolean }
 		): Promise<RestResult<BookingDetailResponseDTO>> {
+			const body: Record<string, unknown> = { status };
+			if (options?.comment !== undefined) body.comment = options.comment;
+			if (options?.cancelLate !== undefined) body.cancelLate = options.cancelLate;
 			return restCall(`/restaurants/${restaurantId}/bookings/${id}/status`, {
 				restaurantId,
 				method: 'PATCH',
-				body: { status }
+				body
 			});
 		},
 		upsertReview(body: UpsertReviewRequestDTO): Promise<RestResult<{ id: number }>> {

@@ -157,6 +157,7 @@ export interface BookingDetailResponseDTO {
 	paymentStatus?: string | null;
 	paymentAmountCents?: number | null;
 	paymentCapturedAt?: string | null;
+	cancelLate: boolean;
 }
 
 export interface CreateBookingRequestDTO {

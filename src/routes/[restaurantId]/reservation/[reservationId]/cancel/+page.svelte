@@ -5,9 +5,9 @@
 	import { formatSlotDate, formatSlotDateTime } from '$lib/utils/slotFormat';
 	import * as m from '$lib/paraglide/messages';
 
-	const { data } = $props();
+	let { data, form } = $props();
 
-	const { reservation, restaurant, widget, cancelStatus, updateStatus } = data;
+	const { reservation, restaurant, widget, cancelStatus, cancelFlow, updateStatus } = data;
 
 	let loading = $state(false);
 	let success = $state(false);
@@ -22,6 +22,10 @@
 			time: formatSlotDateTime(cutoff.date, cutoff.time, 'HH:mm'),
 			date: formatSlotDateTime(cutoff.date, cutoff.time, 'D MMM YYYY')
 		};
+	}
+
+	function formatCents(cents: number) {
+		return (cents / 100).toFixed(2);
 	}
 </script>
 
@@ -128,21 +132,37 @@
 				</button>
 			</div>
 
-			<div class="space-y-2">
+			<div class="space-y-3">
 				<p class="text-sm text-gray-700">{m.cancel_cancelIntro()}</p>
 
-				{#if cancelStatus.allowed}
+				{#if cancelFlow.masterDisabled}
+					<p class="text-xs text-gray-500">{m.cancel_notAllowed()}</p>
+				{:else if cancelFlow.inPast}
+					<p class="text-xs text-gray-500">{m.manage_pastBooking()}</p>
+				{:else if cancelFlow.isLate && cancelFlow.cutoff}
+					{@const cutoffParts = fmtCutoff(cancelFlow.cutoff)}
+					<div
+						class="rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-sm px-4 py-3 space-y-2"
+					>
+						<p class="font-semibold">{m.cancel_lateWarningHeading()}</p>
+						<p>
+							{m.cancel_lateWarningBody({
+								date: cutoffParts.date,
+								time: cutoffParts.time
+							})}
+						</p>
+						{#if cancelFlow.imprint}
+							<p class="font-medium">
+								{m.cancel_lateImprintNotice({
+									amount: formatCents(cancelFlow.imprint.amountCents)
+								})}
+							</p>
+						{/if}
+					</div>
+				{:else if cancelStatus.allowed}
 					<p class="text-xs text-gray-500">
 						{m.cancel_allowedUntil(fmtCutoff(cancelStatus.cutoff))}
 					</p>
-				{:else if cancelStatus.reason === 'past_cutoff'}
-					<p class="text-xs text-amber-700">
-						{m.cancel_pastCutoff(fmtCutoff(cancelStatus.cutoff))}
-					</p>
-				{:else if cancelStatus.reason === 'in_past'}
-					<p class="text-xs text-gray-500">{m.manage_pastBooking()}</p>
-				{:else}
-					<p class="text-xs text-gray-500">{m.cancel_notAllowed()}</p>
 				{/if}
 
 				{#if error}
@@ -152,30 +172,54 @@
 						{m.cancel_error()}
 					</div>
 				{/if}
-				<form
-					method="POST"
-					use:enhance={() => {
-						loading = true;
-						error = false;
-						return async ({ result }) => {
-							loading = false;
-							if (result.type === 'success') {
-								success = true;
-								await invalidate('app:reservation');
-							} else {
-								error = true;
-							}
-						};
-					}}
-				>
-					<button
-						type="submit"
-						disabled={loading || !cancelStatus.allowed}
-						class="w-full py-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-					>
-						{loading ? m.cancel_canceling() : m.cancel_cancelButton()}
-					</button>
-				</form>
+
+				{#if cancelFlow.canCancel}
+					{#key form}
+						<form
+							method="POST"
+							use:enhance={() => {
+								loading = true;
+								error = false;
+								return async ({ result, update }) => {
+									loading = false;
+									if (result.type === 'success') {
+										success = true;
+										await invalidate('app:reservation');
+									} else if (result.type === 'failure') {
+										await update({ reset: false });
+									} else {
+										error = true;
+										await update({ reset: false });
+									}
+								};
+							}}
+							class="space-y-2"
+						>
+							<label for="cancel-reason" class="block text-sm font-medium text-gray-700">
+								{m.cancel_reasonLabel()}
+							</label>
+							<textarea
+								id="cancel-reason"
+								name="reason"
+								required
+								maxlength="500"
+								placeholder={m.cancel_reasonPlaceholder()}
+								value={form?.reason ?? ''}
+								class="w-full min-h-[96px] p-3 border border-gray-300 rounded-lg resize-y text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+							></textarea>
+							{#if form?.reasonError}
+								<p class="text-red-600 text-xs">{form.reasonError}</p>
+							{/if}
+							<button
+								type="submit"
+								disabled={loading}
+								class="w-full py-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+							>
+								{loading ? m.cancel_canceling() : m.cancel_cancelButton()}
+							</button>
+						</form>
+					{/key}
+				{/if}
 			</div>
 		{/if}
 	</div>

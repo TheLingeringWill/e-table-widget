@@ -1,5 +1,5 @@
 import type { Actions } from '@sveltejs/kit';
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import { createWidgetApi } from '$lib/server/api/widget-api';
 import { computeCutoff } from '$lib/utils/cancelCutoff';
 import { tz } from '$lib/utils/tz';
@@ -39,6 +39,11 @@ export const load = async ({ params, url }) => {
 		restaurantTimezone
 	});
 
+	const masterDisabled = !shift || !shift.cancellable;
+	const inPast = cancelStatus.reason === 'in_past';
+	const canCancel = !masterDisabled && !inPast;
+	const isLate = cancelStatus.reason === 'past_cutoff';
+
 	return {
 		// Mirror the legacy reservation shape the +page.svelte template reads.
 		reservation: {
@@ -66,12 +71,23 @@ export const load = async ({ params, url }) => {
 			id: String(rid)
 		},
 		cancelStatus,
+		cancelFlow: {
+			canCancel,
+			isLate,
+			masterDisabled,
+			inPast,
+			cutoff: cancelStatus.cutoff ?? null,
+			imprint:
+				booking.paymentStatus === 'requires_capture' && booking.paymentAmountCents
+					? { amountCents: booking.paymentAmountCents }
+					: null
+		},
 		updateStatus
 	};
 };
 
 export const actions = {
-	default: async ({ params }) => {
+	default: async ({ params, request }) => {
 		const { reservationId, restaurantId } = params;
 		const rid = Number(restaurantId);
 		const numericId = Number(reservationId);
@@ -92,19 +108,35 @@ export const actions = {
 		}
 		const booking = bookingResult.data;
 		const restaurantTimezone = tz(aggregate.ok ? aggregate.data.restaurant.timezone : '');
+		const shift = booking.shiftSlot?.shift ?? null;
 		const cancelStatus = computeCutoff({
 			action: 'cancel',
 			booking: { date: booking.date, time: booking.time },
-			shift: booking.shiftSlot?.shift ?? null,
+			shift,
 			restaurantTimezone
 		});
-		if (!cancelStatus.allowed) {
-			error(409, m.cancel_notAllowedReason());
+
+		// Hard-block: master-disabled or booking already in the past.
+		if (!shift || !shift.cancellable || cancelStatus.reason === 'in_past') {
+			error(403, m.cancel_notAllowedReason());
 		}
 
-		const result = await api.setBookingStatus(numericId, 'canceled');
+		const isLate = cancelStatus.reason === 'past_cutoff';
+
+		const formData = await request.formData();
+		const reasonRaw = (formData.get('reason') ?? '').toString();
+		const reason = reasonRaw.trim().slice(0, 500);
+
+		if (!reason) {
+			return fail(400, { reasonError: m.cancel_reasonRequired(), reason: reasonRaw });
+		}
+
+		const result = await api.setBookingStatus(numericId, 'canceled', {
+			comment: reason,
+			cancelLate: isLate
+		});
 		if (!result.ok) {
-			error(409, result.error.message);
+			return fail(409, { error: result.error.message, reason: reasonRaw });
 		}
 	}
 } satisfies Actions;

@@ -84,32 +84,32 @@
 	});
 </script>
 
-<div class="flex flex-col items-center gap-6 max-w-md mx-auto text-center">
-	<div class="w-20 h-20 rounded-full border border-current/30 flex items-center justify-center">
+<div class="flex flex-col items-center gap-4 max-w-md mx-auto text-center">
+	<div class="w-14 h-14 rounded-full border border-current/30 flex items-center justify-center">
 		{#if category === 'waitlist'}
-			<Hourglass size={34} weight="regular" />
+			<Hourglass size={26} weight="regular" />
 		{:else if category === 'to_confirm'}
-			<ClockClockwise size={34} weight="regular" />
+			<ClockClockwise size={26} weight="regular" />
 		{:else}
-			<CalendarCheck size={34} weight="regular" />
+			<CalendarCheck size={26} weight="regular" />
 		{/if}
 	</div>
 
 	{#if category !== 'to_confirm'}
-		<h2 class="text-base font-medium tracking-[0.18em] uppercase">
+		<h2 class="text-sm font-medium tracking-[0.18em] uppercase">
 			{title}
 		</h2>
 	{/if}
 
 	{#if summary}
 		<div
-			class="w-full border rounded-[var(--base-radius)] py-4 px-5 text-base font-medium leading-relaxed"
+			class="w-full border rounded-[var(--base-radius)] py-3 px-4 text-sm font-medium leading-snug"
 		>
 			{summary}
 		</div>
 	{/if}
 
-	<div class="flex flex-col gap-3 text-base leading-relaxed opacity-85">
+	<div class="flex flex-col gap-2 text-sm leading-snug opacity-85">
 		{#if category === 'waitlist'}
 			<p>{m.done_waitlistBody()}</p>
 		{:else if category === 'to_confirm'}

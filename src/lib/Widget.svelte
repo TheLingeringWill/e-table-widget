@@ -481,12 +481,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 			</div>
 		</div>
 	{:else if step.step === 'DONE'}
-		<div class="flex items-center justify-center p-20 text-center text-black bg-white">
-			<Done {widget} {theme} />
+		<div class="flex-grow min-h-0 overflow-y-auto text-black bg-white">
+			<div class="min-h-full flex items-center justify-center px-6 py-12 text-center">
+				<Done {widget} {theme} />
+			</div>
 		</div>
 	{:else if step.step === 'ERROR'}
-		<div class="flex items-center justify-center p-20 text-center text-black bg-white">
-			<Error />
+		<div class="flex-grow min-h-0 overflow-y-auto text-black bg-white">
+			<div class="min-h-full flex items-center justify-center p-20 text-center">
+				<Error />
+			</div>
 		</div>
 	{/if}
 </div>

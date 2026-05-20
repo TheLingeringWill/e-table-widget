@@ -453,13 +453,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		</div>
 	{:else if step.step === 'CONTACT' || step.step === 'BOOKING' || step.step === 'PAYMENT'}
 		<div
-			class="flex flex-col flex-grow min-h-0 text-black bg-white overflow-y-auto md:overflow-hidden md:grid md:grid-cols-2 md:grid-rows-1 md:gap-8 md:px-10 md:py-6"
+			class="flex flex-col flex-grow min-h-0 text-black bg-white overflow-y-auto md:grid md:grid-cols-2 md:gap-8 md:px-10 md:py-6"
 			transition:slide
 		>
-			<div class="md:order-last md:min-h-0 md:overflow-y-auto">
+			<div class="md:order-last">
 				<Summary />
 			</div>
-			<div class="px-5 pb-5 md:p-0 md:min-h-0 md:overflow-y-auto">
+			<div class="px-5 pb-5 md:p-0">
 				{#if step.step === 'CONTACT'}
 					<div>
 						<Contact />

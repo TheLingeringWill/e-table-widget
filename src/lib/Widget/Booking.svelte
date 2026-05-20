@@ -94,6 +94,7 @@
 			return console.log(err);
 		}
 		if (res.status === 'OK') {
+			reservation.confirmedStatus = res.bookingStatus;
 			nextStep();
 		} else if (res.status === ApiReturnStatus.CUSTOMER_ALREADY_BOOKED_SERVICE) {
 			gotoError(null, ApiReturnStatus.CUSTOMER_ALREADY_BOOKED_SERVICE);

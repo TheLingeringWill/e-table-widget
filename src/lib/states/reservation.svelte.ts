@@ -1,4 +1,4 @@
-import type { SlotTimestamp } from '$lib/api-types';
+import type { BookingStatus, SlotTimestamp } from '$lib/api-types';
 
 export const reservation: {
 	id: string | undefined;
@@ -7,13 +7,15 @@ export const reservation: {
 	pax: number | undefined;
 	seatingTime: number | undefined;
 	notes: string | undefined;
+	confirmedStatus: BookingStatus | undefined;
 } = $state({
 	id: undefined,
 	serviceId: undefined,
 	startDate: undefined,
 	pax: undefined,
 	seatingTime: undefined,
-	notes: undefined
+	notes: undefined,
+	confirmedStatus: undefined
 });
 
 export const resetReservation = () => {
@@ -23,6 +25,7 @@ export const resetReservation = () => {
 	reservation.pax = undefined;
 	reservation.seatingTime = undefined;
 	reservation.notes = undefined;
+	reservation.confirmedStatus = undefined;
 };
 
 export const reservationTemp: {

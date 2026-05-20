@@ -426,7 +426,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 	id="widget"
 	class="flex rounded-lg flex-col {['CONTACT', 'PAYMENT', 'BOOKING'].includes(step.step)
 		? 'widget-max-w-large'
-		: 'widget-max-w-small'} w-full md:h-auto md:max-h-[80vh] h-dvh overflow-hidden"
+		: 'widget-max-w-small'} w-full md:h-auto h-dvh overflow-hidden {step.step === 'CONTACT'
+		? 'md:max-h-none'
+		: 'md:max-h-[80vh]'}"
 >
 	<!-- Google Tag Manager (noscript) - Standalone Mode Only -->
 	{#if !isEmbedded && !builder && widget.gtmEnabled && widget.gtmId}
@@ -453,7 +455,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		</div>
 	{:else if step.step === 'CONTACT' || step.step === 'BOOKING' || step.step === 'PAYMENT'}
 		<div
-			class="flex flex-col flex-grow min-h-0 text-black bg-white overflow-y-auto md:grid md:grid-cols-2 md:gap-8 md:px-10 md:py-6"
+			class="flex flex-col flex-grow min-h-0 text-black bg-white overflow-y-auto md:grid md:grid-cols-2 md:gap-8 md:px-10 md:py-6 {step.step ===
+			'CONTACT'
+				? 'md:overflow-visible'
+				: ''}"
 			transition:slide
 		>
 			<div class="md:order-last">
@@ -477,7 +482,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		</div>
 	{:else if step.step === 'DONE'}
 		<div class="flex items-center justify-center p-20 text-center text-black bg-white">
-			<Done />
+			<Done {widget} {theme} />
 		</div>
 	{:else if step.step === 'ERROR'}
 		<div class="flex items-center justify-center p-20 text-center text-black bg-white">

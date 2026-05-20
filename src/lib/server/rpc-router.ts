@@ -261,7 +261,13 @@ export const router = {
 				return { status: 'ERROR', message: result.error.message };
 			}
 
-			return { status: ApiReturnStatus.OK, paymentIntent: null as null };
+			const finalBookingStatus: BookingStatus =
+				(result.data?.status as BookingStatus | undefined) ?? resolvedStatus;
+			return {
+				status: ApiReturnStatus.OK,
+				paymentIntent: null as null,
+				bookingStatus: finalBookingStatus
+			};
 		}
 	),
 	createPaymentIntent: procedure(

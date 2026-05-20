@@ -426,9 +426,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 	id="widget"
 	class="flex rounded-lg flex-col {['CONTACT', 'PAYMENT', 'BOOKING'].includes(step.step)
 		? 'widget-max-w-large'
-		: 'widget-max-w-small'} w-full md:h-auto h-full md:overflow-hidden {builder
-		? 'overflow-hidden'
-		: ''}"
+		: 'widget-max-w-small'} w-full md:h-auto md:max-h-dvh h-dvh overflow-hidden"
 >
 	<!-- Google Tag Manager (noscript) - Standalone Mode Only -->
 	{#if !isEmbedded && !builder && widget.gtmEnabled && widget.gtmId}
@@ -450,18 +448,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 			<Spinner />
 		</div>
 	{:else if step.step === 'SELECTION'}
-		<div transition:slide class="flex flex-col flex-grow">
+		<div transition:slide class="flex flex-col flex-grow min-h-0">
 			<Selection restaurantId={widget.restaurantId} {theme} />
 		</div>
 	{:else if step.step === 'CONTACT' || step.step === 'BOOKING' || step.step === 'PAYMENT'}
 		<div
-			class="flex flex-col flex-grow text-black bg-white md:grid md:grid-cols-2 md:gap-8 md:px-10 md:py-6"
+			class="flex flex-col flex-grow min-h-0 text-black bg-white overflow-y-auto md:overflow-hidden md:grid md:grid-cols-2 md:grid-rows-1 md:gap-8 md:px-10 md:py-6"
 			transition:slide
 		>
-			<div class="md:order-last">
+			<div class="md:order-last md:min-h-0 md:overflow-y-auto">
 				<Summary />
 			</div>
-			<div class="flex-grow px-5 pb-5 overflow-hidden md:p-0">
+			<div class="px-5 pb-5 md:p-0 md:min-h-0 md:overflow-y-auto">
 				{#if step.step === 'CONTACT'}
 					<div>
 						<Contact />

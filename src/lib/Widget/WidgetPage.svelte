@@ -17,7 +17,7 @@
 <div
 	class="flex items-center justify-center w-full {builder
 		? 'h-fit'
-		: 'h-full'} overflow-visible min-h-full"
+		: 'min-h-full'} overflow-visible min-h-full"
 	id="page"
 >
 	<Widget {builder} data={data.widget} isEmbedded={data.isEmbedded} />

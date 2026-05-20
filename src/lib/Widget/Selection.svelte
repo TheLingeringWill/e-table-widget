@@ -306,11 +306,11 @@
 	};
 </script>
 
-<div class="flex flex-col flex-grow">
+<div class="flex flex-col flex-grow min-h-0">
 	<AccordionGroup
 		bind:openedAccordion={openedAccordion.index}
 		oneAtATime
-		className="flex-grow"
+		className="flex-grow min-h-0 overflow-y-auto"
 		items={[
 			{
 				id: 'date',
@@ -388,9 +388,7 @@
 					/>
 				</div>
 			{:else if item.id === 'service'}
-				<div
-					class={`max-h-[300px] min-h-[150px] w-full relative ${!services.length ? 'overflow-hidden' : 'overflow-auto'}`}
-				>
+				<div class="w-full relative">
 					{#if services.length > 0}
 						<div class="flex flex-col gap-2 px-5 py-2">
 							{#each services as service (service.id)}
@@ -462,7 +460,7 @@
 				{@const hasAvailableSlots = slots.some(
 					(slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED'
 				)}
-				<div class="max-h-[400px] w-full overflow-auto">
+				<div class="w-full">
 					{#if waitlist.selectedUnavailableSlot}
 						<!-- Waitlist prompt for unavailable slot -->
 						{@const alternatives = getAlternativeSlots(waitlist.selectedUnavailableSlot)}
@@ -719,7 +717,7 @@
 			{/if}
 		{/snippet}
 	</AccordionGroup>
-	<div class="flex items-end flex-grow p-3">
+	<div class="flex items-end p-3 mt-auto">
 		<Button
 			onclick={nextStep}
 			disabled={!selection.pax ||

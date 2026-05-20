@@ -29,33 +29,33 @@
 	}
 </script>
 
-<div class="min-h-screen bg-gray-50 flex justify-center px-4 py-8">
+<div class="min-h-screen bg-[#23463D] flex md:items-center justify-center px-4 py-2 md:py-6 lg:py-8">
 	<div
-		class="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-6 h-fit"
+		class="max-w-md md:max-w-xl lg:max-w-2xl w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-6 lg:p-7 space-y-3 md:space-y-4 h-fit"
 	>
 		<h1 class="text-xl font-semibold text-gray-900 text-center">
 			{m.cancel_managementHeading()}
 		</h1>
 
-		<p class="text-sm text-gray-600 leading-relaxed">
-			{m.cancel_managementIntro({ restaurant: restaurant.name })}
+		<p class="text-sm text-gray-600 leading-snug">
+			{m.cancel_managementIntro()} <strong class="font-semibold text-gray-900">{restaurant.name}</strong>. {m.cancel_managementSummary()}
 		</p>
 
 		<div class="grid grid-cols-3 gap-3 text-gray-900">
-			<div class="flex items-center gap-2">
-				<Calendar size={22} weight="regular" />
+			<div class="flex items-center justify-center gap-2">
+				<Calendar size={22} weight="regular" class="shrink-0" />
 				<span class="text-sm font-medium leading-tight">
 					{formatSlotDate(reservation.startDate.date, 'ddd D MMM YYYY')}
 				</span>
 			</div>
-			<div class="flex items-center gap-2">
-				<Clock size={22} weight="regular" />
+			<div class="flex items-center justify-center gap-2">
+				<Clock size={22} weight="regular" class="shrink-0" />
 				<span class="text-sm font-medium leading-tight">
 					{reservation.startDate.time}
 				</span>
 			</div>
-			<div class="flex items-center gap-2">
-				<ForkKnife size={22} weight="regular" />
+			<div class="flex items-center justify-center gap-2">
+				<ForkKnife size={22} weight="bold" class="shrink-0" />
 				<span class="text-sm font-medium leading-tight">
 					{m.common_paxCount({ pax: reservation.pax })}
 				</span>
@@ -63,25 +63,25 @@
 		</div>
 
 		<div class="rounded-xl border border-gray-200 divide-y divide-gray-200 overflow-hidden">
-			<div class="flex justify-between items-center px-4 py-3 text-sm">
+			<div class="flex justify-between items-center px-4 py-2.5 md:py-3 text-sm">
 				<span class="text-gray-700">{m.details_firstName()}</span>
 				<span class="text-gray-900 font-medium text-right">
 					{reservation.firstName || '—'}
 				</span>
 			</div>
-			<div class="flex justify-between items-center px-4 py-3 text-sm">
+			<div class="flex justify-between items-center px-4 py-2.5 md:py-3 text-sm">
 				<span class="text-gray-700">{m.details_lastName()}</span>
 				<span class="text-gray-900 font-medium text-right">
 					{reservation.lastName || '—'}
 				</span>
 			</div>
-			<div class="flex justify-between items-center px-4 py-3 text-sm">
+			<div class="flex justify-between items-center px-4 py-2.5 md:py-3 text-sm">
 				<span class="text-gray-700">{m.details_email()}</span>
 				<span class="text-gray-900 font-medium text-right break-all ml-3">
 					{reservation.email || '—'}
 				</span>
 			</div>
-			<div class="flex justify-between items-center px-4 py-3 text-sm">
+			<div class="flex justify-between items-center px-4 py-2.5 md:py-3 text-sm">
 				<span class="text-gray-700">{m.details_phone()}</span>
 				<span class="text-gray-900 font-medium text-right">
 					{reservation.phone || '—'}
@@ -99,7 +99,7 @@
 				<button
 					type="button"
 					onclick={() => goto(`/${widget.id}`)}
-					class="w-full py-3 rounded-lg border border-gray-300 text-gray-900 font-semibold hover:bg-gray-50 transition-colors text-sm"
+					class="w-full py-2.5 md:py-3 rounded-lg border border-gray-300 text-gray-900 font-semibold hover:bg-gray-50 transition-colors text-sm"
 				>
 					{m.cancel_makeAnother()}
 				</button>
@@ -114,7 +114,7 @@
 				<button
 					type="button"
 					onclick={() => goto(`/${widget.id}`)}
-					class="w-full py-3 rounded-lg border border-gray-300 text-gray-900 font-semibold hover:bg-gray-50 transition-colors text-sm"
+					class="w-full py-2.5 md:py-3 rounded-lg border border-gray-300 text-gray-900 font-semibold hover:bg-gray-50 transition-colors text-sm"
 				>
 					{m.cancel_makeAnother()}
 				</button>
@@ -122,28 +122,20 @@
 		{:else}
 			<div class="space-y-3">
 				{#if updateStatus.allowed}
-					<p class="text-sm font-semibold text-gray-900">
-						{m.manage_modifyAllowedUntil(fmtCutoff(updateStatus.cutoff))}
-					</p>
+					<p class="text-sm md:text-[15px] font-semibold text-gray-900">{m.cancel_modifyIntro()}</p>
 				{:else if updateStatus.reason === 'past_cutoff'}
-					<p class="text-sm font-semibold text-amber-700">
-						{m.manage_modifyNoLongerPossible(fmtCutoff(updateStatus.cutoff))}
-					</p>
+					<p class="text-sm font-semibold text-amber-700">{m.manage_modifyNoLongerPossible()}</p>
 				{:else if updateStatus.reason === 'in_past'}
 					<p class="text-sm font-semibold text-gray-900">{m.manage_pastBooking()}</p>
 				{:else}
 					<p class="text-sm font-semibold text-gray-900">{m.manage_modifyNotAllowed()}</p>
 				{/if}
 
-				{#if updateStatus.allowed}
-					<p class="text-[15px] font-semibold text-gray-900">{m.cancel_modifyIntro()}</p>
-				{/if}
-
 				<button
 					type="button"
 					disabled={!updateStatus.allowed}
 					onclick={() => goto(`/${restaurant.id}/reservation/${reservation.id}`)}
-					class="w-full py-3 rounded-lg border border-gray-300 text-gray-900 font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+					class="w-full py-2.5 md:py-3 rounded-lg border border-gray-300 text-gray-900 font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
 				>
 					{m.cancel_modifyButton()}
 				</button>
@@ -154,18 +146,12 @@
 					<p class="text-sm font-semibold text-gray-900">{m.cancel_notAllowed()}</p>
 				{:else if cancelFlow.inPast}
 					<p class="text-sm font-semibold text-gray-900">{m.manage_pastBooking()}</p>
-				{:else if cancelFlow.isLate && cancelFlow.cutoff}
-					{@const cutoffParts = fmtCutoff(cancelFlow.cutoff)}
+				{:else if cancelFlow.isLate}
 					<div
 						class="rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-sm px-4 py-3 space-y-2"
 					>
 						<p class="font-semibold">{m.cancel_lateWarningHeading()}</p>
-						<p>
-							{m.cancel_lateWarningBody({
-								date: cutoffParts.date,
-								time: cutoffParts.time
-							})}
-						</p>
+						<p>{m.cancel_lateWarningBody()}</p>
 						{#if cancelFlow.imprint}
 							<p class="font-medium">
 								{m.cancel_lateImprintNotice({
@@ -174,14 +160,10 @@
 							</p>
 						{/if}
 					</div>
-				{:else if cancelStatus.allowed}
-					<p class="text-sm font-semibold text-gray-900">
-						{m.cancel_allowedUntil(fmtCutoff(cancelStatus.cutoff))}
-					</p>
 				{/if}
 
 				{#if cancelFlow.canCancel}
-					<p class="text-[15px] font-semibold text-gray-900">{m.cancel_cancelIntro()}</p>
+					<p class="text-sm md:text-[15px] font-semibold text-gray-900">{m.cancel_cancelIntro()}</p>
 				{/if}
 
 				{#if error}
@@ -214,25 +196,24 @@
 							}}
 							class="space-y-2"
 						>
-							<label for="cancel-reason" class="block text-sm font-medium text-gray-700">
-								{m.cancel_reasonLabel()}
-							</label>
-							<textarea
+							<input
+								type="text"
 								id="cancel-reason"
 								name="reason"
 								required
 								maxlength="500"
-								placeholder={m.cancel_reasonPlaceholder()}
+								aria-label={m.cancel_reasonLabel()}
+								placeholder={m.cancel_reasonLabel()}
 								value={form?.reason ?? ''}
-								class="w-full min-h-[96px] p-3 border border-gray-300 rounded-lg resize-y text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-							></textarea>
+								class="w-full p-2.5 md:p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+							/>
 							{#if form?.reasonError}
 								<p class="text-red-600 text-xs">{form.reasonError}</p>
 							{/if}
 							<button
 								type="submit"
 								disabled={loading}
-								class="w-full py-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+								class="w-full py-2.5 md:py-3 rounded-lg border border-gray-300 text-gray-900 font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
 							>
 								{loading ? m.cancel_canceling() : m.cancel_cancelButton()}
 							</button>

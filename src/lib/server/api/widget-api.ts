@@ -56,6 +56,7 @@ export function createWidgetApi(restaurantId: number) {
 			return restCall(`/restaurants/${restaurantId}/bookings/${id}`, {
 				restaurantId,
 				method: 'PUT',
+				query: { 'with-confirmation': 'true' },
 				body
 			});
 		},

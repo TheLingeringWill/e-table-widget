@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { CalendarCheck, CalendarPlus, ClockClockwise, Hourglass } from 'phosphor-svelte';
 	import { selection } from '$lib/states/selection.svelte';
-	import { paymentIntent } from '$lib/states/paymentIntent.svelte';
 	import { reservation, resetReservation } from '$lib/states/reservation.svelte';
 	import { formatSlotDateTime } from '$lib/utils/slotFormat';
 	import { getTranslation } from '$lib/context.svelte.js';
@@ -23,7 +22,6 @@
 	const category: StatusCategory = categorize(reservation.confirmedStatus);
 
 	const restaurantName = $derived(getTranslation(widget?.title));
-	const cameFromPayment = $derived(!!paymentIntent.id);
 
 	const summary = $derived.by(() => {
 		if (!selection.slot) return null;
@@ -119,9 +117,6 @@
 		{:else}
 			<p>{m.done_emailIncoming()}</p>
 			<p>{m.done_checkSpam()}</p>
-		{/if}
-		{#if cameFromPayment}
-			<p>{m.done_cardAuthorized()}</p>
 		{/if}
 	</div>
 

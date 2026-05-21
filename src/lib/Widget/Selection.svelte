@@ -13,6 +13,7 @@
 	import { getTranslation, useZonedDateUtils } from '$lib/context.svelte';
 	import ZonedCalendarInput from '$lib/utils/ZonedCalendarInput.svelte';
 	import { parseSlotDateAsCalendarDate, slotKey } from '$lib/utils/slotFormat';
+	import { isServiceEnded, isSlotPast } from '$lib/utils/pastFilter';
 	import { pushGtmEvent } from '../gtm.svelte';
 	import * as m from '$lib/paraglide/messages';
 
@@ -53,7 +54,11 @@
 			loadingServices = false;
 			return;
 		}
-		services = res;
+		const dateStr = zonedDateUtils.format('YYYY-MM-DD', selection.date);
+		services = res.filter(
+			(s: NonNullable<typeof selection.service>) =>
+				!isServiceEnded(s, dateStr, zonedDateUtils.timezone)
+		);
 		if (reservationTemp.serviceId) {
 			const foundService = services.find((s) => s.id === reservationTemp.serviceId);
 			if (foundService) {
@@ -92,7 +97,9 @@
 			loadingSlots = false;
 			return;
 		}
-		slots = res;
+		slots = res.filter(
+			(s: NonNullable<typeof selection.slot>) => !isSlotPast(s, zonedDateUtils.timezone)
+		);
 		if (reservationTemp.startDate) {
 			const foundSlot = slots.find(
 				(slot) =>

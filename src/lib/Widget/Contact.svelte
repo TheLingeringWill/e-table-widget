@@ -203,7 +203,7 @@
 				<button onclick={() => previousStep()}>
 					<CaretLeft size={28} />
 				</button>
-				<h2 class="text-md font-normal">{m.contact_heading()}</h2>
+				<h2 class="text-xl font-bold">{m.contact_heading()}</h2>
 			</div>
 			{#if prefilled.value}
 				<div
@@ -231,12 +231,12 @@
 			{/if}
 			<div class="flex flex-col md:gap-4 gap-3">
 				<div class="flex flex-col gap-2">
-					<span class="text-sm">{m.contact_civilityLabel()}</span>
+					<span class="text-sm font-semibold">{m.contact_civilityLabel()}</span>
 					<div class="flex gap-2">
 						{#each CIVILITY_OPTIONS as option (option.value)}
 							<button
 								type="button"
-								class="flex-1 px-3 py-2 border rounded text-sm transition-colors {contact.civility ===
+								class="flex-1 px-3 py-2 border rounded text-sm font-medium transition-colors {contact.civility ===
 								option.value
 									? 'bg-gray-800 border-gray-800 text-white'
 									: 'bg-white border-gray-400 text-gray-800 hover:border-gray-600'}"
@@ -250,7 +250,7 @@
 						{/each}
 					</div>
 					{#if civilityErrors.length}
-						<span class="text-xs text-red-600">{civilityErrors[0]}</span>
+						<span class="text-sm text-red-600">{civilityErrors[0]}</span>
 					{/if}
 				</div>
 				<TextInput
@@ -292,9 +292,9 @@
 								<Check size={14} weight="bold" color="white" />
 							{/if}
 						</div>
-						<span class="text-sm">{m.contact_rememberMe()}</span>
+						<span class="text-sm font-semibold">{m.contact_rememberMe()}</span>
 					</button>
-					<p class="text-xs text-gray-500 ml-7">
+					<p class="text-sm text-gray-500 ml-7">
 						{m.contact_rememberMeHelper()}
 					</p>
 				</div>

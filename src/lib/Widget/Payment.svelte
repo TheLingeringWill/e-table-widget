@@ -283,7 +283,7 @@
 		<button onclick={() => previousStep()}>
 			<CaretLeft size={28} />
 		</button>
-		<h2 class="text-md font-normal">{m.payment_heading()}</h2>
+		<h2 class="text-xl font-bold">{m.payment_heading()}</h2>
 	</div>
 	<div class="flex flex-col gap-2">
 		<div>

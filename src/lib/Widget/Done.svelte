@@ -94,20 +94,20 @@
 	</div>
 
 	{#if category !== 'to_confirm'}
-		<h2 class="text-sm font-medium tracking-[0.18em] uppercase">
+		<h2 class="text-xl font-bold">
 			{title}
 		</h2>
 	{/if}
 
 	{#if summary}
 		<div
-			class="w-full border rounded-[var(--base-radius)] py-3 px-4 text-sm font-medium leading-snug"
+			class="w-full border rounded-[var(--base-radius)] py-3 px-4 text-base font-semibold leading-snug"
 		>
 			{summary}
 		</div>
 	{/if}
 
-	<div class="flex flex-col gap-2 text-sm leading-snug opacity-85">
+	<div class="flex flex-col gap-2 text-base leading-snug opacity-85">
 		{#if category === 'waitlist'}
 			<p>{m.done_waitlistBody()}</p>
 		{:else if category === 'to_confirm'}
@@ -123,7 +123,7 @@
 	{#if selection.slot && category !== 'waitlist'}
 		<button
 			type="button"
-			class="mt-2 w-full py-3 px-4 text-sm font-semibold text-center transition-all hover:brightness-110 focus:brightness-95 focus:outline-none"
+			class="mt-2 w-full py-3 px-4 text-base font-semibold text-center transition-all hover:brightness-110 focus:brightness-95 focus:outline-none"
 			style="background: {theme?.backgroundColor};
 			       color: {theme?.fontColor};
 			       border: 1px solid {theme?.backgroundColor};

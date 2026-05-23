@@ -32,7 +32,7 @@
 <div class="py-3 px-4 bg-primary flex flex-col space-y-3">
 	<div class="flex items-center justify-between gap-3 min-h-[40px]">
 		<div class="w-10 shrink-0" aria-hidden="true"></div>
-		<h1 class="font-normal font-serif text-center flex-1" id="title">{title}</h1>
+		<h1 class="text-xl font-semibold font-serif text-center flex-1" id="title">{title}</h1>
 		{#if showLanguageSwitcher}
 			<LanguageSwitcher />
 		{:else}

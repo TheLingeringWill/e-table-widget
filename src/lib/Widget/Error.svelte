@@ -36,7 +36,7 @@
 
 <div class="flex flex-col gap-4 items-center justify-center">
 	<X size={80} color="red" />
-	<p style:white-space="pre-line">{message}</p>
+	<p class="text-base font-medium" style:white-space="pre-line">{message}</p>
 	{#if error.code}
 		<p class="text-sm opacity-50">{error.code}</p>
 	{/if}

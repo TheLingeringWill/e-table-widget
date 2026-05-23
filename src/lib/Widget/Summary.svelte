@@ -69,7 +69,7 @@
 <div
 	class="flex flex-col md:gap-4 gap-3 flex-shrink text-black md:border md:rounded-lg md:p-5 p-4 bg-gray-100"
 >
-	<div class="font-light text-md">{m.summary_yourReservation()}</div>
+	<div class="font-semibold text-md">{m.summary_yourReservation()}</div>
 	<div class="flex flex-col gap-1" id="summary">
 		{@render button(
 			0,

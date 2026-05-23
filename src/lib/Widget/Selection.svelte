@@ -473,7 +473,7 @@
 						{@const alternatives = getAlternativeSlots(waitlist.selectedUnavailableSlot)}
 						<div class="flex flex-col gap-3 px-5 py-3">
 							<div class="text-center">
-								<p class="text-sm font-medium mb-1">{m.selection_slotUnavailable()}</p>
+								<p class="text-base font-semibold mb-1">{m.selection_slotUnavailable()}</p>
 								<p class="text-xs opacity-60">
 									{m.selection_slotUnavailableDetails({
 										time: waitlist.selectedUnavailableSlot.time,
@@ -596,7 +596,7 @@
 									>
 										<div class="flex items-center justify-between">
 											<div class="flex-1 min-w-0">
-												<div class="text-sm font-medium truncate">
+												<div class="text-sm font-semibold truncate">
 													{alternativeRestaurant.restaurant.name}
 												</div>
 												<div class="text-xs opacity-40 truncate">
@@ -630,7 +630,7 @@
 								</div>
 							{:else if alternativeRestaurant?.found}
 								<div class="flex flex-col items-center py-3 px-4 w-full">
-									<p class="text-sm font-medium mb-1">{m.selection_noSlotsAvailable()}</p>
+									<p class="text-base font-semibold mb-1">{m.selection_noSlotsAvailable()}</p>
 									<p class="text-xs text-center opacity-50 mb-3">
 										{m.selection_noTablesForDate({
 											pax: selection.pax ?? 0,
@@ -680,7 +680,7 @@
 									>
 										<div class="flex items-center justify-between">
 											<div class="flex-1 min-w-0">
-												<div class="text-sm font-medium truncate">
+												<div class="text-sm font-semibold truncate">
 													{alternativeRestaurant.restaurant.name}
 												</div>
 												<div class="text-xs opacity-40 truncate">
@@ -700,7 +700,7 @@
 								</div>
 							{:else}
 								<div class="flex flex-col items-center py-4 px-4 w-full">
-									<p class="text-sm font-medium mb-1">{m.selection_noSlotsAvailable()}</p>
+									<p class="text-base font-semibold mb-1">{m.selection_noSlotsAvailable()}</p>
 									<p class="text-xs text-center opacity-50 mb-3">
 										{m.selection_noTablesTryAnotherDate()}
 									</p>

@@ -395,7 +395,7 @@
 					/>
 				</div>
 			{:else if item.id === 'service'}
-				<div class="w-full relative">
+				<div class="w-full">
 					{#if services.length > 0}
 						<div class="flex flex-col gap-2 px-5 py-2">
 							{#each services as service (service.id)}
@@ -429,19 +429,16 @@
 								</button>
 							{/each}
 						</div>
-					{/if}
-					{#if services.length === 0}
+					{:else if !loadingServices}
 						<div
-							class="absolute top-0 left-0 flex flex-col items-center justify-center w-full h-full gap-5 p-10 bg-white bg-opacity-10"
+							class="flex flex-col items-center justify-center w-full gap-5 p-6"
 						>
-							{#if !loadingServices}
-								<div class="">{m.selection_noServiceToday()}</div>
-								<Button
-									onclick={() => {
-										openedAccordion.index = 0;
-									}}>{m.selection_chooseAnotherDay()}</Button
-								>
-							{/if}
+							<div>{m.selection_noServiceToday()}</div>
+							<Button
+								onclick={() => {
+									openedAccordion.index = 0;
+								}}>{m.selection_chooseAnotherDay()}</Button
+							>
 						</div>
 					{/if}
 				</div>

@@ -578,6 +578,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 			background: ${theme.buttonColor};
 			color: ${theme.buttonTextColor};
 		}
+		#widget [data-active="true"],
+		#widget [data-selected="true"] {
+			background: ${theme.fontColor} !important;
+			color: ${theme.backgroundColor} !important;
+			opacity: 1 !important;
+		}
 
 		#button.revert {
 			background: #f0f0f0f0;

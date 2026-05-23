@@ -34,6 +34,7 @@
 
 	let services = $state<NonNullable<typeof selection.service>[]>([]);
 	let slots = $state<NonNullable<typeof selection.slot>[]>([]);
+	let disabledDates = $state<Date[]>([]);
 
 	// Alternative restaurant state
 	type AlternativeResult = Awaited<ReturnType<typeof api.getAlternativeRestaurant>>[0];
@@ -76,6 +77,35 @@
 
 		console.log('services', services);
 		loadingServices = false;
+	};
+
+	const fetchDisabledDates = async () => {
+		loadingDates = true;
+		const today = new Date();
+		const startDate = zonedDateUtils.format('YYYY-MM-DD', today);
+		const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 90);
+		const endDate = zonedDateUtils.format('YYYY-MM-DD', end);
+		const [res, error] = await api.getAvailableDates({ restaurantId, startDate, endDate });
+		if (error || !res) {
+			loadingDates = false;
+			return;
+		}
+		const availableSet = new Set(res);
+		const disabled: Date[] = [];
+		const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+		const endTime = end.getTime();
+		while (cursor.getTime() <= endTime) {
+			const y = cursor.getFullYear();
+			const m = String(cursor.getMonth() + 1).padStart(2, '0');
+			const d = String(cursor.getDate()).padStart(2, '0');
+			const dateStr = `${y}-${m}-${d}`;
+			if (!availableSet.has(dateStr)) {
+				disabled.push(new Date(cursor.getTime()));
+			}
+			cursor.setDate(cursor.getDate() + 1);
+		}
+		disabledDates = disabled;
+		loadingDates = false;
 	};
 
 	const getServiceSlots = async () => {
@@ -147,6 +177,8 @@
 	};
 
 	onMount(async () => {
+		await fetchDisabledDates();
+
 		if (reservationTemp.startDate) {
 			selection.date = parseSlotDateAsCalendarDate(reservationTemp.startDate.date);
 		}
@@ -360,39 +392,42 @@
 		{#snippet content(item, next, previous, close)}
 			{#if item.id === 'date'}
 				<div class="flex flex-col w-full gap-2">
-					<ZonedCalendarInput
-						{zonedDateUtils}
-						type="calendar"
-						view="single"
-						headerClass="flex justify-between items-center font-light"
-						weekdayClass="flex items-center justify-center pb-2 font-normal"
-						gridClass="gap-2"
-						dayClass="data-[in-month=false]:pointer-events-none data-[disabled=true]:opacity-30 data-[disabled=true]:pointer-events-none data-[in-month=false]:opacity-25  rounded-sm data-[in-month=true]:border hover:bg-white hover:bg-opacity-10 data-[selected=true]:bg-white data-[selected=true]:bg-opacity-50"
-						class="w-full"
-						buttons={{
-							prev: {
-								icon: ArrowLeft,
-								color: theme.fontColor
-							},
-							next: {
-								icon: ArrowRight,
-								color: theme.fontColor
-							}
-						}}
-						containerClass="w-full gap-3"
-						value={selection.date}
-						minDate={new Date(new Date().setDate(new Date().getDate() - 1))}
-						onChange={(date: Date | null) => {
-							if (date === null) return;
-							selection.date = new Date(date.getTime());
-							pushGtmEvent('date_selected', {
-								date: selection.date.toISOString()
-							});
-							onDateChange().then(() => {
-								openAccordion();
-							});
-						}}
-					/>
+					{#if !loadingDates}
+						<ZonedCalendarInput
+							{zonedDateUtils}
+							type="calendar"
+							view="single"
+							headerClass="flex justify-between items-center font-light"
+							weekdayClass="flex items-center justify-center pb-2 font-normal"
+							gridClass="gap-2"
+							dayClass="data-[in-month=false]:pointer-events-none data-[disabled=true]:opacity-30 data-[disabled=true]:pointer-events-none data-[in-month=false]:opacity-25  rounded-sm data-[in-month=true]:border-2 hover:bg-white hover:bg-opacity-15"
+							class="w-full"
+							buttons={{
+								prev: {
+									icon: ArrowLeft,
+									color: theme.fontColor
+								},
+								next: {
+									icon: ArrowRight,
+									color: theme.fontColor
+								}
+							}}
+							containerClass="w-full gap-3"
+							value={selection.date}
+							{disabledDates}
+							minDate={new Date(new Date().setDate(new Date().getDate() - 1))}
+							onChange={(date: Date | null) => {
+								if (date === null) return;
+								selection.date = new Date(date.getTime());
+								pushGtmEvent('date_selected', {
+									date: selection.date.toISOString()
+								});
+								onDateChange().then(() => {
+									openAccordion();
+								});
+							}}
+						/>
+					{/if}
 				</div>
 			{:else if item.id === 'service'}
 				<div class="w-full">
@@ -412,7 +447,7 @@
 											openAccordion();
 										});
 									}}
-									class="flex flex-row items-center gap-2 min-w-0 px-4 py-2 text-sm w-full rounded hover:bg-white hover:bg-opacity-5 border data-[active=true]:bg-white data-[active=true]:bg-opacity-30 disabled:opacity-50 disabled:pointer-events-none"
+									class="flex flex-row items-center gap-2 min-w-0 px-4 py-2 text-base w-full rounded hover:bg-white hover:bg-opacity-15 border-2 disabled:opacity-50 disabled:pointer-events-none"
 								>
 									<div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
 										<b>{getTranslation(service.name)}</b>
@@ -422,7 +457,7 @@
 										</div>
 									</div>
 									{#if service.description?.length > 0}
-										<div class="text-sm truncate min-w-0 flex-1 text-left opacity-70">
+										<div class="text-sm truncate min-w-0 flex-1 text-left opacity-70 hidden md:block">
 											•&nbsp;{getTranslation(service.description)}
 										</div>
 									{/if}
@@ -455,7 +490,7 @@
 								openAccordion();
 							});
 						}}
-						class="flex items-center justify-center p-5 rounded hover:bg-white hover:bg-opacity-5 w-10 h-10 border data-[active=true]:bg-white data-[active=true]:bg-opacity-30"
+						class="flex items-center justify-center p-5 rounded hover:bg-white hover:bg-opacity-15 w-10 h-10 text-base border-2"
 					>
 						{pax}
 					</button>
@@ -486,7 +521,7 @@
 										{#each alternatives as altSlot}
 											<button
 												onclick={() => handleSelectAlternative(altSlot)}
-												class="flex items-center justify-between gap-3 px-4 py-2 text-sm w-full rounded border border-white border-opacity-20 hover:bg-white hover:bg-opacity-10 transition-all"
+												class="flex items-center justify-between gap-3 px-4 py-2 text-base w-full rounded border-2 border-white border-opacity-20 hover:bg-white hover:bg-opacity-10 transition-all"
 											>
 												<span>{altSlot.time}</span>
 											</button>
@@ -547,7 +582,7 @@
 												});
 											}
 										}}
-										class="flex items-center justify-between gap-3 px-4 py-2 text-sm w-full rounded hover:bg-white hover:bg-opacity-5 border data-[active=true]:bg-white data-[active=true]:bg-opacity-30"
+										class="flex items-center justify-between gap-3 px-4 py-2 text-base w-full rounded hover:bg-white hover:bg-opacity-15 border-2"
 									>
 										<div class="flex items-center gap-3">
 											{slot.time}

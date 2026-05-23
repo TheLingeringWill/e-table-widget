@@ -1,12 +1,7 @@
 <script lang="ts" generics="T extends 'calendar' | 'calendar-range'">
-	// Widget-local copy of the legacy `shared/utils/ZonedCalendarInput.svelte`.
-	// Thin tz-conversion wrapper around `maket/CalendarInput` — preserves the
-	// styled inline calendar grid the original Selection.svelte design relies
-	// on (Mon-Sun header, day buttons with `data-in-month` / `data-disabled` /
-	// `data-selected` attributes the call site styles via Tailwind).
-
 	import CalendarInput from 'maket/CalendarInput';
 	import type { ZonedDateUtils } from '$lib/utils/zonedDateUtils';
+	import { currentLocale } from '$lib/states/locale.svelte';
 
 	type ComponentProps<C> = C extends new (...args: infer Args) => unknown
 		? Args[0] extends { props: infer P }
@@ -36,6 +31,49 @@
 		v = zonedDateUtils.inferDateToZone(date);
 		return props.onChange(v);
 	});
+
+	let container: HTMLElement;
+
+	const patchLocale = () => {
+		if (!container) return;
+		const locale = currentLocale.value;
+
+		const weekdays = container.querySelectorAll('.ui-calendar-weekday');
+		weekdays.forEach((el, i) => {
+			el.textContent = new Date(0, 0, i).toLocaleDateString(locale, {
+				weekday: (props.weekdayLength as 'narrow' | 'short') || 'narrow'
+			});
+		});
+
+		const cell = container.querySelector('[data-in-month="true"]');
+		if (cell) {
+			const iso = cell.getAttribute('data-date');
+			if (iso) {
+				const d = new Date(iso);
+				const label = d.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+				const header = container.querySelector('.ui-calendar-header');
+				if (header) {
+					for (const node of header.childNodes) {
+						if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+							node.textContent = ` ${label} `;
+						}
+					}
+				}
+			}
+		}
+	};
+
+	$effect(() => {
+		if (!container) return;
+		// track locale so the effect re-runs on language change
+		void currentLocale.value;
+		patchLocale();
+		const observer = new MutationObserver(patchLocale);
+		observer.observe(container, { childList: true, subtree: true });
+		return () => observer.disconnect();
+	});
 </script>
 
-<CalendarInput {value} {...props} {minDate} {onChange} />
+<div bind:this={container}>
+	<CalendarInput {value} {...props} {minDate} {onChange} />
+</div>

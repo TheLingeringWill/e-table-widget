@@ -437,6 +437,26 @@ export const router = {
 						slot: { date: string; time: string; state: 'AVAILABLE' | 'ALMOST_FULL' };
 				  };
 		}
+	),
+	getAvailableDates: procedure(
+		object({ restaurantId: string(), startDate: string(), endDate: string() }),
+		async ({ input }) => {
+			const rid = Number(input.restaurantId);
+			if (!Number.isFinite(rid)) {
+				throw new Error(`getAvailableDates: invalid restaurant id ${input.restaurantId}`);
+			}
+			const result = await createWidgetApi(rid).getAvailabilities({
+				startDate: input.startDate,
+				endDate: input.endDate
+			});
+			if (!result.ok) {
+				throw new Error(`getAvailableDates: ${result.error.code} ${result.error.message}`);
+			}
+			const days = result.data.data as LiveDay[];
+			return days
+				.filter((d) => d.shifts.some((s) => s.bookable))
+				.map((d) => d.date);
+		}
 	)
 };
 

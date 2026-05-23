@@ -50,7 +50,7 @@
 				{#if Icon}
 					<Icon size="24" />
 				{/if}
-				<span class="font-normal" transition:fade>{title}</span>
+				<span class="font-semibold text-base" transition:fade>{title}</span>
 				{#if loading && !isOpen}
 					<div class="flex items-center" transition:fade>
 						<Spinner size={24} width={3} />

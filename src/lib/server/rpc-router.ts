@@ -8,6 +8,12 @@ import {
 	type GenericSchema,
 	type InferOutput
 } from 'valibot';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezoned from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezoned);
 import type { CountryCode } from 'libphonenumber-js';
 import { convertToE164 } from '$lib/utils/phone';
 import { createWidgetApi } from '$lib/server/api/widget-api';
@@ -439,7 +445,7 @@ export const router = {
 		}
 	),
 	getAvailableDates: procedure(
-		object({ restaurantId: string(), startDate: string(), endDate: string() }),
+		object({ restaurantId: string(), startDate: string(), endDate: string(), timezone: string() }),
 		async ({ input }) => {
 			const rid = Number(input.restaurantId);
 			if (!Number.isFinite(rid)) {
@@ -453,8 +459,19 @@ export const router = {
 				throw new Error(`getAvailableDates: ${result.error.code} ${result.error.message}`);
 			}
 			const days = result.data.data as LiveDay[];
+			const todayStr = dayjs().tz(input.timezone).format('YYYY-MM-DD');
+			const now = dayjs().tz(input.timezone);
+
 			return days
-				.filter((d) => d.shifts.some((s) => s.bookable))
+				.filter((d) => {
+					const bookable = d.shifts.filter((s) => s.bookable);
+					if (bookable.length === 0) return false;
+					if (d.date !== todayStr) return true;
+					return bookable.some((s) => {
+						if (s.endTime <= s.startTime) return true;
+						return dayjs.tz(`${todayStr}T${s.endTime}`, input.timezone).isAfter(now);
+					});
+				})
 				.map((d) => d.date);
 		}
 	)

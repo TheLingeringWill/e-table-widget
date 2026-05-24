@@ -85,7 +85,7 @@
 		const startDate = zonedDateUtils.format('YYYY-MM-DD', today);
 		const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 90);
 		const endDate = zonedDateUtils.format('YYYY-MM-DD', end);
-		const [res, error] = await api.getAvailableDates({ restaurantId, startDate, endDate });
+		const [res, error] = await api.getAvailableDates({ restaurantId, startDate, endDate, timezone: zonedDateUtils.timezone });
 		if (error || !res) {
 			loadingDates = false;
 			return;

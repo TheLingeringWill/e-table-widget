@@ -7,8 +7,15 @@
 import dayjs from 'dayjs';
 import timezoned from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
+import 'dayjs/locale/de';
 import 'dayjs/locale/en';
+import 'dayjs/locale/es';
 import 'dayjs/locale/fr';
+import 'dayjs/locale/it';
+import 'dayjs/locale/ja';
+import 'dayjs/locale/ko';
+import 'dayjs/locale/nl';
+import 'dayjs/locale/pt';
 import 'dayjs/locale/zh';
 import { currentLocale } from '$lib/states/locale.svelte';
 

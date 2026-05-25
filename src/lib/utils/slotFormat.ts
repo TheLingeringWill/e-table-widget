@@ -8,12 +8,19 @@
 //
 // Locale is read from the reactive `currentLocale` $state at call time, so
 // language switches re-render dates wherever these helpers are used inside
-// `.svelte` template expressions. Both locales are eagerly imported below
-// so dayjs can switch synchronously.
+// `.svelte` template expressions. All supported locales are eagerly imported
+// below so dayjs can switch synchronously.
 
 import dayjs from 'dayjs';
+import 'dayjs/locale/de';
 import 'dayjs/locale/en';
+import 'dayjs/locale/es';
 import 'dayjs/locale/fr';
+import 'dayjs/locale/it';
+import 'dayjs/locale/ja';
+import 'dayjs/locale/ko';
+import 'dayjs/locale/nl';
+import 'dayjs/locale/pt';
 import 'dayjs/locale/zh';
 import { currentLocale } from '$lib/states/locale.svelte';
 

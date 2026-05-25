@@ -9,6 +9,7 @@ import timezoned from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import 'dayjs/locale/en';
 import 'dayjs/locale/fr';
+import 'dayjs/locale/zh';
 import { currentLocale } from '$lib/states/locale.svelte';
 
 export class ZonedDateUtils {

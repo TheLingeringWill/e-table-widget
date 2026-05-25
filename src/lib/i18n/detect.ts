@@ -11,7 +11,7 @@
  * markup matches our detected locale.
  */
 
-export const SUPPORTED_LOCALES = ['fr', 'en', 'de', 'es', 'pt', 'it', 'nl', 'ja'] as const;
+export const SUPPORTED_LOCALES = ['fr', 'en', 'de', 'es', 'pt', 'it', 'nl', 'ja', 'zh'] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
 export const DEFAULT_LOCALE: Locale = 'en';

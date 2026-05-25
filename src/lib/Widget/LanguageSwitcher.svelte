@@ -15,7 +15,8 @@
 		pt: 'Português',
 		it: 'Italiano',
 		nl: 'Nederlands',
-		ja: '日本語'
+		ja: '日本語',
+		zh: '中文'
 	};
 
 	let open = $state(false);

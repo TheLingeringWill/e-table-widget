@@ -42,11 +42,15 @@ export function createWidgetApi(restaurantId: number) {
 		getBooking(id: number): Promise<RestResult<BookingDetailResponseDTO>> {
 			return restCall(`/restaurants/${restaurantId}/bookings/${id}`, { restaurantId });
 		},
-		createBooking(body: CreateBookingRequestDTO): Promise<RestResult<CreateBookingResponseDTO>> {
+		createBooking(
+			body: CreateBookingRequestDTO,
+			opts?: { force?: boolean }
+		): Promise<RestResult<CreateBookingResponseDTO>> {
 			return restCall(`/restaurants/${restaurantId}/bookings`, {
 				restaurantId,
 				method: 'POST',
-				body
+				body,
+				query: opts?.force ? { force: 'true' } : undefined
 			});
 		},
 		updateBooking(

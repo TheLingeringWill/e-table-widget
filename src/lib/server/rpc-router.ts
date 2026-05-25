@@ -244,22 +244,25 @@ export const router = {
 						email: r.contact.email,
 						phone: normalizedPhone
 					} satisfies UpdateBookingRequestDTO)
-				: await api.createBooking({
-						pax: r.pax,
-						status: resolvedStatus,
-						date: dateStr,
-						time: timeStr,
-						source: 'web',
-						comment: r.notes ?? null,
-						civility: r.contact.civility,
-						language: event.locals.locale,
-						countryCode: r.contact.countryCode,
-						firstName: r.contact.firstName ?? null,
-						lastName: r.contact.lastName,
-						email: r.contact.email,
-						phone: normalizedPhone,
-						paymentIntentId: input.paymentIntentId ?? null
-					} satisfies CreateBookingRequestDTO);
+				: await api.createBooking(
+						{
+							pax: r.pax,
+							status: resolvedStatus,
+							date: dateStr,
+							time: timeStr,
+							source: 'web',
+							comment: r.notes ?? null,
+							civility: r.contact.civility,
+							language: event.locals.locale,
+							countryCode: r.contact.countryCode,
+							firstName: r.contact.firstName ?? null,
+							lastName: r.contact.lastName,
+							email: r.contact.email,
+							phone: normalizedPhone,
+							paymentIntentId: input.paymentIntentId ?? null
+						} satisfies CreateBookingRequestDTO,
+						{ force: resolvedStatus === 'waiting_list' || resolvedStatus === 'to_confirm' }
+					);
 			if (!result.ok) {
 				if (result.error.code === 'customer_already_booked_service') {
 					return { status: ApiReturnStatus.CUSTOMER_ALREADY_BOOKED_SERVICE };
@@ -272,7 +275,8 @@ export const router = {
 			return {
 				status: ApiReturnStatus.OK,
 				paymentIntent: null as null,
-				bookingStatus: finalBookingStatus
+				bookingStatus: finalBookingStatus,
+				bookingId: result.data?.id != null ? String(result.data.id) : null
 			};
 		}
 	),

@@ -37,11 +37,9 @@
 	import { selection } from './states/selection.svelte';
 	import { gotoError, error as errorState } from './states/error.svelte';
 	import {
-		pushGtmEvent,
 		pushEcommerceEvent,
 		trackStep,
 		trackError,
-		trackBookingConfirmed,
 		setGtmRestaurantId
 	} from './gtm.svelte';
 
@@ -375,18 +373,9 @@
 				break;
 
 			case 'DONE':
-				if (reservation.id) {
-					trackBookingConfirmed({
-						reservationId: reservation.id,
-						serviceId: selection.service?.id || '',
-						serviceName: selection.service?.name ? getTranslation(selection.service.name) : '',
-						pax: selection.pax || 0,
-						date: selection.date?.toISOString() || '',
-						customerEmail: contact.email,
-						paymentRequired: !!paymentIntent.id,
-						amount: paymentIntent.amount ? paymentIntent.amount / 100 : undefined
-					});
-				}
+				// Tracking (booking_completed) is fired from Booking.svelte /
+				// Payment.svelte BEFORE nextStep() so the data is still
+				// available — Done.svelte's onMount resets reservation state.
 				break;
 
 			case 'ERROR':

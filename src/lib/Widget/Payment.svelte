@@ -65,6 +65,8 @@
 	} from '$lib/states/reservation.svelte';
 	import { api } from '$lib/widget-rpc-client';
 	import * as m from '$lib/paraglide/messages';
+	import { trackBookingComplete } from '$lib/gtm.svelte';
+	import { getTranslation } from '$lib/context.svelte.js';
 
 	let {
 		widget,
@@ -251,7 +253,30 @@
 		}
 
 		clearPendingReservation();
+		if (bookRes.bookingId) reservation.id = bookRes.bookingId;
+		reservation.confirmedStatus = bookRes.bookingStatus;
 		paymentIntentClientSecret = paymentIntent.clientSecret as string;
+		const embeddedBookingId = bookRes.bookingId || reservation.id || '';
+		if (embeddedBookingId) {
+			trackBookingComplete({
+				restaurant_id: widget.id,
+				reservation_id: embeddedBookingId,
+				service_id: selection.service?.id || '',
+				service_name: selection.service?.name ? getTranslation(selection.service.name) : '',
+				pax: selection.pax || 0,
+				date: selection.slot?.date || '',
+				time: selection.slot?.time || '',
+				confirmed_status: reservation.confirmedStatus || 'confirmed',
+				customer_civility: contact.civility || '',
+				customer_country_code: contact.countryCode || '',
+				customer_first_name: contact.firstName,
+				customer_last_name: contact.lastName,
+				customer_email: contact.email,
+				customer_phone: contact.phone,
+				customer_language: currentLocale.value,
+				payment_required: true
+			});
+		}
 		window.parent?.postMessage(
 			{
 				type: 'confirmation',

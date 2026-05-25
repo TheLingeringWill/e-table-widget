@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { CalendarCheck, CalendarPlus, ClockClockwise, Hourglass } from 'phosphor-svelte';
 	import { selection } from '$lib/states/selection.svelte';
-	import { reservation, resetReservation } from '$lib/states/reservation.svelte';
+	import { reservation, reservationTemp, resetReservation } from '$lib/states/reservation.svelte';
 	import { formatSlotDateTime } from '$lib/utils/slotFormat';
 	import { getTranslation } from '$lib/context.svelte.js';
 	import * as m from '$lib/paraglide/messages';
@@ -18,7 +18,7 @@
 	};
 
 	// Snapshot before onMount → resetReservation() clears reservation state.
-	const wasModification = reservation.id !== undefined;
+	const wasModification = reservationTemp.id != null;
 	const category: StatusCategory = categorize(reservation.confirmedStatus);
 
 	const restaurantName = $derived(getTranslation(widget?.title));

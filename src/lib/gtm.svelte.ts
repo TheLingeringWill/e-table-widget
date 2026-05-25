@@ -148,30 +148,24 @@ export function trackError(
 /**
  * Track successful booking
  */
-export function trackBookingConfirmed(data: {
-	reservationId: string;
-	serviceId: string;
-	serviceName: string;
+export function trackBookingComplete(data: {
+	restaurant_id: string;
+	reservation_id: string;
+	service_id: string;
+	service_name: string;
 	pax: number;
 	date: string;
-	customerEmail: string;
-	paymentRequired: boolean;
-	amount?: number;
+	time: string;
+	confirmed_status: string;
+	customer_civility: string;
+	customer_country_code: string;
+	customer_first_name: string;
+	customer_last_name: string;
+	customer_email: string;
+	customer_phone: string;
+	customer_language: string;
+	customer_notes?: string;
+	payment_required: boolean;
 }) {
-	pushGtmEvent('booking_confirmed', data);
-
-	if (data.amount) {
-		pushEcommerceEvent('purchase', {
-			transaction_id: data.reservationId,
-			value: data.amount,
-			items: [
-				{
-					item_id: data.serviceId,
-					item_name: data.serviceName,
-					price: data.amount,
-					quantity: data.pax
-				}
-			]
-		});
-	}
+	pushGtmEvent('booking_completed', data);
 }

@@ -10,6 +10,9 @@
 	import { paymentIntent } from '$lib/states/paymentIntent.svelte';
 	import { reservation, setPendingReservation } from '$lib/states/reservation.svelte';
 	import { waitlist } from '$lib/states/waitlist.svelte';
+	import { trackBookingComplete } from '$lib/gtm.svelte';
+	import { getTranslation } from '$lib/context.svelte.js';
+	import { currentLocale } from '$lib/states/locale.svelte';
 
 	let {
 		widget
@@ -94,7 +97,32 @@
 			return console.log(err);
 		}
 		if (res.status === 'OK') {
+			if (res.bookingId) reservation.id = res.bookingId;
 			reservation.confirmedStatus = res.bookingStatus;
+
+			const bookingId = res.bookingId || reservation.id || '';
+			if (bookingId) {
+				trackBookingComplete({
+					restaurant_id: widget.restaurantId,
+					reservation_id: bookingId,
+					service_id: selection.service?.id || '',
+					service_name: selection.service?.name ? getTranslation(selection.service.name) : '',
+					pax: selection.pax || 0,
+					date: selection.slot?.date || '',
+					time: selection.slot?.time || '',
+					confirmed_status: reservation.confirmedStatus || 'unknown',
+					customer_civility: contact.civility || '',
+					customer_country_code: contact.countryCode || '',
+					customer_first_name: contact.firstName,
+					customer_last_name: contact.lastName,
+					customer_email: contact.email,
+					customer_phone: contact.phone,
+					customer_language: currentLocale.value,
+					customer_notes: contact.notes || undefined,
+					payment_required: !!paymentIntent.id
+				});
+			}
+
 			nextStep();
 		} else if (res.status === ApiReturnStatus.CUSTOMER_ALREADY_BOOKED_SERVICE) {
 			gotoError(null, ApiReturnStatus.CUSTOMER_ALREADY_BOOKED_SERVICE);

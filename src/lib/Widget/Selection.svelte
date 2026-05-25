@@ -35,6 +35,7 @@
 	let services = $state<NonNullable<typeof selection.service>[]>([]);
 	let slots = $state<NonNullable<typeof selection.slot>[]>([]);
 	let disabledDates = $state<Date[]>([]);
+	let maxCalendarDate = $state<Date | undefined>(undefined);
 
 	// Alternative restaurant state
 	type AlternativeResult = Awaited<ReturnType<typeof api.getAlternativeRestaurant>>[0];
@@ -83,7 +84,7 @@
 		loadingDates = true;
 		const today = new Date();
 		const startDate = zonedDateUtils.format('YYYY-MM-DD', today);
-		const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 90);
+		const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 120);
 		const endDate = zonedDateUtils.format('YYYY-MM-DD', end);
 		const [res, error] = await api.getAvailableDates({ restaurantId, startDate, endDate, timezone: zonedDateUtils.timezone });
 		if (error || !res) {
@@ -105,6 +106,7 @@
 			cursor.setDate(cursor.getDate() + 1);
 		}
 		disabledDates = disabled;
+		maxCalendarDate = end;
 		loadingDates = false;
 	};
 
@@ -416,6 +418,7 @@
 							value={selection.date}
 							{disabledDates}
 							minDate={new Date(new Date().setDate(new Date().getDate() - 1))}
+							maxDate={maxCalendarDate}
 							onChange={(date: Date | null) => {
 								if (date === null) return;
 								selection.date = new Date(date.getTime());

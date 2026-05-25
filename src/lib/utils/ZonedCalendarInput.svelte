@@ -68,7 +68,11 @@
 		// track locale so the effect re-runs on language change
 		void currentLocale.value;
 		patchLocale();
-		const observer = new MutationObserver(patchLocale);
+		const observer = new MutationObserver(() => {
+			observer.disconnect();
+			patchLocale();
+			observer.observe(container, { childList: true, subtree: true });
+		});
 		observer.observe(container, { childList: true, subtree: true });
 		return () => observer.disconnect();
 	});

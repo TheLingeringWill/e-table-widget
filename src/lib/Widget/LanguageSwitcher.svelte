@@ -14,7 +14,8 @@
 		es: 'Español',
 		pt: 'Português',
 		it: 'Italiano',
-		nl: 'Nederlands'
+		nl: 'Nederlands',
+		ja: '日本語'
 	};
 
 	let open = $state(false);

@@ -145,6 +145,7 @@
 	"selection_searchingAlternatives": "正在搜索其他时段...",
 	"selection_slotUnavailable": "此时段暂不可用",
 	"selection_slotUnavailableDetails": "{time} - {pax}位客人",
+	"selection_paxLockedByPayment": "The number of guests cannot be changed because a card pre-authorization has been placed. Please contact the restaurant at {phone} or by email at {email}.",
 	"standalonePayment_authorizationNotice": "此金额仅在您的卡片上进行预授权，只有在未到店或逾期取消的情况下才会实际扣款。",
 	"standalonePayment_authorized": "支付已授权",
 	"standalonePayment_bankImprint": "卡片预授权",

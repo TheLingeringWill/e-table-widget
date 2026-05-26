@@ -145,6 +145,7 @@
 	"selection_searchingAlternatives": "他の時間帯を検索中...",
 	"selection_slotUnavailable": "この時間帯は現在ご利用いただけません",
 	"selection_slotUnavailableDetails": "{time} - {pax}名様",
+	"selection_paxLockedByPayment": "The number of guests cannot be changed because a card pre-authorization has been placed. Please contact the restaurant at {phone} or by email at {email}.",
 	"standalonePayment_authorizationNotice": "この金額はカードに事前承認されるのみで、無断キャンセルまたは期限後キャンセルの場合にのみ請求されます。",
 	"standalonePayment_authorized": "支払いが承認されました",
 	"standalonePayment_bankImprint": "カード事前承認",

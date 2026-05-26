@@ -145,6 +145,7 @@
 	"selection_searchingAlternatives": "Alternatieven zoeken...",
 	"selection_slotUnavailable": "Dit tijdslot is momenteel niet beschikbaar",
 	"selection_slotUnavailableDetails": "{time} - {pax} gasten",
+	"selection_paxLockedByPayment": "The number of guests cannot be changed because a card pre-authorization has been placed. Please contact the restaurant at {phone} or by email at {email}.",
 	"standalonePayment_authorizationNotice": "Dit bedrag wordt alleen op uw kaart geautoriseerd en wordt alleen afgeschreven bij no-show of late annulering.",
 	"standalonePayment_authorized": "Betaling geautoriseerd",
 	"standalonePayment_bankImprint": "Voorautorisatie van de kaart",

@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { createWidgetApi } from '$lib/server/api/widget-api';
 import type { PageServerLoad } from './$types';
 
-type DisplayState = 'confirmed' | 'canceled' | 'terminal' | 'error';
+type DisplayState = 'confirmed' | 'reconfirmed' | 'canceled' | 'terminal' | 'error';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const rid = Number(params.restaurantId);
@@ -24,14 +24,16 @@ export const load: PageServerLoad = async ({ params }) => {
 	let displayState: DisplayState;
 	let errorCode: string | undefined;
 
-	if (booking.status === 'reconfirmed' || booking.status === 'confirmed') {
+	if (booking.status === 'reconfirmed') {
+		displayState = 'reconfirmed';
+	} else if (booking.status === 'confirmed') {
 		displayState = 'confirmed';
 	} else if (booking.status === 'canceled') {
 		displayState = 'canceled';
 	} else if (booking.availableTransitions?.includes('reconfirmed')) {
 		const result = await api.setBookingStatus(numericId, 'reconfirmed');
 		if (result.ok) {
-			displayState = 'confirmed';
+			displayState = 'reconfirmed';
 			booking = result.data;
 		} else {
 			displayState = 'error';

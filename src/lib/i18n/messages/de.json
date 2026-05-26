@@ -145,6 +145,7 @@
 	"selection_searchingAlternatives": "Suche nach Alternativen...",
 	"selection_slotUnavailable": "Diese Zeit ist derzeit nicht verfügbar",
 	"selection_slotUnavailableDetails": "{time} - {pax} Gäste",
+	"selection_paxLockedByPayment": "The number of guests cannot be changed because a card pre-authorization has been placed. Please contact the restaurant at {phone} or by email at {email}.",
 	"standalonePayment_authorizationNotice": "Dieser Betrag wird lediglich auf Ihrer Karte autorisiert und nur bei Nichterscheinen oder verspäteter Stornierung abgebucht.",
 	"standalonePayment_authorized": "Zahlung autorisiert",
 	"standalonePayment_bankImprint": "Kartenvorautorisierung",

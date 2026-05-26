@@ -111,6 +111,7 @@
 				reservation.pax = res.pax;
 				reservation.seatingTime = res.seatingTime;
 				reservation.notes = res.notes;
+				reservation.paymentStatus = res.paymentStatus;
 				reservationTemp.id = res.id;
 				reservationTemp.serviceId = res.serviceId;
 				reservationTemp.startDate = res.startDate;

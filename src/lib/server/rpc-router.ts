@@ -179,17 +179,12 @@ export const router = {
 			const timeStr = r.date.time;
 			const api = createWidgetApi(rid);
 
-			// Resolve booking status from the live shift+slot at this date/time.
-			// Lenient on lookup miss: a non-PI booking falls back to 'to_confirm'
-			// (the API stays authoritative); a PI booking falls back to
-			// 'confirmed'/'reconfirmed' because the widget only attaches a PI
-			// after createPaymentIntent succeeds, which itself only happens when
-			// capture is required — so PI presence is a reliable capture signal
-			// even if the post-hoc availabilities lookup fails. A waitlist
-			// opt-in falls back to 'waiting_list' so a missed availabilities
-			// lookup doesn't strand a waitlist user on 'to_confirm'.
-			const piFallback: BookingStatus = r.id ? 'reconfirmed' : 'confirmed';
-			let resolvedStatus: BookingStatus = input.paymentIntentId
+			const existingBooking = r.id ? await api.getBooking(Number(r.id)) : null;
+			const existingHasAuthorizedPI =
+				!!existingBooking?.ok && existingBooking.data.paymentStatus === 'requires_capture';
+
+			const piFallback: BookingStatus = 'confirmed';
+			let resolvedStatus: BookingStatus = input.paymentIntentId || existingHasAuthorizedPI
 				? piFallback
 				: input.joiningWaitlist
 					? 'waiting_list'
@@ -219,8 +214,7 @@ export const router = {
 							foreignCaptureEnabled: slot.foreignCaptureEnabled
 						},
 						pax: r.pax,
-						hasPaymentIntentId: !!input.paymentIntentId,
-						hasReservationId: !!r.id,
+						hasPaymentIntentId: !!input.paymentIntentId || existingHasAuthorizedPI,
 						joiningWaitlist: input.joiningWaitlist ?? false
 					});
 				}
@@ -228,14 +222,13 @@ export const router = {
 
 			const result = r.id
 				? await api.updateBooking(Number(r.id), {
-						// PUT shape: seatingTime required (API derives it on create
-						// only); status / paymentIntentId rejected — use PATCH /status
-						// or the standalone-payment route for those transitions.
 						pax: r.pax,
 						date: dateStr,
 						time: timeStr,
 						seatingTime: r.seatingTime ?? 0,
 						source: 'web',
+						status: resolvedStatus,
+						paymentIntentId: input.paymentIntentId ?? null,
 						comment: r.notes ?? null,
 						civility: r.contact.civility,
 						countryCode: r.contact.countryCode,

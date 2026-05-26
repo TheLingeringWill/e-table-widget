@@ -145,6 +145,7 @@
 	"selection_searchingAlternatives": "Recherche d'alternatives...",
 	"selection_slotUnavailable": "Ce créneau est actuellement indisponible",
 	"selection_slotUnavailableDetails": "{time} - {pax} couverts",
+	"selection_paxLockedByPayment": "Le nombre de couverts ne peut pas être modifié car une empreinte bancaire a été autorisée. Veuillez contacter le restaurant au {phone} ou par email à {email}.",
 	"standalonePayment_authorizationNotice": "Ce montant sera uniquement autorisé sur votre carte et ne sera prélevé qu'en cas de non-présentation ou d'annulation tardive.",
 	"standalonePayment_authorized": "Paiement autorisé",
 	"standalonePayment_bankImprint": "Empreinte bancaire",

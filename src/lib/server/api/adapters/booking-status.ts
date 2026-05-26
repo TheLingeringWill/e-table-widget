@@ -23,18 +23,14 @@ export function resolveBookingStatus(args: {
 	slot: SlotOverrides;
 	pax: number;
 	hasPaymentIntentId: boolean;
-	hasReservationId: boolean;
 	joiningWaitlist: boolean;
 }): BookingStatus {
 	const captureEnabled = args.slot.captureEnabled ?? args.shiftCaptureEnabled;
 	const foreignCaptureEnabled = args.slot.foreignCaptureEnabled ?? args.shiftForeignCaptureEnabled;
 
 	// Payment-intent path: capture or foreign-capture being enabled forces
-	// confirmed (widget) or reconfirmed (standalone). The customer's isForeign
-	// is NOT a gate here — per spec, the resolved foreignCaptureEnabled boolean
-	// alone is the trigger, regardless of the booker.
 	if (args.hasPaymentIntentId && (captureEnabled || foreignCaptureEnabled)) {
-		return args.hasReservationId ? 'reconfirmed' : 'confirmed';
+		return 'confirmed';
 	}
 
 	const waitlistEnabled = args.slot.waitlistEnabled ?? args.shiftWaitlistEnabled;

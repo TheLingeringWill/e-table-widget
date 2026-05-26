@@ -10,7 +10,7 @@
 	import { waitlist, resetWaitlist, joinWaitlist, type Slot } from '$lib/states/waitlist.svelte';
 	import { formatTime, hours, minutes } from '$lib/utils/time';
 	import { reservation, reservationTemp } from '$lib/states/reservation.svelte';
-	import { getTranslation, useZonedDateUtils } from '$lib/context.svelte';
+	import { getTranslation, useWidget, useZonedDateUtils } from '$lib/context.svelte';
 	import ZonedCalendarInput from '$lib/utils/ZonedCalendarInput.svelte';
 	import { parseSlotDateAsCalendarDate, slotKey } from '$lib/utils/slotFormat';
 	import { isServiceEnded, isSlotPast } from '$lib/utils/pastFilter';
@@ -25,6 +25,7 @@
 		theme: any;
 	} = $props();
 
+	const widgetCtx = useWidget();
 	const zonedDateUtils = useZonedDateUtils();
 
 	let loadingServices = $state(false);
@@ -481,9 +482,11 @@
 					{/if}
 				</div>
 			{:else if item.id === 'pax'}
+				{@const paxLocked = reservation.paymentStatus === 'requires_capture'}
 				{#each Array.from({ length: (selection.service?.maxPaxPerReservation || 20) - (selection.service?.minPaxPerReservation || 0) + 1 }, (_, i) => i + (selection.service?.minPaxPerReservation || 1)) as pax}
 					<button
 						data-active={pax === selection.pax}
+						disabled={paxLocked && pax !== selection.pax}
 						onclick={() => {
 							selection.pax = pax;
 							pushGtmEvent('pax_selected', {
@@ -493,11 +496,16 @@
 								openAccordion();
 							});
 						}}
-						class="flex items-center justify-center p-5 rounded hover:bg-white hover:bg-opacity-15 w-10 h-10 text-base border-2"
+						class="flex items-center justify-center p-5 rounded hover:bg-white hover:bg-opacity-15 w-10 h-10 text-base border-2 disabled:opacity-30 disabled:cursor-not-allowed"
 					>
 						{pax}
 					</button>
 				{/each}
+				{#if paxLocked}
+					<p class="w-full text-xs opacity-70 mt-2 px-1">
+						{m.selection_paxLockedByPayment({ phone: widgetCtx.restaurant.phone ?? '', email: widgetCtx.restaurant.email ?? '' })}
+					</p>
+				{/if}
 			{:else if item.id === 'slots'}
 				{@const hasAvailableSlots = slots.some(
 					(slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED'

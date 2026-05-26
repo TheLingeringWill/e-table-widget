@@ -29,9 +29,7 @@
 	let iti: ReturnType<typeof intlTelInput> | undefined = $state();
 
 	const showPreAuthNotice = $derived.by(() => {
-		// Modifications never hit createPaymentIntent (see Booking.svelte), so the
-		// pre-auth banner would mis-promise a Stripe step that won't happen.
-		if (reservation.id) return false;
+		if (reservation.paymentStatus === 'requires_capture') return false;
 		if (waitlist.isWaitlist) return false;
 		const svc = selection.service;
 		const slot = selection.slot;

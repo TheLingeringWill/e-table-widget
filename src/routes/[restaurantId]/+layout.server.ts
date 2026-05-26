@@ -71,7 +71,9 @@ export const load = async ({ params, url, setHeaders }) => {
 		theme,
 		whitelist: [],
 		restaurant: {
-			timezone: restaurant.timezone || 'Europe/Paris'
+			timezone: restaurant.timezone || 'Europe/Paris',
+			phone: restaurant.phone,
+			email: restaurant.email
 		},
 		gtmEnabled: widgetDto.gtmEnabled,
 		gtmId: widgetDto.gtmId ?? null
@@ -85,7 +87,9 @@ export const load = async ({ params, url, setHeaders }) => {
 		// — expose it at the top level so the layout doesn't have to reach into widget.
 		restaurant: {
 			name: restaurant.name,
-			timezone: restaurant.timezone || 'Europe/Paris'
+			timezone: restaurant.timezone || 'Europe/Paris',
+			phone: restaurant.phone,
+			email: restaurant.email
 		}
 	};
 };

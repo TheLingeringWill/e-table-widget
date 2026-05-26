@@ -20,7 +20,7 @@ export type WidgetContextData = {
 	name: string;
 	theme: Record<string, unknown>;
 	whitelist: unknown[];
-	restaurant: { timezone: string };
+	restaurant: { timezone: string; phone?: string; email?: string };
 	gtmEnabled: boolean;
 	gtmId: string | null;
 };

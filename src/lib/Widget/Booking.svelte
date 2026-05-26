@@ -56,11 +56,13 @@
 			joiningWaitlist: waitlist.isWaitlist
 		};
 
-		// Edits: skip the deposit pre-check and just update the existing booking.
-		// Waitlist: skip too — a waitlist entry is not a confirmed booking, so no
-		// deposit is owed even if the slot/shift has a capture policy. The server
-		// resolves status='waiting_list' from the live shift+slot in `book`.
-		if (!reservation?.id && !waitlist.isWaitlist) {
+		// Waitlist: skip the deposit pre-check — a waitlist entry is not a
+		// confirmed booking, so no deposit is owed even if the slot/shift has a
+		// capture policy. Edits with an already-authorized PI: skip too — the
+		// deposit was already collected. All other cases (new bookings + edits
+		// moving to a deposit-required slot) go through the pre-check.
+		const alreadyHasPayment = reservation.paymentStatus === 'requires_capture';
+		if (!waitlist.isWaitlist && !alreadyHasPayment) {
 			// New bookings: try to pre-create a PaymentIntent. If the slot has no
 			// deposit policy the API returns 409 "no deposit required" and we fall
 			// through to the regular create path. Otherwise we collect the

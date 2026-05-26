@@ -8,6 +8,7 @@ export const reservation: {
 	seatingTime: number | undefined;
 	notes: string | undefined;
 	confirmedStatus: BookingStatus | undefined;
+	paymentStatus: string | undefined;
 } = $state({
 	id: undefined,
 	serviceId: undefined,
@@ -15,7 +16,8 @@ export const reservation: {
 	pax: undefined,
 	seatingTime: undefined,
 	notes: undefined,
-	confirmedStatus: undefined
+	confirmedStatus: undefined,
+	paymentStatus: undefined
 });
 
 export const resetReservation = () => {
@@ -26,6 +28,7 @@ export const resetReservation = () => {
 	reservation.seatingTime = undefined;
 	reservation.notes = undefined;
 	reservation.confirmedStatus = undefined;
+	reservation.paymentStatus = undefined;
 };
 
 export const reservationTemp: {

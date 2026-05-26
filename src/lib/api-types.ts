@@ -183,16 +183,14 @@ export interface CreateBookingResponseDTO extends BookingDetailResponseDTO {
 	stripeConnectAccountId?: string | null;
 }
 
-// PUT /restaurants/{id}/bookings/{id} has a tighter shape than POST: it requires
-// `seatingTime` (the API derives it from service rules on create but not on
-// update) and rejects `status` / `paymentIntentId` (use PATCH /status for state
-// transitions, and the standalone-payment route for deposit finalization).
 export interface UpdateBookingRequestDTO {
 	pax: number;
 	date: string;
 	time: string;
 	seatingTime: number;
 	source: BookingSource;
+	status?: BookingStatus;
+	paymentIntentId?: string | null;
 	note?: string | null;
 	comment?: string | null;
 	civility?: BookingCivility | null;

@@ -44,11 +44,60 @@
 
 <main class="page">
 	<div class="stack" aria-live="polite">
-		{#if displayState === 'confirmed'}
+		{#if displayState === 'reconfirmed'}
 			<span class="hero-icon" aria-hidden="true">
 				<CheckCircle size={64} weight="regular" color="#16a34a" />
 			</span>
 			<h1 class="hero-title">{m.reconfirm_thanksForReconfirming()}</h1>
+
+			<section class="card card--info">
+				<p class="resto-name">{restaurant.name}</p>
+				{#if restaurant.address}
+					<p class="resto-address">{restaurant.address}</p>
+				{/if}
+				{#if directionsUrl}
+					<a class="directions" href={directionsUrl} target="_blank" rel="noopener noreferrer">
+						{m.common_getDirections()}
+					</a>
+				{/if}
+			</section>
+
+			<section class="card card--details" aria-label={m.reconfirm_detailsAriaLabel()}>
+				<div class="details">
+					<div class="cell">
+						<p class="label">{m.common_date()}</p>
+						<p class="value">{dateShort}</p>
+					</div>
+					<div class="cell">
+						<p class="label">{m.common_time()}</p>
+						<p class="value">{timeShort}</p>
+					</div>
+					<div class="cell">
+						<p class="label">{m.common_guests()}</p>
+						<p class="value">{paxLabel}</p>
+					</div>
+				</div>
+			</section>
+
+			{#if restaurant.phone}
+				<div class="contact">
+					<p class="contact-heading">{m.reconfirm_forMoreInfo()}</p>
+					<a class="contact-phone" href={`tel:${restaurant.phone}`}>{restaurant.phone}</a>
+				</div>
+
+				<div class="footer-info">
+					<p class="footer-name">{restaurant.name}</p>
+					{#if restaurant.address}
+						<p class="footer-address">{restaurant.address}</p>
+					{/if}
+					<a class="contact-phone" href={`tel:${restaurant.phone}`}>{restaurant.phone}</a>
+				</div>
+			{/if}
+		{:else if displayState === 'confirmed'}
+			<span class="hero-icon" aria-hidden="true">
+				<CheckCircle size={64} weight="regular" color="#16a34a" />
+			</span>
+			<h1 class="hero-title">{m.reconfirm_confirmedHeading()}</h1>
 
 			<section class="card card--info">
 				<p class="resto-name">{restaurant.name}</p>

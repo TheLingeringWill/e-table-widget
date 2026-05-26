@@ -145,6 +145,7 @@
 	"selection_searchingAlternatives": "대체 시간 검색 중...",
 	"selection_slotUnavailable": "현재 이 시간대는 이용할 수 없습니다",
 	"selection_slotUnavailableDetails": "{time} - {pax}명",
+	"selection_paxLockedByPayment": "The number of guests cannot be changed because a card pre-authorization has been placed. Please contact the restaurant at {phone} or by email at {email}.",
 	"standalonePayment_authorizationNotice": "이 금액은 카드에 승인만 되며, 노쇼 또는 늦은 취소 시에만 청구됩니다.",
 	"standalonePayment_authorized": "결제 승인 완료",
 	"standalonePayment_bankImprint": "카드 사전 승인",

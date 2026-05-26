@@ -12,6 +12,7 @@ export type LegacyReservationToUpdate = {
 	pax: number;
 	seatingTime: number;
 	notes?: string | null;
+	paymentStatus: string | null;
 	contact: {
 		civility?: BookingCivility | null;
 		countryCode?: string | null;
@@ -33,6 +34,7 @@ export function bookingToLegacyReservation(
 		pax: dto.pax,
 		seatingTime: dto.seatingTime,
 		notes: dto.comment ?? null,
+		paymentStatus: dto.paymentStatus ?? null,
 		contact: {
 			civility: dto.civility ?? null,
 			countryCode: dto.countryCode ?? null,

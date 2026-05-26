@@ -137,6 +137,7 @@ export interface BookingShiftSlotResponseDTO {
 export interface BookingDetailResponseDTO {
 	id: number;
 	restaurantId: number;
+	customerSheetId?: number | null;
 	pax: number;
 	date: string;
 	time: string;
@@ -191,6 +192,7 @@ export interface UpdateBookingRequestDTO {
 	source: BookingSource;
 	status?: BookingStatus;
 	paymentIntentId?: string | null;
+	customerSheetId?: number | null;
 	note?: string | null;
 	comment?: string | null;
 	civility?: BookingCivility | null;

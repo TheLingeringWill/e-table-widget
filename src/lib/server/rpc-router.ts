@@ -229,6 +229,7 @@ export const router = {
 						source: 'web',
 						status: resolvedStatus,
 						paymentIntentId: input.paymentIntentId ?? null,
+						customerSheetId: existingBooking?.ok ? existingBooking.data.customerSheetId ?? null : null,
 						comment: r.notes ?? null,
 						civility: r.contact.civility,
 						countryCode: r.contact.countryCode,

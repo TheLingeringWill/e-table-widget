@@ -1,6 +1,7 @@
 import type { Actions } from '@sveltejs/kit';
 import { error, fail } from '@sveltejs/kit';
 import { createWidgetApi } from '$lib/server/api/widget-api';
+import { isTerminalBookingStatus } from '$lib/api-types';
 import { computeCutoff } from '$lib/utils/cancelCutoff';
 import { tz } from '$lib/utils/tz';
 import * as m from '$lib/paraglide/messages';
@@ -23,6 +24,8 @@ export const load = async ({ params, url }) => {
 	}
 	const booking = bookingResult.data;
 	const restaurantTimezone = tz(aggregate.ok ? aggregate.data.restaurant.timezone : '');
+
+	const isTerminal = isTerminalBookingStatus(booking.status);
 
 	const bookingSlot = { date: booking.date, time: booking.time };
 	const shift = booking.shiftSlot?.shift ?? null;
@@ -82,7 +85,8 @@ export const load = async ({ params, url }) => {
 					? { amountCents: booking.paymentAmountCents }
 					: null
 		},
-		updateStatus
+		updateStatus,
+		isTerminal
 	};
 };
 
@@ -107,6 +111,11 @@ export const actions = {
 			error(404);
 		}
 		const booking = bookingResult.data;
+
+		if (isTerminalBookingStatus(booking.status)) {
+			return fail(403, { error: m.cancel_notAllowedReason() });
+		}
+
 		const restaurantTimezone = tz(aggregate.ok ? aggregate.data.restaurant.timezone : '');
 		const shift = booking.shiftSlot?.shift ?? null;
 		const cancelStatus = computeCutoff({

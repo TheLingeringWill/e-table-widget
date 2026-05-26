@@ -220,6 +220,10 @@ export const router = {
 				}
 			}
 
+			if (r.id && (resolvedStatus === 'waiting_list' || resolvedStatus === 'to_confirm')) {
+				return { status: ApiReturnStatus.MODIFICATION_NOT_ALLOWED, message: null };
+			}
+
 			const result = r.id
 				? await api.updateBooking(Number(r.id), {
 						pax: r.pax,
@@ -232,6 +236,7 @@ export const router = {
 						customerSheetId: existingBooking?.ok ? existingBooking.data.customerSheetId ?? null : null,
 						comment: r.notes ?? null,
 						civility: r.contact.civility,
+						language: event.locals.locale ?? null,
 						countryCode: r.contact.countryCode,
 						firstName: r.contact.firstName ?? null,
 						lastName: r.contact.lastName,

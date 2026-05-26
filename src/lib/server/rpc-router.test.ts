@@ -323,6 +323,129 @@ describe('router.book', () => {
 		);
 	});
 
+	// --- Scenario 10: Modification blocked when resolved status is waiting_list ---
+	it('returns MODIFICATION_NOT_ALLOWED when modifying to waitlist slot', async () => {
+		const mockApi = buildMockWidgetApi({
+			getBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildBookingDetailDTO({ id: 99, paymentStatus: null })
+			}),
+			getAvailabilities: vi.fn().mockResolvedValue(
+				availWithShiftAndSlot(
+					{ waitlistEnabled: true, autoConfirm: false },
+					{ slotPax: 20, slotMaxPax: 20, waitlistEnabled: true }
+				)
+			)
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const input = buildBookInput({
+			reservation: { id: '99', seatingTime: 90 },
+			joiningWaitlist: true
+		});
+		const result = await router.book.call(event, input);
+
+		expect(result).toEqual({ status: ApiReturnStatus.MODIFICATION_NOT_ALLOWED, message: null });
+		expect(mockApi.updateBooking).not.toHaveBeenCalled();
+	});
+
+	// --- Scenario 11: Modification blocked when resolved status is to_confirm ---
+	it('returns MODIFICATION_NOT_ALLOWED when modifying to non-auto-confirm slot', async () => {
+		const mockApi = buildMockWidgetApi({
+			getBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildBookingDetailDTO({ id: 99, paymentStatus: null })
+			}),
+			getAvailabilities: vi.fn().mockResolvedValue(
+				availWithShiftAndSlot({ autoConfirm: false, waitlistEnabled: false }, {})
+			)
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const input = buildBookInput({ reservation: { id: '99', seatingTime: 90 } });
+		const result = await router.book.call(event, input);
+
+		expect(result).toEqual({ status: ApiReturnStatus.MODIFICATION_NOT_ALLOWED, message: null });
+		expect(mockApi.updateBooking).not.toHaveBeenCalled();
+	});
+
+	// --- Scenario 12: Modification allowed when resolved status is confirmed ---
+	it('allows modification when slot resolves to confirmed (auto-confirm)', async () => {
+		const mockApi = buildMockWidgetApi({
+			getBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildBookingDetailDTO({ id: 99, paymentStatus: null })
+			}),
+			getAvailabilities: vi.fn().mockResolvedValue(
+				availWithShiftAndSlot({ autoConfirm: true }, {})
+			),
+			updateBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: { id: 99, status: 'confirmed' }
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const input = buildBookInput({ reservation: { id: '99', seatingTime: 90 } });
+		const result = await router.book.call(event, input);
+
+		expect(result.status).toBe(ApiReturnStatus.OK);
+		expect(result.bookingStatus).toBe('confirmed');
+		expect(mockApi.updateBooking).toHaveBeenCalled();
+	});
+
+	// --- Scenario 13: New booking to waitlist still works (guard is modification-only) ---
+	it('allows new booking to waitlist (guard only applies to modifications)', async () => {
+		const mockApi = buildMockWidgetApi({
+			getAvailabilities: vi.fn().mockResolvedValue(
+				availWithShiftAndSlot(
+					{ waitlistEnabled: true },
+					{ slotPax: 20, slotMaxPax: 20, waitlistEnabled: true }
+				)
+			),
+			createBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: { id: 20, status: 'waiting_list' }
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const input = buildBookInput({ joiningWaitlist: true });
+		const result = await router.book.call(event, input);
+
+		expect(result.status).toBe(ApiReturnStatus.OK);
+		expect(result.bookingStatus).toBe('waiting_list');
+		expect(mockApi.createBooking).toHaveBeenCalled();
+	});
+
+	// --- Scenario 14: Modification with existing PI to auto-confirm slot works ---
+	it('allows modification with existing PI when slot auto-confirms', async () => {
+		const mockApi = buildMockWidgetApi({
+			getBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildBookingDetailDTO({ id: 99, paymentStatus: 'requires_capture' })
+			}),
+			getAvailabilities: vi.fn().mockResolvedValue(
+				availWithShiftAndSlot(
+					{ autoConfirm: true, captureEnabled: false },
+					{ captureEnabled: false }
+				)
+			),
+			updateBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: { id: 99, status: 'confirmed' }
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const input = buildBookInput({ reservation: { id: '99', seatingTime: 90 } });
+		const result = await router.book.call(event, input);
+
+		expect(result.status).toBe(ApiReturnStatus.OK);
+		expect(result.bookingStatus).toBe('confirmed');
+		expect(mockApi.updateBooking).toHaveBeenCalled();
+	});
+
 	// --- Error handling ---
 	it('returns CUSTOMER_ALREADY_BOOKED_SERVICE on duplicate booking', async () => {
 		const mockApi = buildMockWidgetApi({

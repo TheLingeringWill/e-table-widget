@@ -196,6 +196,7 @@ export interface UpdateBookingRequestDTO {
 	note?: string | null;
 	comment?: string | null;
 	civility?: BookingCivility | null;
+	language?: string | null;
 	countryCode?: string | null;
 	firstName?: string | null;
 	lastName?: string | null;
@@ -257,7 +258,8 @@ export const ApiReturnStatus = {
 	OK: 'OK',
 	RESERVATION_DATE_MISMATCH_SERVICE_TIME: 'RESERVATION_DATE_MISMATCH_SERVICE_TIME',
 	CUSTOMER_ALREADY_BOOKED_SERVICE: 'CUSTOMER_ALREADY_BOOKED_SERVICE',
-	REQUIRES_PAYMENT_INTENT: 'REQUIRES_PAYMENT_INTENT'
+	REQUIRES_PAYMENT_INTENT: 'REQUIRES_PAYMENT_INTENT',
+	MODIFICATION_NOT_ALLOWED: 'MODIFICATION_NOT_ALLOWED'
 } as const;
 
 // UI-facing slot type with the derived semantic state attached. The adapter
@@ -309,6 +311,18 @@ export interface LegacyService {
 // can never drift from the restaurant clock no matter what timezone the
 // browser is in.
 export type SlotTimestamp = { date: string; time: string };
+
+export const TERMINAL_BOOKING_STATUSES: ReadonlySet<BookingStatus> = new Set([
+	'arrived',
+	'seated',
+	'finished',
+	'no_show',
+	'canceled'
+]);
+
+export function isTerminalBookingStatus(status: BookingStatus): boolean {
+	return TERMINAL_BOOKING_STATUSES.has(status);
+}
 
 export interface LegacySlot {
 	date: string; // 'YYYY-MM-DD' in restaurant local clock

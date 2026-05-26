@@ -26,6 +26,8 @@
 				return m.payment_reservationPayloadMissing();
 			case 'BOOKING_CREATE_AFTER_PAYMENT_FAILED':
 				return m.payment_createBookingFailed();
+			case ApiReturnStatus.MODIFICATION_NOT_ALLOWED:
+				return m.error_modificationNotAllowed();
 			default:
 				return null;
 		}

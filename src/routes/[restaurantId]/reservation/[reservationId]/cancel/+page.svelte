@@ -13,8 +13,8 @@
 	let success = $state(false);
 	let error = $state(false);
 
-	const canceled = $derived(
-		success || ['USER_CANCELED', 'RESTAURANT_CANCELED'].includes(reservation.status)
+	const alreadyCanceled = $derived(
+		['USER_CANCELED', 'RESTAURANT_CANCELED'].includes(reservation.status)
 	);
 
 	function fmtCutoff(cutoff: { date: string; time: string }) {
@@ -89,11 +89,26 @@
 			</div>
 		</div>
 
-		{#if canceled}
+		{#if success || alreadyCanceled}
 			<div
 				class="rounded-lg bg-green-50 border border-green-200 text-green-800 text-sm font-medium px-4 py-3 text-center"
 			>
 				{m.cancel_canceled()}
+			</div>
+			{#if widget}
+				<button
+					type="button"
+					onclick={() => goto(`/${widget.id}`)}
+					class="w-full py-2.5 md:py-3 rounded-lg border border-gray-300 text-gray-900 font-semibold hover:bg-gray-50 transition-colors text-sm"
+				>
+					{m.cancel_makeAnother()}
+				</button>
+			{/if}
+		{:else if data.isTerminal}
+			<div
+				class="rounded-lg bg-gray-50 border border-gray-200 text-gray-700 text-sm font-medium px-4 py-3 text-center"
+			>
+				{m.manage_terminalStatus()}
 			</div>
 			{#if widget}
 				<button
@@ -166,11 +181,11 @@
 					<p class="text-sm md:text-[15px] font-semibold text-gray-900">{m.cancel_cancelIntro()}</p>
 				{/if}
 
-				{#if error}
+				{#if error || form?.error}
 					<div
 						class="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm font-medium px-4 py-3"
 					>
-						{m.cancel_error()}
+						{form?.error ?? m.cancel_error()}
 					</div>
 				{/if}
 

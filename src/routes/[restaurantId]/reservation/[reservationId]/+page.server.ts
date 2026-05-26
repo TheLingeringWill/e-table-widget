@@ -1,5 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import { createWidgetApi } from '$lib/server/api/widget-api';
+import { isTerminalBookingStatus } from '$lib/api-types';
 import { computeCutoff } from '$lib/utils/cancelCutoff';
 import { tz } from '$lib/utils/tz';
 
@@ -24,6 +25,10 @@ export const load = async ({ params, url }) => {
 		error(404);
 	}
 	const booking = bookingResult.data;
+
+	if (isTerminalBookingStatus(booking.status)) {
+		redirect(303, `/${restaurantId}/reservation/${reservationId}/cancel`);
+	}
 
 	// Gate entry to the editor on the shift's update cutoff. If the window has
 	// closed, send the user to the management page where the locked-state

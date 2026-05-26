@@ -505,6 +505,16 @@
 					<p class="w-full text-xs opacity-70 mt-2 px-1">
 						{m.selection_paxLockedByPayment({ phone: widgetCtx.restaurant.phone ?? '', email: widgetCtx.restaurant.email ?? '' })}
 					</p>
+				{:else if selection.service && (widgetCtx.restaurant.phone || widgetCtx.restaurant.email)}
+					{@const phone = widgetCtx.restaurant.phone}
+					{@const email = widgetCtx.restaurant.email}
+					{@const maxPax = selection.service.maxPaxPerReservation}
+					{@const phonePart = phone ? `<a href="tel:${phone}" style="text-decoration:underline;opacity:1;font-weight:bold">${phone}</a>` : ''}
+					{@const emailPart = email ? `<a href="mailto:${email}" style="text-decoration:underline;opacity:1;font-weight:bold">${email}</a>` : ''}
+					{@const contactInfo = [phonePart, emailPart].filter(Boolean).join(` ${m.selection_or()} `)}
+					<p class="w-full text-xs opacity-70 mt-2 px-1">
+						{@html m.selection_groupContactNotice({ maxPax: String(maxPax), contactInfo })}
+					</p>
 				{/if}
 			{:else if item.id === 'slots'}
 				{@const hasAvailableSlots = slots.some(
@@ -563,9 +573,11 @@
 						</div>
 					{:else if slots.length > 0}
 						<!-- Regular slot list (all clickable, no color dots) -->
+						{@const isModifying = !!reservation.id}
 						{@const visibleSlots = slots.filter((s) => {
 							if (s.state === 'CLOSED') return false;
 							if (s.state === 'FULL') {
+								if (isModifying) return false;
 								return !!(selection.service?.waitlistEnabled || s.waitlistEnabled);
 							}
 							return true;

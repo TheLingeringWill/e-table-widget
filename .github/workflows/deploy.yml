@@ -28,14 +28,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Unit + integration test suites are flagged broken in widget/CLAUDE.md
-      # during the in-progress REST migration. CI is reduced to lint + svelte-check
-      # until those suites are restored.
-      #- name: Lint
-      #  run: pnpm lint
-
-      #- name: Svelte check
-      #  run: pnpm check
+      - name: Unit tests
+        run: pnpm vitest run
 
   deploy-staging:
     name: Deploy to staging

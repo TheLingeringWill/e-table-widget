@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveBookingStatus } from './booking-status';
+import { resolveBookingStatus, wouldRequireConfirmation } from './booking-status';
 
 const BASE_ARGS = {
 	shiftAutoConfirm: false,
@@ -178,5 +178,60 @@ describe('resolveBookingStatus', () => {
 				slot: { slotPax: 20, slotMaxPax: 20 }
 			})
 		).toBe('to_confirm');
+	});
+});
+
+const WRC_BASE = {
+	shiftAutoConfirm: false,
+	shiftAutoConfirmMaxPax: null as number | null,
+	shiftCaptureEnabled: false,
+	shiftForeignCaptureEnabled: false,
+	slot: { captureEnabled: null as boolean | null, foreignCaptureEnabled: null as boolean | null },
+	pax: 2
+};
+
+function wrc(overrides: Record<string, unknown>) {
+	const merged = { ...WRC_BASE, ...overrides };
+	if (overrides.slot) {
+		merged.slot = { ...WRC_BASE.slot, ...(overrides.slot as Record<string, unknown>) };
+	}
+	return wouldRequireConfirmation(merged as typeof WRC_BASE);
+}
+
+describe('wouldRequireConfirmation', () => {
+	it('returns true when no auto-confirm, no capture', () => {
+		expect(wrc({})).toBe(true);
+	});
+
+	it('returns false when auto-confirm enabled, no pax cap', () => {
+		expect(wrc({ shiftAutoConfirm: true })).toBe(false);
+	});
+
+	it('returns false when auto-confirm + pax within cap', () => {
+		expect(wrc({ shiftAutoConfirm: true, shiftAutoConfirmMaxPax: 4, pax: 2 })).toBe(false);
+	});
+
+	it('returns true when auto-confirm + pax exceeds cap', () => {
+		expect(wrc({ shiftAutoConfirm: true, shiftAutoConfirmMaxPax: 1, pax: 2 })).toBe(true);
+	});
+
+	it('returns false when shift capture enabled', () => {
+		expect(wrc({ shiftCaptureEnabled: true })).toBe(false);
+	});
+
+	it('returns false when shift foreign capture enabled', () => {
+		expect(wrc({ shiftForeignCaptureEnabled: true })).toBe(false);
+	});
+
+	it('returns false when slot-level capture overrides shift', () => {
+		expect(wrc({ slot: { captureEnabled: true } })).toBe(false);
+	});
+
+	it('returns false when slot-level foreignCapture overrides shift', () => {
+		expect(wrc({ slot: { foreignCaptureEnabled: true } })).toBe(false);
+	});
+
+	it('returns false when both capture and auto-confirm active', () => {
+		expect(wrc({ shiftAutoConfirm: true, shiftCaptureEnabled: true })).toBe(false);
 	});
 });

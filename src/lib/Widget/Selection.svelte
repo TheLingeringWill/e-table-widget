@@ -122,7 +122,8 @@
 			restaurantId,
 			serviceId: selection.service.id,
 			pax: selection.pax,
-			date: zonedDateUtils.format('YYYY-MM-DD', selection.date)
+			date: zonedDateUtils.format('YYYY-MM-DD', selection.date),
+			isModifying: !!reservation.id
 		});
 		if (error) {
 			console.log(error);

@@ -63,3 +63,25 @@ export function resolveBookingStatus(args: {
 
 	return 'to_confirm';
 }
+
+export function wouldRequireConfirmation(args: {
+	shiftAutoConfirm: boolean;
+	shiftAutoConfirmMaxPax: number | null;
+	shiftCaptureEnabled: boolean;
+	shiftForeignCaptureEnabled: boolean;
+	slot: Pick<SlotOverrides, 'captureEnabled' | 'foreignCaptureEnabled'>;
+	pax: number;
+}): boolean {
+	const captureEnabled = args.slot.captureEnabled ?? args.shiftCaptureEnabled;
+	const foreignCaptureEnabled = args.slot.foreignCaptureEnabled ?? args.shiftForeignCaptureEnabled;
+	if (captureEnabled || foreignCaptureEnabled) return false;
+
+	if (
+		args.shiftAutoConfirm &&
+		(args.shiftAutoConfirmMaxPax == null || args.pax <= args.shiftAutoConfirmMaxPax)
+	) {
+		return false;
+	}
+
+	return true;
+}

@@ -20,7 +20,7 @@ import { createWidgetApi } from '$lib/server/api/widget-api';
 import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
 import { shiftToLegacyService, type LiveDay } from '$lib/server/api/adapters/service';
 import { filterByPax, slotToLegacySlot } from '$lib/server/api/adapters/slot-state';
-import { resolveBookingStatus } from '$lib/server/api/adapters/booking-status';
+import { resolveBookingStatus, wouldRequireConfirmation } from '$lib/server/api/adapters/booking-status';
 import { ApiReturnStatus } from '$lib/api-types';
 import type {
 	BookingStatus,
@@ -86,7 +86,7 @@ export const router = {
 		return shifts.filter((s) => s.bookable === true).map(shiftToLegacyService);
 	}),
 	getServiceSlots: procedure(
-		object({ restaurantId: string(), serviceId: string(), pax: number(), date: string() }),
+		object({ restaurantId: string(), serviceId: string(), pax: number(), date: string(), isModifying: optional(boolean()) }),
 		async ({ input }) => {
 			// REST replacement for `reservator.getServiceSlots`. The new endpoint
 			// takes a date range with no pax filter — we send a single-day
@@ -115,7 +115,26 @@ export const router = {
 			const flatSlots = days.flatMap((day) =>
 				day.shifts
 					.filter((shift) => shift.id === targetServiceId)
-					.flatMap((shift) => shift.slots.map((slot) => ({ ...slot, date: day.date })))
+					.flatMap((shift) => {
+						let slots = shift.slots.map((slot) => ({ ...slot, date: day.date }));
+						if (input.isModifying) {
+							slots = slots.filter(
+								(slot) =>
+									!wouldRequireConfirmation({
+										shiftAutoConfirm: shift.autoConfirm ?? false,
+										shiftAutoConfirmMaxPax: shift.autoConfirmMaxPax ?? null,
+										shiftCaptureEnabled: shift.captureEnabled ?? false,
+										shiftForeignCaptureEnabled: shift.foreignCaptureEnabled ?? false,
+										slot: {
+											captureEnabled: slot.captureEnabled ?? null,
+											foreignCaptureEnabled: slot.foreignCaptureEnabled ?? null
+										},
+										pax: input.pax
+									})
+							);
+						}
+						return slots;
+					})
 			);
 			return filterByPax(flatSlots, input.pax).map((s) => slotToLegacySlot(s, input.pax));
 		}

@@ -254,7 +254,6 @@ export const router = {
 						date: dateStr,
 						time: timeStr,
 						seatingTime: r.seatingTime ?? 0,
-						source: 'web',
 						status: resolvedStatus,
 						paymentIntentId: input.paymentIntentId ?? null,
 						customerSheetId: existingBooking?.ok ? existingBooking.data.customerSheetId ?? null : null,

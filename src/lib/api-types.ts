@@ -189,7 +189,7 @@ export interface UpdateBookingRequestDTO {
 	date: string;
 	time: string;
 	seatingTime: number;
-	source: BookingSource;
+	source?: BookingSource;
 	status?: BookingStatus;
 	paymentIntentId?: string | null;
 	customerSheetId?: number | null;

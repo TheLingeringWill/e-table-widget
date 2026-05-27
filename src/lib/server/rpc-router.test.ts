@@ -349,15 +349,18 @@ describe('router.book', () => {
 		expect(mockApi.updateBooking).not.toHaveBeenCalled();
 	});
 
-	// --- Scenario 11: Modification blocked when resolved status is to_confirm ---
-	it('returns MODIFICATION_NOT_ALLOWED when modifying to non-auto-confirm slot', async () => {
+	// --- Scenario 11: Modification blocked when resolved status is to_confirm (no capture) ---
+	it('returns MODIFICATION_NOT_ALLOWED when modifying to non-auto-confirm slot without capture', async () => {
 		const mockApi = buildMockWidgetApi({
 			getBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: buildBookingDetailDTO({ id: 99, paymentStatus: null })
 			}),
 			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot({ autoConfirm: false, waitlistEnabled: false }, {})
+				availWithShiftAndSlot(
+					{ autoConfirm: false, waitlistEnabled: false, captureEnabled: false },
+					{ captureEnabled: false }
+				)
 			)
 		});
 		mockedCreateWidgetApi.mockReturnValue(mockApi);
@@ -443,6 +446,34 @@ describe('router.book', () => {
 
 		expect(result.status).toBe(ApiReturnStatus.OK);
 		expect(result.bookingStatus).toBe('confirmed');
+		expect(mockApi.updateBooking).toHaveBeenCalled();
+	});
+
+	// --- Scenario 15: Modification allowed to capture-enabled, non-auto-confirm slot ---
+	it('allows modification to to_confirm slot when capture is enabled', async () => {
+		const mockApi = buildMockWidgetApi({
+			getBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildBookingDetailDTO({ id: 99, paymentStatus: null })
+			}),
+			getAvailabilities: vi.fn().mockResolvedValue(
+				availWithShiftAndSlot(
+					{ autoConfirm: false, waitlistEnabled: false, captureEnabled: true },
+					{ captureEnabled: true }
+				)
+			),
+			updateBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: { id: 99, status: 'to_confirm' }
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const input = buildBookInput({ reservation: { id: '99', seatingTime: 90 } });
+		const result = await router.book.call(event, input);
+
+		expect(result.status).toBe(ApiReturnStatus.OK);
+		expect(result.bookingStatus).toBe('to_confirm');
 		expect(mockApi.updateBooking).toHaveBeenCalled();
 	});
 

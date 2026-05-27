@@ -208,6 +208,7 @@ export const router = {
 				: input.joiningWaitlist
 					? 'waiting_list'
 					: 'to_confirm';
+			let slotHasCapture = false;
 			const availResult = await api.getAvailabilities({
 				startDate: dateStr,
 				endDate: dateStr
@@ -217,6 +218,10 @@ export const router = {
 				const shift = days.flatMap((d) => d.shifts).find((s) => s.id === Number(r.serviceId));
 				const slot = shift?.slots.find((sl) => sl.time === timeStr);
 				if (shift && slot) {
+					const captureEnabled = slot.captureEnabled ?? (shift.captureEnabled ?? false);
+					const foreignCaptureEnabled =
+						slot.foreignCaptureEnabled ?? (shift.foreignCaptureEnabled ?? false);
+					slotHasCapture = !!(captureEnabled || foreignCaptureEnabled);
 					resolvedStatus = resolveBookingStatus({
 						shiftAutoConfirm: shift.autoConfirm ?? false,
 						shiftAutoConfirmMaxPax: shift.autoConfirmMaxPax ?? null,
@@ -239,7 +244,7 @@ export const router = {
 				}
 			}
 
-			if (r.id && (resolvedStatus === 'waiting_list' || resolvedStatus === 'to_confirm')) {
+			if (r.id && (resolvedStatus === 'waiting_list' || (resolvedStatus === 'to_confirm' && !slotHasCapture))) {
 				return { status: ApiReturnStatus.MODIFICATION_NOT_ALLOWED, message: null };
 			}
 

@@ -22,6 +22,7 @@ import 'dayjs/locale/ko';
 import 'dayjs/locale/nl';
 import 'dayjs/locale/pt';
 import 'dayjs/locale/zh';
+import 'dayjs/locale/ru';
 import { currentLocale } from '$lib/states/locale.svelte';
 
 export function formatSlotDateTime(date: string, time: string, format: string): string {

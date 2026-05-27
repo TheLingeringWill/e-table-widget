@@ -17,7 +17,8 @@
 		nl: 'Nederlands',
 		ja: '日本語',
 		zh: '中文',
-		ko: '한국어'
+		ko: '한국어',
+		ru: 'Русский'
 	};
 
 	let open = $state(false);

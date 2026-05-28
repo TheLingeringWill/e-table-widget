@@ -258,7 +258,7 @@ export const router = {
 						status: resolvedStatus,
 						paymentIntentId: input.paymentIntentId ?? null,
 						customerSheetId: existingBooking?.ok ? existingBooking.data.customerSheetId ?? null : null,
-						comment: r.notes ?? null,
+						comment: r.notes || (existingBooking?.ok ? existingBooking.data.comment ?? null : null),
 						civility: r.contact.civility,
 						language: event.locals.locale ?? null,
 						countryCode: r.contact.countryCode,

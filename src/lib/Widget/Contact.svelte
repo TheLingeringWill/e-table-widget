@@ -128,6 +128,11 @@
 		} else {
 			lastNameErrors = [];
 		}
+		if (!contact.firstName) {
+			firstNameErrors = [m.contact_firstNameRequired()];
+		} else {
+			firstNameErrors = [];
+		}
 		normalizeEmail();
 		if (!contact.email) {
 			emailErrors = [m.contact_emailRequired()];
@@ -141,6 +146,7 @@
 		if (
 			civilityErrors.length ||
 			lastNameErrors.length ||
+			firstNameErrors.length ||
 			emailErrors.length ||
 			phoneErrors.length
 		) {

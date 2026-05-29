@@ -157,7 +157,7 @@ export const router = {
 					contact: object({
 						civility: picklist(['mr', 'mrs', 'other']),
 						countryCode: string(),
-						firstName: optional(string()),
+						firstName: string(),
 						lastName: string(),
 						phone: string(),
 						email: string()
@@ -278,7 +278,7 @@ export const router = {
 							civility: r.contact.civility,
 							language: event.locals.locale,
 							countryCode: r.contact.countryCode,
-							firstName: r.contact.firstName ?? null,
+							firstName: r.contact.firstName,
 							lastName: r.contact.lastName,
 							email: r.contact.email,
 							phone: normalizedPhone,

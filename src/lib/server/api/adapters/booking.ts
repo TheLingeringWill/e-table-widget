@@ -13,6 +13,10 @@ export type LegacyReservationToUpdate = {
 	seatingTime: number;
 	notes?: string | null;
 	paymentStatus: string | null;
+	// Saved-card (SetupIntent) discriminator — its presence means a deposit
+	// guarantee is in place (mirrors the app). The widget uses it to lock pax
+	// on modify, the same way `requires_capture` locks for the legacy hold.
+	stripeSetupIntentId: string | null;
 	contact: {
 		civility?: BookingCivility | null;
 		countryCode?: string | null;
@@ -35,6 +39,7 @@ export function bookingToLegacyReservation(
 		seatingTime: dto.seatingTime,
 		notes: dto.comment ?? null,
 		paymentStatus: dto.paymentStatus ?? null,
+		stripeSetupIntentId: dto.stripeSetupIntentId ?? null,
 		contact: {
 			civility: dto.civility ?? null,
 			countryCode: dto.countryCode ?? null,

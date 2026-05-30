@@ -9,6 +9,9 @@ export const reservation: {
 	notes: string | undefined;
 	confirmedStatus: BookingStatus | undefined;
 	paymentStatus: string | undefined;
+	// Present when the booking already has a saved-card SetupIntent. Locks pax
+	// on modify, mirroring the legacy `requires_capture` hold.
+	stripeSetupIntentId: string | undefined;
 } = $state({
 	id: undefined,
 	serviceId: undefined,
@@ -17,7 +20,8 @@ export const reservation: {
 	seatingTime: undefined,
 	notes: undefined,
 	confirmedStatus: undefined,
-	paymentStatus: undefined
+	paymentStatus: undefined,
+	stripeSetupIntentId: undefined
 });
 
 export const resetReservation = () => {
@@ -29,6 +33,7 @@ export const resetReservation = () => {
 	reservation.notes = undefined;
 	reservation.confirmedStatus = undefined;
 	reservation.paymentStatus = undefined;
+	reservation.stripeSetupIntentId = undefined;
 };
 
 export const reservationTemp: {

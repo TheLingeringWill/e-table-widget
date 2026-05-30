@@ -3,7 +3,7 @@ import { isTerminalBookingStatus, TERMINAL_BOOKING_STATUSES } from './api-types'
 import type { BookingStatus } from './api-types';
 
 describe('isTerminalBookingStatus', () => {
-	const terminalStatuses: BookingStatus[] = ['arrived', 'seated', 'finished', 'no_show', 'canceled'];
+	const terminalStatuses: BookingStatus[] = ['arrived', 'seated', 'ended', 'no_show', 'canceled'];
 	const nonTerminalStatuses: BookingStatus[] = [
 		'to_confirm',
 		'waiting_list',

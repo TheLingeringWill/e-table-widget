@@ -5,8 +5,13 @@
 // Sourced from https://jonathan-api-local.e-table.co/api-docs/openapi.json.
 // Refresh whenever the adapter touches a new field (see PRD §8 risk row 4).
 
+// Mirrors the API's domain BookingStatus enum (api/src/domain/model/booking.rs).
+// Note: the end-of-visit state is `ended` (not `finished`), and `to_reconfirm`
+// is a distinct status the API emits — both must be present or status-driven
+// branches silently miss those bookings.
 export type BookingStatus =
 	| 'to_confirm'
+	| 'to_reconfirm'
 	| 'waiting_list'
 	| 'confirmed'
 	| 'reconfirmed'
@@ -15,7 +20,7 @@ export type BookingStatus =
 	| 'requires_payment_intent'
 	| 'arrived'
 	| 'seated'
-	| 'finished';
+	| 'ended';
 
 export type BookingSource = 'web' | 'messenger' | 'thefork' | 'api' | 'phone' | 'walk_in' | 'other';
 
@@ -155,6 +160,7 @@ export interface BookingDetailResponseDTO {
 	availableTransitions: BookingStatus[];
 	shiftSlot?: BookingShiftSlotResponseDTO | null;
 	stripePaymentIntentId?: string | null;
+	stripeSetupIntentId?: string | null;
 	paymentStatus?: string | null;
 	paymentAmountCents?: number | null;
 	paymentCapturedAt?: string | null;
@@ -177,6 +183,7 @@ export interface CreateBookingRequestDTO {
 	email?: string | null;
 	phone?: string | null;
 	paymentIntentId?: string | null;
+	setupIntentId?: string | null;
 }
 
 export interface CreateBookingResponseDTO extends BookingDetailResponseDTO {
@@ -192,6 +199,11 @@ export interface UpdateBookingRequestDTO {
 	source: BookingSource;
 	status?: BookingStatus;
 	paymentIntentId?: string | null;
+	// Saved-card deposit on modify: the `SetupIntent` (`seti_…`) the widget
+	// confirmed client-side when the guest moved an existing booking into a
+	// deposit-required slot. The API verifies it succeeded and persists
+	// `stripeSetupIntentId` — without this the saved card never reaches the booking.
+	setupIntentId?: string | null;
 	customerSheetId?: number | null;
 	note?: string | null;
 	comment?: string | null;
@@ -243,6 +255,41 @@ export interface CreatePaymentIntentResponseDTO {
 	clientSecret: string;
 	amountCents: number;
 	stripeConnectAccountId: string;
+}
+
+// Saved-card (SetupIntent) model — the migration's replacement for the manual
+// PaymentIntent hold. A SetupIntent saves the guest's card without holding
+// funds; the card is charged later only on no-show / late cancel. The presence
+// of `setupIntentId` on a booking is the discriminator for the saved-card model
+// (vs. the legacy `stripePaymentIntentId` hold). Mirrors the PaymentIntent DTOs.
+export interface CreateSetupIntentRequestDTO {
+	pax: number;
+	date: string;
+	time: string;
+	countryCode?: string;
+	email?: string;
+	firstName?: string;
+	lastName?: string;
+}
+
+export interface CreateSetupIntentResponseDTO {
+	setupIntentId: string;
+	clientSecret: string;
+	amountCents: number;
+	stripeConnectAccountId: string;
+}
+
+export interface SetupIntentResponseDTO {
+	id: string;
+	clientSecret: string;
+	amountCents: number;
+	status: string;
+	// Populated from the SetupIntent's `booking_id` metadata, set for
+	// staff-initiated setups (the booking exists before the card is saved). On the
+	// standalone save-card link (`{origin}/{rid}/pay/{seti_...}`) the GET response
+	// carries the owning bookingId so the confirm-saved-card RPC can finalize it.
+	bookingId?: number;
+	stripeConnectAccountId?: string;
 }
 
 export type ApiErrorResult = {
@@ -315,7 +362,7 @@ export type SlotTimestamp = { date: string; time: string };
 export const TERMINAL_BOOKING_STATUSES: ReadonlySet<BookingStatus> = new Set([
 	'arrived',
 	'seated',
-	'finished',
+	'ended',
 	'no_show',
 	'canceled'
 ]);

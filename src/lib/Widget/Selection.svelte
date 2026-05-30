@@ -483,7 +483,8 @@
 					{/if}
 				</div>
 			{:else if item.id === 'pax'}
-				{@const paxLocked = reservation.paymentStatus === 'requires_capture'}
+				{@const paxLocked =
+					reservation.paymentStatus === 'requires_capture' || !!reservation.stripeSetupIntentId}
 				{#each Array.from({ length: (selection.service?.maxPaxPerReservation || 20) - (selection.service?.minPaxPerReservation || 0) + 1 }, (_, i) => i + (selection.service?.minPaxPerReservation || 1)) as pax}
 					<button
 						data-active={pax === selection.pax}

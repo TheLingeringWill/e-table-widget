@@ -61,7 +61,7 @@ describe('reservation edit page load', () => {
 		mockedComputeCutoff.mockReturnValue({ allowed: true, reason: null, cutoff: { date: '2026-06-01', time: '12:00' } });
 	});
 
-	const terminalStatuses: BookingStatus[] = ['arrived', 'seated', 'finished', 'no_show', 'canceled'];
+	const terminalStatuses: BookingStatus[] = ['arrived', 'seated', 'ended', 'no_show', 'canceled'];
 
 	it.each(terminalStatuses)(
 		'redirects to cancel page when booking status is %s',

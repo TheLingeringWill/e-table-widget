@@ -20,7 +20,10 @@ import { createWidgetApi } from '$lib/server/api/widget-api';
 import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
 import { shiftToLegacyService, type LiveDay } from '$lib/server/api/adapters/service';
 import { filterByPax, slotToLegacySlot } from '$lib/server/api/adapters/slot-state';
-import { resolveBookingStatus, wouldRequireConfirmation } from '$lib/server/api/adapters/booking-status';
+import {
+	resolveBookingStatus,
+	wouldRequireConfirmation
+} from '$lib/server/api/adapters/booking-status';
 import { ApiReturnStatus } from '$lib/api-types';
 import type {
 	BookingStatus,
@@ -86,7 +89,13 @@ export const router = {
 		return shifts.filter((s) => s.bookable === true).map(shiftToLegacyService);
 	}),
 	getServiceSlots: procedure(
-		object({ restaurantId: string(), serviceId: string(), pax: number(), date: string(), isModifying: optional(boolean()) }),
+		object({
+			restaurantId: string(),
+			serviceId: string(),
+			pax: number(),
+			date: string(),
+			isModifying: optional(boolean())
+		}),
 		async ({ input }) => {
 			// REST replacement for `reservator.getServiceSlots`. The new endpoint
 			// takes a date range with no pax filter — we send a single-day
@@ -165,18 +174,20 @@ export const router = {
 				})
 			),
 			paymentIntentId: optional(string()),
+			setupIntentId: optional(string()),
 			joiningWaitlist: optional(boolean())
 		}),
 		async ({ input, event }) => {
 			// REST replacement for `reservator.book`. Call shapes from the widget UI:
 			//   1. Initial submit (Booking.svelte): full reservation payload,
-			//      no paymentIntentId. May return REQUIRES_PAYMENT_INTENT for
-			//      services with deposits — Stripe Elements then mints/confirms
-			//      a payment intent on the client.
+			//      no paymentIntentId/setupIntentId. May return REQUIRES_PAYMENT_INTENT
+			//      for services with deposits — Stripe Elements then mints/confirms
+			//      a setup intent on the client.
 			//   2. After Stripe confirm (Payment.svelte): full reservation
-			//      payload PLUS paymentIntentId. The API verifies the intent
-			//      is in `requires_capture` and persists the booking with
-			//      status = Reconfirmed.
+			//      payload PLUS setupIntentId (saved-card model) — the API verifies
+			//      the SetupIntent succeeded and persists the booking. The legacy
+			//      paymentIntentId path (manual hold, `requires_capture`) is still
+			//      accepted for backward compatibility.
 			const rid = input.reservation ? Number(input.reservation.restaurantId) : ridFromEvent(event);
 			if (!Number.isFinite(rid)) {
 				throw new Error('book: restaurant id missing');
@@ -202,12 +213,16 @@ export const router = {
 			const existingHasAuthorizedPI =
 				!!existingBooking?.ok && existingBooking.data.paymentStatus === 'requires_capture';
 
+			// A saved-card SetupIntent guarantees the booking the same way a
+			// captured PaymentIntent hold does, so treat either as "has payment".
+			const hasPayment = !!input.paymentIntentId || !!input.setupIntentId;
 			const piFallback: BookingStatus = 'confirmed';
-			let resolvedStatus: BookingStatus = input.paymentIntentId || existingHasAuthorizedPI
-				? piFallback
-				: input.joiningWaitlist
-					? 'waiting_list'
-					: 'to_confirm';
+			let resolvedStatus: BookingStatus =
+				hasPayment || existingHasAuthorizedPI
+					? piFallback
+					: input.joiningWaitlist
+						? 'waiting_list'
+						: 'to_confirm';
 			let slotHasCapture = false;
 			const availResult = await api.getAvailabilities({
 				startDate: dateStr,
@@ -218,9 +233,9 @@ export const router = {
 				const shift = days.flatMap((d) => d.shifts).find((s) => s.id === Number(r.serviceId));
 				const slot = shift?.slots.find((sl) => sl.time === timeStr);
 				if (shift && slot) {
-					const captureEnabled = slot.captureEnabled ?? (shift.captureEnabled ?? false);
+					const captureEnabled = slot.captureEnabled ?? shift.captureEnabled ?? false;
 					const foreignCaptureEnabled =
-						slot.foreignCaptureEnabled ?? (shift.foreignCaptureEnabled ?? false);
+						slot.foreignCaptureEnabled ?? shift.foreignCaptureEnabled ?? false;
 					slotHasCapture = !!(captureEnabled || foreignCaptureEnabled);
 					resolvedStatus = resolveBookingStatus({
 						shiftAutoConfirm: shift.autoConfirm ?? false,
@@ -238,13 +253,16 @@ export const router = {
 							foreignCaptureEnabled: slot.foreignCaptureEnabled
 						},
 						pax: r.pax,
-						hasPaymentIntentId: !!input.paymentIntentId || existingHasAuthorizedPI,
+						hasPaymentIntentId: hasPayment || existingHasAuthorizedPI,
 						joiningWaitlist: input.joiningWaitlist ?? false
 					});
 				}
 			}
 
-			if (r.id && (resolvedStatus === 'waiting_list' || (resolvedStatus === 'to_confirm' && !slotHasCapture))) {
+			if (
+				r.id &&
+				(resolvedStatus === 'waiting_list' || (resolvedStatus === 'to_confirm' && !slotHasCapture))
+			) {
 				return { status: ApiReturnStatus.MODIFICATION_NOT_ALLOWED, message: null };
 			}
 
@@ -257,8 +275,16 @@ export const router = {
 						source: existingBooking?.ok ? existingBooking.data.source : 'web',
 						status: resolvedStatus,
 						paymentIntentId: input.paymentIntentId ?? null,
-						customerSheetId: existingBooking?.ok ? existingBooking.data.customerSheetId ?? null : null,
-						comment: r.notes || (existingBooking?.ok ? existingBooking.data.comment ?? null : null),
+						// Forward the saved-card SetupIntent on edits too — the create
+						// path already does. Without this, modifying a booking into a
+						// deposit-required slot confirms the card in Stripe but never
+						// links it to the booking, so the app never sees the saved card.
+						setupIntentId: input.setupIntentId ?? null,
+						customerSheetId: existingBooking?.ok
+							? (existingBooking.data.customerSheetId ?? null)
+							: null,
+						comment:
+							r.notes || (existingBooking?.ok ? (existingBooking.data.comment ?? null) : null),
 						civility: r.contact.civility,
 						language: event.locals.locale ?? null,
 						countryCode: r.contact.countryCode,
@@ -282,7 +308,8 @@ export const router = {
 							lastName: r.contact.lastName,
 							email: r.contact.email,
 							phone: normalizedPhone,
-							paymentIntentId: input.paymentIntentId ?? null
+							paymentIntentId: input.paymentIntentId ?? null,
+							setupIntentId: input.setupIntentId ?? null
 						} satisfies CreateBookingRequestDTO,
 						{ force: resolvedStatus === 'waiting_list' || resolvedStatus === 'to_confirm' }
 					);
@@ -341,6 +368,43 @@ export const router = {
 			};
 		}
 	),
+	createSetupIntent: procedure(
+		object({
+			restaurantId: string(),
+			date: object({ date: string(), time: string() }),
+			pax: number(),
+			countryCode: string()
+		}),
+		async ({ input }) => {
+			const rid = Number(input.restaurantId);
+			if (!Number.isFinite(rid)) {
+				throw new Error(`createSetupIntent: invalid restaurant id ${input.restaurantId}`);
+			}
+			const result = await createWidgetApi(rid).createSetupIntent({
+				pax: input.pax,
+				date: input.date.date,
+				time: input.date.time,
+				countryCode: input.countryCode
+			});
+			if (!result.ok) {
+				// Per API contract: 409 means "no deposit required for this slot, or
+				// restaurant not onboarded" — fall through to legacy book() path.
+				// Any other error is a real failure that must not be masked, otherwise
+				// a deposit-required slot silently slips into book() with no saved card.
+				if (result.error.code === 'http_409' || result.error.code === 'no_deposit_required') {
+					return { ok: false as const, error: result.error };
+				}
+				throw new Error(`createSetupIntent: ${result.error.code} ${result.error.message}`);
+			}
+			return {
+				ok: true as const,
+				setupIntentId: result.data.setupIntentId,
+				clientSecret: result.data.clientSecret,
+				amount: result.data.amountCents,
+				stripeAccountId: result.data.stripeConnectAccountId
+			};
+		}
+	),
 	loadReservation: procedure(string(), async ({ input, event }) => {
 		// REST replacement for the legacy `reservator.loadReservationToUpdate`.
 		// The booking id is numeric in the new schema (PRD §10.1: rid=1).
@@ -367,6 +431,7 @@ export const router = {
 			bookingId: string(),
 			status: picklist([
 				'to_confirm',
+				'to_reconfirm',
 				'waiting_list',
 				'confirmed',
 				'reconfirmed',
@@ -374,7 +439,7 @@ export const router = {
 				'no_show',
 				'arrived',
 				'seated',
-				'finished'
+				'ended'
 			])
 		}),
 		async ({ input, event }) => {
@@ -400,6 +465,70 @@ export const router = {
 			return { ok: true as const, status: result.data.status };
 		}
 	),
+	confirmSavedCard: procedure(
+		object({ bookingId: string(), setupIntentId: string() }),
+		async ({ input, event }) => {
+			// Standalone saved-card finalization path. After Stripe confirms the
+			// pre-existing booking's SetupIntent client-side, the widget calls this
+			// to have the API verify the SetupIntent succeeded, mark the booking
+			// `card_saved`, and transition it to `reconfirmed`. Replaces the
+			// standalone flow's old bare setBookingStatus(reconfirmed) call.
+			const rid = ridFromEvent(event);
+			if (!Number.isFinite(rid)) {
+				throw new Error('confirmSavedCard: restaurantId missing');
+			}
+			const numericId = Number(input.bookingId);
+			if (!Number.isFinite(numericId)) {
+				throw new Error(`confirmSavedCard: invalid booking id ${input.bookingId}`);
+			}
+			const result = await createWidgetApi(rid).confirmSavedCard(numericId, input.setupIntentId);
+			if (!result.ok) {
+				return { ok: false as const, error: result.error };
+			}
+			return { ok: true as const, status: result.data.status };
+		}
+	),
+	loadSetupIntent: procedure(string(), async ({ input, event }) => {
+		// REST replacement for loadPaymentIntent in the saved-card model. Hits the
+		// live SetupIntent GET endpoint. The GET response now carries `bookingId`
+		// (resolved from the SetupIntent's `booking_id` metadata, set for
+		// staff-initiated setups), which the standalone confirm-saved-card path
+		// needs. We don't fetch the full booking here (`reservation` stays
+		// undefined) — the standalone page summary is populated from the route's
+		// own load — but we surface `bookingId` so the confirm RPC can finalize.
+		try {
+			const rid = ridFromEvent(event);
+			if (!Number.isFinite(rid)) {
+				throw new Error('loadSetupIntent: restaurantId missing');
+			}
+			const api = createWidgetApi(rid);
+			const siResult = await api.getSetupIntent(input);
+			if (!siResult.ok) {
+				throw new Error(`loadSetupIntent: ${siResult.error.code} ${siResult.error.message}`);
+			}
+			const si = siResult.data;
+
+			// Reshape the BFF setup-intent record into the legacy Stripe-style
+			// payload Widget.svelte still consumes
+			// (`paymentIntent.{id, client_secret, amount, status}`).
+			const stripeSetupIntent = {
+				id: input,
+				client_secret: si.clientSecret,
+				amount: si.amountCents,
+				status: si.status
+			};
+
+			return {
+				setupIntent: stripeSetupIntent,
+				reservation: undefined as ReturnType<typeof bookingToLegacyReservation> | undefined,
+				bookingId: si.bookingId ?? null,
+				stripeAccountId: si.stripeConnectAccountId ?? null
+			};
+		} catch (error) {
+			console.error(error);
+			return { error: 'Failed to load setup intent' };
+		}
+	}),
 	loadPaymentIntent: procedure(string(), async ({ input, event }) => {
 		// REST replacement for the legacy reservator-driven payment-intent
 		// load. Hits the live PaymentIntent GET endpoint.

@@ -112,6 +112,7 @@
 				reservation.seatingTime = res.seatingTime;
 				reservation.notes = res.notes;
 				reservation.paymentStatus = res.paymentStatus;
+				reservation.stripeSetupIntentId = res.stripeSetupIntentId ?? undefined;
 				reservationTemp.id = res.id;
 				reservationTemp.serviceId = res.serviceId;
 				reservationTemp.startDate = res.startDate;

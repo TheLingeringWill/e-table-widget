@@ -7,7 +7,7 @@
 	import { gotoStep, nextStep } from '$lib/states/step.svelte';
 	import { ApiReturnStatus } from '$lib/api-types';
 	import { gotoError } from '$lib/states/error.svelte';
-	import { paymentIntent } from '$lib/states/paymentIntent.svelte';
+	import { setupIntent } from '$lib/states/paymentIntent.svelte';
 	import { reservation, setPendingReservation } from '$lib/states/reservation.svelte';
 	import { waitlist } from '$lib/states/waitlist.svelte';
 	import { trackBookingComplete } from '$lib/gtm.svelte';
@@ -61,31 +61,36 @@
 		// capture policy. Edits with an already-authorized PI: skip too — the
 		// deposit was already collected. All other cases (new bookings + edits
 		// moving to a deposit-required slot) go through the pre-check.
-		const alreadyHasPayment = reservation.paymentStatus === 'requires_capture';
+		// Skip the deposit pre-check when a guarantee is already in place: a legacy
+		// hold (`requires_capture`) OR a saved card (any SetupIntent on the booking).
+		// Without the saved-card arm, modifying an already-guaranteed booking would
+		// re-run createSetupIntent and re-prompt the guest for a card they've saved.
+		const alreadyHasPayment =
+			reservation.paymentStatus === 'requires_capture' || !!reservation.stripeSetupIntentId;
 		if (!waitlist.isWaitlist && !alreadyHasPayment) {
-			// New bookings: try to pre-create a PaymentIntent. If the slot has no
-			// deposit policy the API returns 409 "no deposit required" and we fall
-			// through to the regular create path. Otherwise we collect the
-			// clientSecret and route to PAYMENT, where Stripe Elements will
-			// authorize the card; the booking itself is then persisted by
+			// New bookings: try to pre-create a SetupIntent (saved-card model). If
+			// the slot has no deposit policy the API returns 409 "no deposit
+			// required" and we fall through to the regular create path. Otherwise we
+			// collect the clientSecret and route to PAYMENT, where Stripe Elements
+			// will save the card; the booking itself is then persisted by
 			// Payment.svelte calling `api.book(...)` synchronously with
-			// `paymentIntentId` after `confirmCardPayment` resolves.
-			const [piRes, piErr] = await api.createPaymentIntent({
+			// `setupIntentId` after `confirmCardSetup` resolves.
+			const [siRes, siErr] = await api.createSetupIntent({
 				restaurantId: widget.restaurantId,
 				date: { date: selection.slot.date, time: selection.slot.time },
 				pax: selection.pax,
 				countryCode: contact.countryCode
 			});
-			if (piErr) {
+			if (siErr) {
 				return gotoError(null, 'CREATE_PAYMENT_INTENT_FAILED');
 			}
-			if (piRes.ok) {
-				paymentIntent.id = piRes.paymentIntentId;
-				paymentIntent.amount = piRes.amount;
-				paymentIntent.clientSecret = piRes.clientSecret;
-				paymentIntent.stripeAccountId = piRes.stripeAccountId ?? null;
+			if (siRes.ok) {
+				setupIntent.id = siRes.setupIntentId;
+				setupIntent.amount = siRes.amount;
+				setupIntent.clientSecret = siRes.clientSecret;
+				setupIntent.stripeAccountId = siRes.stripeAccountId ?? null;
 				// Stash the full reservation payload so Payment.svelte can replay
-				// it post-confirm with the captured paymentIntentId.
+				// it post-confirm with the saved-card setupIntentId.
 				setPendingReservation(reservationPayload);
 				gotoStep('PAYMENT');
 				return;
@@ -121,7 +126,7 @@
 					customer_phone: contact.phone,
 					customer_language: currentLocale.value,
 					customer_notes: contact.notes || undefined,
-					payment_required: !!paymentIntent.id
+					payment_required: !!setupIntent.id
 				});
 			}
 

@@ -71,7 +71,7 @@ describe('cancel page load', () => {
 		});
 	});
 
-	const terminalStatuses: BookingStatus[] = ['arrived', 'seated', 'finished', 'no_show', 'canceled'];
+	const terminalStatuses: BookingStatus[] = ['arrived', 'seated', 'ended', 'no_show', 'canceled'];
 	const nonTerminalStatuses: BookingStatus[] = ['to_confirm', 'waiting_list', 'confirmed', 'reconfirmed'];
 
 	it.each(terminalStatuses)(
@@ -160,7 +160,7 @@ describe('cancel page action', () => {
 		});
 	});
 
-	const terminalStatuses: BookingStatus[] = ['arrived', 'seated', 'finished', 'no_show', 'canceled'];
+	const terminalStatuses: BookingStatus[] = ['arrived', 'seated', 'ended', 'no_show', 'canceled'];
 
 	it.each(terminalStatuses)(
 		'returns fail(403) when booking status is %s',

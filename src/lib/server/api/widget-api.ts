@@ -10,9 +10,12 @@ import type {
 	CreateBookingResponseDTO,
 	CreatePaymentIntentRequestDTO,
 	CreatePaymentIntentResponseDTO,
+	CreateSetupIntentRequestDTO,
+	CreateSetupIntentResponseDTO,
 	PaymentIntentResponseDTO,
 	RestaurantAggregateResponseDTO,
 	ReviewSettingsResponseDTO,
+	SetupIntentResponseDTO,
 	TrackReviewArgVisitRequestDTO,
 	UpdateBookingRequestDTO,
 	UpsertReviewRequestDTO,
@@ -105,6 +108,28 @@ export function createWidgetApi(restaurantId: number) {
 				restaurantId,
 				method: 'POST',
 				body
+			});
+		},
+		getSetupIntent(id: string): Promise<RestResult<SetupIntentResponseDTO>> {
+			return restCall(`/restaurants/${restaurantId}/setup-intents/${id}`, { restaurantId });
+		},
+		createSetupIntent(
+			body: CreateSetupIntentRequestDTO
+		): Promise<RestResult<CreateSetupIntentResponseDTO>> {
+			return restCall(`/restaurants/${restaurantId}/setup-intents`, {
+				restaurantId,
+				method: 'POST',
+				body
+			});
+		},
+		confirmSavedCard(
+			id: number,
+			setupIntentId: string
+		): Promise<RestResult<BookingDetailResponseDTO>> {
+			return restCall(`/restaurants/${restaurantId}/bookings/${id}/confirm-saved-card`, {
+				restaurantId,
+				method: 'PATCH',
+				body: { setupIntentId }
 			});
 		}
 	};

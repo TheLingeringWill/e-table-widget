@@ -52,12 +52,12 @@
 	import { slide } from 'svelte/transition';
 	import Button from './Button.svelte';
 	import Separator from 'maket/Separator';
-	import { browser, dev } from '$app/environment';
+	import { browser } from '$app/environment';
 	import { selection } from '$lib/states/selection.svelte';
 	import { contact } from '$lib/states/contact.svelte';
 	import { nextStep, previousStep } from '$lib/states/step.svelte';
 	import { gotoError } from '$lib/states/error.svelte';
-	import { paymentIntent } from '$lib/states/paymentIntent.svelte';
+	import { setupIntent } from '$lib/states/paymentIntent.svelte';
 	import {
 		reservation,
 		pendingReservation,
@@ -76,7 +76,7 @@
 		mode?: 'embedded' | 'standalone';
 	} = $props();
 
-	let paymentIntentClientSecret = $state('');
+	let setupIntentClientSecret = $state('');
 
 	let loading = $state(false);
 	const theme = getContext('theme');
@@ -85,7 +85,7 @@
 	let stripe: Stripe | null = null;
 	let stripeElements: StripeElements | null = null;
 
-	const stripeState = useStripe(paymentIntent.stripeAccountId);
+	const stripeState = useStripe(setupIntent.stripeAccountId);
 
 	let cardNumberELementReady = $state(false);
 	let cardCvcELementReady = $state(false);
@@ -183,53 +183,82 @@
 		loading = true;
 		const stripe = stripeState.stripe;
 
-		const domain = dev ? 'http://localhost:8987' : 'https://edged.cloud';
-		const path = `/${widget.id}?s=${paymentIntent.clientSecret}`;
-		const result = await stripe.confirmCardPayment(paymentIntent.clientSecret as string, {
-			payment_method: {
-				card: stripeState.elements?.getElement('cardNumber')!
-			},
-			return_url: `${domain}${path}`
-		});
+		// The saved-card model confirms a SetupIntent (`seti_`); deposits requested
+		// before that migration are a legacy PaymentIntent hold (`pi_`). Confirm
+		// with the matching Stripe call — confirmCardPayment authorizes the hold,
+		// confirmCardSetup saves the card (both run 3-D Secure if required, neither
+		// needs a return_url). Calling confirmCardSetup on a `pi_` secret throws,
+		// which is what left the legacy link spinning forever.
+		const clientSecret = setupIntent.clientSecret as string;
+		const isLegacyHold = clientSecret.startsWith('pi_');
+		const card = stripeState.elements?.getElement('cardNumber')!;
 
-		if (result.error) {
-			gotoError(null, result.error.message);
-			return;
-		}
-
-		const pi = result.paymentIntent;
-		if (!pi || pi.status !== 'requires_capture') {
-			gotoError(null, 'PAYMENT_NOT_AUTHORIZED');
-			return;
+		let confirmedIntentId: string;
+		if (isLegacyHold) {
+			const result = await stripe.confirmCardPayment(clientSecret, {
+				payment_method: { card }
+			});
+			if (result.error) {
+				gotoError(null, result.error.message);
+				return;
+			}
+			const pi = result.paymentIntent;
+			if (!pi || pi.status !== 'requires_capture') {
+				gotoError(null, 'PAYMENT_NOT_AUTHORIZED');
+				return;
+			}
+			confirmedIntentId = pi.id;
+		} else {
+			const result = await stripe.confirmCardSetup(clientSecret, {
+				payment_method: { card }
+			});
+			if (result.error) {
+				gotoError(null, result.error.message);
+				return;
+			}
+			const si = result.setupIntent;
+			if (!si || si.status !== 'succeeded') {
+				gotoError(null, 'PAYMENT_NOT_AUTHORIZED');
+				return;
+			}
+			confirmedIntentId = si.id;
 		}
 
 		if (mode === 'standalone') {
 			// Standalone mode: the booking already exists (created server-side
-			// when the deposit-link email was minted). Flip its status to
-			// 'reconfirmed' to acknowledge the customer authorized the card.
-			// Failure here does NOT cancel the PI — the booking is real and
-			// admin needs to investigate.
+			// when the save-card link email was minted). Its id arrives via the
+			// SetupIntent's `booking_id` metadata, surfaced as `bookingId` on the
+			// SetupIntent GET response and threaded into `reservation.id` by the
+			// pay route's load. Call confirm-saved-card so the API verifies the
+			// SetupIntent succeeded, marks the booking 'card_saved', and transitions
+			// it to 'reconfirmed'. Failure here does NOT undo the saved card — the
+			// booking is real and admin needs to investigate.
+			//
+			// Graceful guard for the genuinely-unexpected case: a SetupIntent
+			// created without an owning booking (shouldn't happen on the standalone
+			// link). The card is already saved at this point, so surface a
+			// non-crashing error rather than throwing.
 			const bookingId = reservation?.id;
 			if (!bookingId) {
 				gotoError(null, 'BOOKING_ID_MISSING');
 				return;
 			}
-			const [statusRes, statusErr] = await api.setBookingStatus({
+			const [confirmRes, confirmErr] = await api.confirmSavedCard({
 				bookingId,
-				status: 'reconfirmed'
+				setupIntentId: confirmedIntentId
 			});
-			if (statusErr || !statusRes?.ok) {
+			if (confirmErr || !confirmRes?.ok) {
 				gotoError(null, 'BOOKING_RECONFIRM_FAILED');
 				return;
 			}
 
-			paymentIntentClientSecret = paymentIntent.clientSecret as string;
+			setupIntentClientSecret = setupIntent.clientSecret as string;
 			nextStep();
 			return;
 		}
 
-		// Embedded mode: synchronously create the booking with the captured
-		// paymentIntentId so the customer gets immediate confirmation. The
+		// Embedded mode: synchronously create the booking with the saved-card
+		// setupIntentId so the customer gets immediate confirmation. The
 		// previous webhook-driven path is gone.
 		const payload = pendingReservation.payload;
 		if (!payload) {
@@ -239,14 +268,11 @@
 
 		const [bookRes, bookErr] = await api.book({
 			...payload,
-			paymentIntentId: pi.id
+			setupIntentId: confirmedIntentId
 		});
 		if (bookErr || !bookRes || bookRes.status !== 'OK') {
-			// TODO: reconcile abandoned PI — the API has no
-			// POST /restaurants/{id}/payment-intents/{id}/cancel endpoint yet,
-			// so the authorized card hold lingers until Stripe auto-expires it.
-			// When the cancel endpoint lands, call it here before routing to
-			// ERROR.
+			// The saved card persists on the guest's Stripe Customer regardless; no
+			// funds were held, so there is nothing to release on failure here.
 			clearPendingReservation();
 			gotoError(null, 'BOOKING_CREATE_AFTER_PAYMENT_FAILED');
 			return;
@@ -255,7 +281,7 @@
 		clearPendingReservation();
 		if (bookRes.bookingId) reservation.id = bookRes.bookingId;
 		reservation.confirmedStatus = bookRes.bookingStatus;
-		paymentIntentClientSecret = paymentIntent.clientSecret as string;
+		setupIntentClientSecret = setupIntent.clientSecret as string;
 		const embeddedBookingId = bookRes.bookingId || reservation.id || '';
 		if (embeddedBookingId) {
 			trackBookingComplete({
@@ -294,7 +320,7 @@
 	};
 
 	$effect(() => {
-		if (paymentIntentClientSecret !== '') {
+		if (setupIntentClientSecret !== '') {
 			loading = true;
 		}
 	});
@@ -313,7 +339,7 @@
 	<div class="flex flex-col gap-2">
 		<div>
 			{@html m.payment_preAuthIntro({
-				amount: `<b>${paymentIntent.amount / 100}€</b>`
+				amount: `<b>${setupIntent.amount / 100}€</b>`
 			})}
 		</div>
 	</div>

@@ -29,7 +29,10 @@
 	let iti: ReturnType<typeof intlTelInput> | undefined = $state();
 
 	const showPreAuthNotice = $derived.by(() => {
-		if (reservation.paymentStatus === 'requires_capture') return false;
+		// A guarantee already in place — legacy hold or a saved card — means no new
+		// pre-auth will be requested, so don't show the notice.
+		if (reservation.paymentStatus === 'requires_capture' || reservation.stripeSetupIntentId)
+			return false;
 		if (waitlist.isWaitlist) return false;
 		const svc = selection.service;
 		const slot = selection.slot;

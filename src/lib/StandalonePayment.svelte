@@ -3,7 +3,7 @@
 	import type { SlotTimestamp } from '$lib/api-types';
 	import { formatSlotDate } from '$lib/utils/slotFormat';
 	import Payment from './Widget/Payment.svelte';
-	import { paymentIntent } from './states/paymentIntent.svelte';
+	import { setupIntent } from './states/paymentIntent.svelte';
 	import { contact } from './states/contact.svelte';
 	import { selection } from './states/selection.svelte';
 	import { reservation } from './states/reservation.svelte';
@@ -14,7 +14,7 @@
 	import * as m from '$lib/paraglide/messages';
 
 	type PageData = {
-		paymentIntent?: {
+		setupIntent?: {
 			id: string;
 			client_secret: string | null;
 			amount: number | null;
@@ -57,18 +57,18 @@
 			return;
 		}
 
-		if (!data.paymentIntent) {
+		if (!data.setupIntent) {
 			gotoStep('ERROR');
 			error.message = m.error_loadPaymentIntent();
 			mounted = true;
 			return;
 		}
 
-		// Populate payment intent state
-		paymentIntent.id = data.paymentIntent.id;
-		paymentIntent.clientSecret = data.paymentIntent.client_secret;
-		paymentIntent.amount = data.paymentIntent.amount;
-		paymentIntent.stripeAccountId = data.stripeAccountId ?? null;
+		// Populate saved-card setup intent state
+		setupIntent.id = data.setupIntent.id;
+		setupIntent.clientSecret = data.setupIntent.client_secret;
+		setupIntent.amount = data.setupIntent.amount;
+		setupIntent.stripeAccountId = data.stripeAccountId ?? null;
 
 		// Populate contact from reservation
 		if (data.reservation?.contact) {
@@ -84,7 +84,7 @@
 		if (data.reservation) {
 			selection.pax = data.reservation.pax ?? null;
 			// Standalone mode: Payment.svelte reads `reservation.id` to call
-			// `setBookingStatus` after Stripe authorizes the card. The booking
+			// `confirmSavedCard` after Stripe confirms the SetupIntent. The booking
 			// already exists for this flow.
 			reservation.id = data.reservation.id;
 			reservation.serviceId = data.reservation.serviceId;
@@ -93,11 +93,9 @@
 			reservation.startDate = data.reservation.startDate ?? undefined;
 		}
 
-		// Check if payment already completed (matches Stripe vocabulary)
-		if (
-			data.paymentIntent.status === 'succeeded' ||
-			data.paymentIntent.status === 'requires_capture'
-		) {
+		// Check if the card was already saved (Stripe SetupIntent vocabulary:
+		// `succeeded` is the terminal success state — there is no `requires_capture`).
+		if (data.setupIntent.status === 'succeeded') {
 			gotoStep('DONE');
 		} else {
 			gotoStep('PAYMENT');
@@ -263,7 +261,7 @@
 							</div>
 							<div class="text-right">
 								<p class="text-3xl font-bold text-gray-900">
-									{formatAmount(paymentIntent.amount)} €
+									{formatAmount(setupIntent.amount)} €
 								</p>
 							</div>
 						</div>
@@ -280,7 +278,7 @@
 
 					<!-- Payment component -->
 					<div class="payment-wrapper">
-						<Payment widget={{ id: data.paymentIntent?.id }} mode="standalone" />
+						<Payment widget={{ id: data.setupIntent?.id }} mode="standalone" />
 					</div>
 				</div>
 			</div>

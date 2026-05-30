@@ -48,7 +48,11 @@ function loadEvent(restaurantId: string, reservationId: string) {
 	} as unknown as Parameters<typeof load>[0];
 }
 
-function actionEvent(restaurantId: string, reservationId: string, formData?: Record<string, string>) {
+function actionEvent(
+	restaurantId: string,
+	reservationId: string,
+	formData?: Record<string, string>
+) {
 	const fd = new FormData();
 	if (formData) {
 		for (const [k, v] of Object.entries(formData)) {
@@ -72,27 +76,29 @@ describe('cancel page load', () => {
 	});
 
 	const terminalStatuses: BookingStatus[] = ['arrived', 'seated', 'ended', 'no_show', 'canceled'];
-	const nonTerminalStatuses: BookingStatus[] = ['to_confirm', 'waiting_list', 'confirmed', 'reconfirmed'];
+	const nonTerminalStatuses: BookingStatus[] = [
+		'to_confirm',
+		'waiting_list',
+		'confirmed',
+		'reconfirmed'
+	];
 
-	it.each(terminalStatuses)(
-		'returns isTerminal true when booking status is %s',
-		async (status) => {
-			const mockApi = buildMockWidgetApi({
-				getBooking: vi.fn().mockResolvedValue({
-					ok: true,
-					data: buildBookingDetailDTO({ status })
-				}),
-				getAggregate: vi.fn().mockResolvedValue({
-					ok: true,
-					data: buildAggregateDTO()
-				})
-			});
-			mockedCreateWidgetApi.mockReturnValue(mockApi);
+	it.each(terminalStatuses)('returns isTerminal true when booking status is %s', async (status) => {
+		const mockApi = buildMockWidgetApi({
+			getBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildBookingDetailDTO({ status })
+			}),
+			getAggregate: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildAggregateDTO()
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
 
-			const result = await load(loadEvent('42', '1'));
-			expect(result.isTerminal).toBe(true);
-		}
-	);
+		const result = await load(loadEvent('42', '1'));
+		expect(result.isTerminal).toBe(true);
+	});
 
 	it.each(nonTerminalStatuses)(
 		'returns isTerminal false when booking status is %s',
@@ -133,6 +139,66 @@ describe('cancel page load', () => {
 		expect(result.reservation.pax).toBe(4);
 	});
 
+	it('exposes imprint amount for a saved-card booking (card_saved + SetupIntent)', async () => {
+		const mockApi = buildMockWidgetApi({
+			getBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildBookingDetailDTO({
+					status: 'confirmed',
+					paymentStatus: 'card_saved',
+					stripeSetupIntentId: 'seti_saved_123',
+					paymentAmountCents: 5000
+				})
+			}),
+			getAggregate: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildAggregateDTO()
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const result = await load(loadEvent('42', '1'));
+		expect(result.cancelFlow.imprint).toEqual({ amountCents: 5000 });
+	});
+
+	it('exposes imprint amount for a legacy requires_capture booking', async () => {
+		const mockApi = buildMockWidgetApi({
+			getBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildBookingDetailDTO({
+					status: 'confirmed',
+					paymentStatus: 'requires_capture',
+					paymentAmountCents: 3000
+				})
+			}),
+			getAggregate: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildAggregateDTO()
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const result = await load(loadEvent('42', '1'));
+		expect(result.cancelFlow.imprint).toEqual({ amountCents: 3000 });
+	});
+
+	it('leaves imprint null when the booking has no payment', async () => {
+		const mockApi = buildMockWidgetApi({
+			getBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildBookingDetailDTO({ status: 'confirmed' })
+			}),
+			getAggregate: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildAggregateDTO()
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const result = await load(loadEvent('42', '1'));
+		expect(result.cancelFlow.imprint).toBeNull();
+	});
+
 	it('throws 404 for invalid params', async () => {
 		await expect(load(loadEvent('abc', '1'))).rejects.toThrow('HttpError: 404');
 	});
@@ -162,29 +228,26 @@ describe('cancel page action', () => {
 
 	const terminalStatuses: BookingStatus[] = ['arrived', 'seated', 'ended', 'no_show', 'canceled'];
 
-	it.each(terminalStatuses)(
-		'returns fail(403) when booking status is %s',
-		async (status) => {
-			const mockApi = buildMockWidgetApi({
-				getBooking: vi.fn().mockResolvedValue({
-					ok: true,
-					data: buildBookingDetailDTO({ status })
-				}),
-				getAggregate: vi.fn().mockResolvedValue({
-					ok: true,
-					data: buildAggregateDTO()
-				})
-			});
-			mockedCreateWidgetApi.mockReturnValue(mockApi);
+	it.each(terminalStatuses)('returns fail(403) when booking status is %s', async (status) => {
+		const mockApi = buildMockWidgetApi({
+			getBooking: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildBookingDetailDTO({ status })
+			}),
+			getAggregate: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildAggregateDTO()
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
 
-			const result = await actions.default(actionEvent('42', '1', { reason: 'test' }));
-			expect(result).toEqual({
-				status: 403,
-				data: { error: 'This reservation cannot be canceled.' }
-			});
-			expect(mockApi.setBookingStatus).not.toHaveBeenCalled();
-		}
-	);
+		const result = await actions.default(actionEvent('42', '1', { reason: 'test' }));
+		expect(result).toEqual({
+			status: 403,
+			data: { error: 'This reservation cannot be canceled.' }
+		});
+		expect(mockApi.setBookingStatus).not.toHaveBeenCalled();
+	});
 
 	it('does not block cancellation when booking status is confirmed', async () => {
 		const mockApi = buildMockWidgetApi({

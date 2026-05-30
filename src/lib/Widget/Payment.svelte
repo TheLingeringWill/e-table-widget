@@ -238,6 +238,9 @@
 			// created without an owning booking (shouldn't happen on the standalone
 			// link). The card is already saved at this point, so surface a
 			// non-crashing error rather than throwing.
+			// Unreachable in normal flows: pay links are only minted from the staff
+			// save-card emails, and every SetupIntent behind one stamps `booking_id`
+			// metadata — so `reservation.id` is always present here. Belt-and-suspenders.
 			const bookingId = reservation?.id;
 			if (!bookingId) {
 				gotoError(null, 'BOOKING_ID_MISSING');

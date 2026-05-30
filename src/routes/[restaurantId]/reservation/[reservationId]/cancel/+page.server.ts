@@ -80,8 +80,12 @@ export const load = async ({ params, url }) => {
 			masterDisabled,
 			inPast,
 			cutoff: cancelStatus.cutoff ?? null,
+			// Show the chargeable amount for both legacy holds (`requires_capture`)
+			// and the saved-card model (`card_saved` with a SetupIntent). Mirrors the
+			// widget's established saved-card discriminator.
 			imprint:
-				booking.paymentStatus === 'requires_capture' && booking.paymentAmountCents
+				(booking.paymentStatus === 'requires_capture' || !!booking.stripeSetupIntentId) &&
+				booking.paymentAmountCents
 					? { amountCents: booking.paymentAmountCents }
 					: null
 		},

@@ -22,15 +22,15 @@
 		};
 		reservation?: {
 			id?: string;
-			serviceId?: string;
+			serviceId?: string | null;
 			startDate?: SlotTimestamp | null;
 			pax?: number;
-			notes?: string;
+			notes?: string | null;
 			contact?: {
-				firstName?: string;
-				lastName?: string;
-				phone?: string;
-				email?: string;
+				firstName?: string | null;
+				lastName?: string | null;
+				phone?: string | null;
+				email?: string | null;
 			};
 		};
 		stripeAccountId?: string | null;
@@ -87,9 +87,9 @@
 			// `confirmSavedCard` after Stripe confirms the SetupIntent. The booking
 			// already exists for this flow.
 			reservation.id = data.reservation.id;
-			reservation.serviceId = data.reservation.serviceId;
+			reservation.serviceId = data.reservation.serviceId ?? undefined;
 			reservation.pax = data.reservation.pax;
-			reservation.notes = data.reservation.notes;
+			reservation.notes = data.reservation.notes ?? undefined;
 			reservation.startDate = data.reservation.startDate ?? undefined;
 		}
 

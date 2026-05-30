@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { createWidgetApi } from '$lib/server/api/widget-api';
+import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
 import * as m from '$lib/paraglide/messages';
 
 export const load = async ({ params }) => {
@@ -22,12 +23,21 @@ export const load = async ({ params }) => {
 	}
 	const si = siResult.data;
 
-	// The SetupIntent GET response now carries `bookingId` (resolved from the
+	// The SetupIntent GET response carries `bookingId` (resolved from the
 	// SetupIntent's `booking_id` metadata, set for staff-initiated setups — the
-	// booking exists before the card is saved). The standalone confirm-saved-card
-	// path needs it. We don't fetch the full booking for the summary; the card
-	// form renders from the SetupIntent alone. `reservation.id` is surfaced so the
-	// page can pass it to the confirm-saved-card RPC after Stripe succeeds.
+	// booking exists before the card is saved). We fetch the full booking to
+	// populate the "Your reservation" summary (date/time, party size, name). If
+	// that fetch fails we fall back to an id-only stub so `reservation.id` is
+	// still present for the confirm-saved-card RPC the page runs after Stripe
+	// succeeds.
+	let reservation;
+	if (si.bookingId != null) {
+		const bookingResult = await api.getBooking(si.bookingId);
+		reservation = bookingResult.ok
+			? bookingToLegacyReservation(bookingResult.data)
+			: { id: String(si.bookingId) };
+	}
+
 	const aggregate = await api.getAggregate();
 	const restaurantName = aggregate.ok ? aggregate.data.restaurant.name : '';
 
@@ -38,7 +48,7 @@ export const load = async ({ params }) => {
 			amount: si.amountCents,
 			status: si.status
 		},
-		reservation: si.bookingId != null ? { id: String(si.bookingId) } : undefined,
+		reservation,
 		stripeAccountId: si.stripeConnectAccountId ?? null,
 		restaurant: {
 			name: restaurantName

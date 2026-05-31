@@ -103,6 +103,24 @@
 			}
 			contact.phone = convertToE164(input.value, country);
 			phoneErrors = []; // clear while typing; validation happens on blur
+
+			// Live international promotion: once the typed number is complete & valid,
+			// snap the *display* to full international form ("+33 6 12 34 56 78") as the
+			// user types, mirroring the blur behaviour. intl-tel-input's own
+			// formatAsYouType only spaces the number in the form it was typed (a national
+			// entry stays "06 12 34 56 78"); convertToE164 is what prepends the dial code.
+			// Skip values already in '+...' form — that both avoids re-promoting an
+			// international number and terminates the re-entrancy: iti.setNumber dispatches
+			// a synchronous 'input' event that re-enters this handler with a value that now
+			// starts with '+', so the branch is skipped on re-entry.
+			const raw = input.value;
+			if (raw && !raw.trimStart().startsWith('+') && getPhoneValidationError(raw, country) === null) {
+				const e164 = convertToE164(raw, country);
+				// Defer like the blur path: setNumber's synchronous 'input' event would
+				// otherwise re-enter our $state updates mid-handler and trip Svelte's
+				// state_unsafe_mutation guard.
+				if (e164.startsWith('+')) queueMicrotask(() => !destroyed && iti?.setNumber(e164));
+			}
 		};
 
 		// On blur, promote a complete number to the full international form so the

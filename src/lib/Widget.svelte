@@ -36,12 +36,7 @@
 	import { paymentIntent } from './states/paymentIntent.svelte';
 	import { selection } from './states/selection.svelte';
 	import { gotoError, error as errorState } from './states/error.svelte';
-	import {
-		pushEcommerceEvent,
-		trackStep,
-		trackError,
-		setGtmRestaurantId
-	} from './gtm.svelte';
+	import { pushEcommerceEvent, trackStep, trackError, setGtmRestaurantId } from './gtm.svelte';
 
 	let { data: widget, builder, isEmbedded } = $props();
 
@@ -320,7 +315,13 @@
 					email: contact.email,
 					phone: contact.phone
 				};
-				window.localStorage.setItem(storageKey, JSON.stringify(dataToStore));
+				// Only persist a COMPLETE contact — the same shape isValidStoredContact
+				// requires to restore. This stops a transient empty phone (e.g. mid
+				// country-selection) from overwriting a good save and silently breaking
+				// the next restore. Defensive backstop to the syncPhone fix.
+				if (isValidStoredContact(dataToStore)) {
+					window.localStorage.setItem(storageKey, JSON.stringify(dataToStore));
+				}
 			} else {
 				window.localStorage.removeItem(storageKey);
 			}

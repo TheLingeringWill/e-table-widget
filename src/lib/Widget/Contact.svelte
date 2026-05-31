@@ -2,7 +2,7 @@
 	import TextInput from 'maket/TextInput';
 	import { CaretLeft, Check, ClockCounterClockwise, Info } from 'phosphor-svelte';
 	import Button from './Button.svelte';
-	import { onMount, untrack } from 'svelte';
+	import { onMount } from 'svelte';
 	import intlTelInput from 'intl-tel-input';
 	import 'intl-tel-input/build/css/intlTelInput.css';
 	import { contact, rememberMe, prefilled } from '$lib/states/contact.svelte';
@@ -10,12 +10,7 @@
 	import { reservation } from '$lib/states/reservation.svelte';
 	import { nextStep, previousStep } from '$lib/states/step.svelte';
 	import { waitlist } from '$lib/states/waitlist.svelte';
-	import {
-		formatPhoneAsYouType,
-		convertToE164,
-		formatPhoneNumberForDisplay,
-		getPhoneValidationError
-	} from '$lib/utils/phone';
+	import { convertToE164, getPhoneValidationError } from '$lib/utils/phone';
 	import { page } from '$app/state';
 	import type { CountryCode } from 'libphonenumber-js';
 	import type { BookingCivility } from '$lib/api-types';
@@ -59,10 +54,6 @@
 	const EMAIL_REGEX =
 		/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
-	// Dual-format phone state
-	let phoneE164 = $state<string | null>(null); // Internal E.164 format for API
-	let phoneDisplay = $state<string>(contact.phone || ''); // Formatted display for user
-
 	const getSelectedCountry = (): CountryCode | undefined => {
 		if (iti) {
 			const countryData = iti.getSelectedCountryData();
@@ -77,44 +68,93 @@
 
 	onMount(() => {
 		const input = document.querySelector('#phone') as HTMLInputElement;
-		const initialCountry = page.data.countryCode || 'FR';
+		let destroyed = false; // guards deferred work against a mid-flight unmount
+		// intl-tel-input (with its utils module) owns formatting, the dynamic
+		// per-country placeholder, and the searchable country dropdown. We never
+		// write the input value ourselves — the previous hand-rolled AsYouType +
+		// setNumber logic fought the library and mangled non-French numbers.
 		iti = intlTelInput(input, {
-			geoIpLookup: (callback) => {
-				callback(initialCountry);
-			},
-			initialCountry,
-			containerClass: 'ui-field-input-container ui-text-input-container'
+			initialCountry: (page.data.countryCode || 'FR').toLowerCase(),
+			loadUtilsOnInit: () => import('intl-tel-input/utils'),
+			nationalMode: false, // show the full international number incl. dial code
+			autoPlaceholder: 'aggressive', // dynamic placeholder per country (incl. dial code)
+			countrySearch: true,
+			fixDropdownWidth: false, // let CSS size the dropdown to the full field width
+			separateDialCode: false,
+			strictMode: true,
+			containerClass: 'widget-iti'
 		});
 
-		// Attach event listeners directly since TextInput doesn't pass them through
-		input.addEventListener('input', handlePhoneInput);
-		input.addEventListener('blur', validatePhone);
+		// Read-only sync while typing: derive E.164 for the API from whatever
+		// intl-tel-input currently displays, and track the selected country. We never
+		// write the input here — that's what made the old code fight the library and
+		// mangle foreign numbers.
+		const syncPhone = (event?: Event) => {
+			const country = getSelectedCountry();
+			contact.countryCode = country ?? contact.countryCode ?? 'FR';
+			// A `countrychange` on an EMPTY field must not wipe an existing number.
+			// This fires when the user picks their country before typing, and during
+			// prefill seeding (setCountry) — clobbering contact.phone to '' there is
+			// what made "remember me" silently drop foreign numbers. Only real `input`
+			// edits may clear the number.
+			if (event?.type === 'countrychange' && !input.value.trim()) {
+				phoneErrors = [];
+				return;
+			}
+			contact.phone = convertToE164(input.value, country);
+			phoneErrors = []; // clear while typing; validation happens on blur
+		};
+
+		// On blur, promote a complete number to the full international form so the
+		// committed value mirrors the reference widget ("+1 201-555-0199",
+		// "+33 6 12 34 56 78"). convertToE164 (libphonenumber) drops national trunk
+		// prefixes correctly for every country — unlike a naive dial-code prepend,
+		// which would turn FR "06…" into an invalid "+330 6…". Partial/invalid input
+		// is left untouched; once the value starts with "+", intl-tel-input keeps it
+		// international on later edits too.
+		const reformatPhone = () => {
+			if (input.value && !input.value.trimStart().startsWith('+')) {
+				const e164 = convertToE164(input.value, getSelectedCountry());
+				// Defer the rewrite: iti.setNumber dispatches a synchronous 'input'
+				// event, and re-entering our state updates mid-blur trips Svelte's
+				// state_unsafe_mutation guard. A microtask runs it in a clean tick.
+				if (e164.startsWith('+')) queueMicrotask(() => !destroyed && iti?.setNumber(e164));
+			}
+			validatePhone();
+		};
+
+		input.addEventListener('input', syncPhone);
+		input.addEventListener('countrychange', syncPhone);
+		input.addEventListener('blur', reformatPhone);
 
 		const emailInput = document.querySelector('#email') as HTMLInputElement | null;
 		emailInput?.addEventListener('blur', normalizeEmail);
 
-		// Migrate old localStorage formats to E.164 and sync input value
+		// Seed from prefill: Widget.svelte restores contact.phone (E.164) and
+		// contact.countryCode (from localStorage / a server reservation) before
+		// this component mounts. setNumber formats it and sets the flag.
 		if (contact.phone) {
-			const country = getSelectedCountry();
-			phoneE164 = convertToE164(contact.phone, country);
-			phoneDisplay = formatPhoneNumberForDisplay(contact.phone, country);
-			contact.phone = phoneE164 || contact.phone;
-			input.value = phoneDisplay;
+			if (contact.countryCode) iti.setCountry(contact.countryCode.toLowerCase());
+			iti.setNumber(contact.phone);
 		}
 		contact.countryCode = getSelectedCountry() ?? contact.countryCode ?? 'FR';
 
 		return () => {
-			input.removeEventListener('input', handlePhoneInput);
-			input.removeEventListener('blur', validatePhone);
+			destroyed = true;
+			input.removeEventListener('input', syncPhone);
+			input.removeEventListener('countrychange', syncPhone);
+			input.removeEventListener('blur', reformatPhone);
 			emailInput?.removeEventListener('blur', normalizeEmail);
+			iti?.destroy();
 		};
 	});
 
 	const validatePhone = () => {
+		const input = document.querySelector('#phone') as HTMLInputElement | null;
 		const country = getSelectedCountry();
-		// Validate against E.164 format or raw display
-		const toValidate = phoneE164 || phoneDisplay;
-		const code = getPhoneValidationError(toValidate, country);
+		// getPhoneValidationError is pure libphonenumber-js, so it validates
+		// reliably even before intl-tel-input's utils finish loading.
+		const code = getPhoneValidationError(input?.value ?? contact.phone, country);
 		phoneErrors = code
 			? [code === 'PHONE_REQUIRED' ? m.contact_phoneRequired() : m.contact_phoneInvalid()]
 			: [];
@@ -157,55 +197,11 @@
 		}
 		nextStep();
 	};
-
-	const handlePhoneInput = (event: Event) => {
-		const input = event.target as HTMLInputElement;
-		const cursorPosition = input.selectionStart || 0;
-		const valueBeforeFormat = input.value;
-
-		const country = getSelectedCountry();
-
-		// Format as user types
-		const formatted = formatPhoneAsYouType(valueBeforeFormat, country);
-
-		// Update both the state and the input value directly
-		phoneDisplay = formatted;
-		input.value = formatted;
-
-		// Calculate new cursor position accounting for added spaces
-		const charsBeforeCursor = valueBeforeFormat.slice(0, cursorPosition).replace(/\s/g, '').length;
-		let newCursorPos = 0;
-		let charCount = 0;
-		for (let i = 0; i < formatted.length && charCount < charsBeforeCursor; i++) {
-			if (formatted[i] !== ' ') {
-				charCount++;
-			}
-			newCursorPos = i + 1;
-		}
-
-		// Restore cursor position after formatting
-		requestAnimationFrame(() => {
-			input.setSelectionRange(newCursorPos, newCursorPos);
-		});
-
-		// Convert to E.164 for storage/API
-		phoneE164 = convertToE164(phoneDisplay, country);
-		contact.phone = phoneE164 || phoneDisplay;
-		contact.countryCode = country ?? contact.countryCode;
-
-		// Auto-update intl-tel-input flag when user types country code
-		if (iti && phoneDisplay.startsWith('+')) {
-			iti.setNumber(phoneDisplay.replace(/\s/g, ''));
-		}
-
-		// Clear errors when user is typing (show only on blur)
-		phoneErrors = [];
-	};
 </script>
 
 <div class="w-full h-full">
 	<!-- <div class="border-b w-full max-w-[100px] h-[1px] px-5"></div> -->
-	<form class="flex flex-col gap-5 flex-grow" onsubmit={(e) => e.preventDefault()}>
+	<form class="contact-form flex flex-col gap-5 flex-grow" onsubmit={(e) => e.preventDefault()}>
 		<div class="flex flex-col md:gap-5 gap-4">
 			<div class="flex items-center gap-5 pt-3">
 				<button onclick={() => previousStep()}>
@@ -261,13 +257,13 @@
 						<span class="text-sm text-red-600">{civilityErrors[0]}</span>
 					{/if}
 				</div>
-				<TextInput
-					id="phone"
-					inputContainerClass="p-0"
-					errors={phoneErrors}
-					label={m.contact_phoneLabel()}
-					bind:value={phoneDisplay}
-				/>
+				<div class="flex flex-col gap-2">
+					<label for="phone" class="text-sm font-semibold">{m.contact_phoneLabel()}</label>
+					<input id="phone" type="tel" autocomplete="tel" data-1p-ignore />
+					{#if phoneErrors.length}
+						<span class="text-sm text-red-600">{phoneErrors[0]}</span>
+					{/if}
+				</div>
 				<TextInput
 					id="email"
 					errors={emailErrors}

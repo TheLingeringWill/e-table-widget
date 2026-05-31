@@ -1,23 +1,17 @@
 // Widget-local replacement for `shared/utils/phone`. Wraps libphonenumber-js
-// with the four helpers the widget Contact component consumes.
+// with the E.164 conversion + validation helpers the widget consumes — on the
+// client (Contact.svelte) and on the server (rpc-router.ts). Display formatting,
+// the dynamic placeholder, and the country picker are owned by intl-tel-input
+// in Contact.svelte.
 //
-// The intl-tel-input UI in Contact.svelte gives us a CountryCode at all
-// times; we still defensively default to 'FR' when missing.
+// The intl-tel-input UI gives us a CountryCode at all times; we still
+// defensively default to 'FR' when missing.
 
-import { parsePhoneNumberFromString, AsYouType, type CountryCode } from 'libphonenumber-js';
-
-export function formatPhoneAsYouType(value: string, country: CountryCode = 'FR'): string {
-	return new AsYouType(country).input(value);
-}
+import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js';
 
 export function convertToE164(value: string, country: CountryCode = 'FR'): string {
 	const parsed = parsePhoneNumberFromString(value, country);
 	return parsed?.number ?? value;
-}
-
-export function formatPhoneNumberForDisplay(value: string, country: CountryCode = 'FR'): string {
-	const parsed = parsePhoneNumberFromString(value, country);
-	return parsed?.formatNational() ?? value;
 }
 
 export type PhoneValidationError = 'PHONE_REQUIRED' | 'PHONE_INVALID';

@@ -20,11 +20,13 @@
 	const widget = useWidget();
 
 	// Pass the active runtime locale ('en', 'fr', …) so the header shows the
-	// matching translation; getTranslation normalizes case/region and falls
-	// back to the first entry when the language has no translation (e.g. the
-	// title only has an 'FR' entry).
+	// matching translation. Title keeps the first-entry fallback (it's a
+	// single-'FR' array). The description opts out — when the active language
+	// has no translation we render nothing rather than another language's text.
 	const title = $derived(getTranslation(widget.title, currentLocale.value));
-	const description = $derived(getTranslation(widget.description, currentLocale.value));
+	const description = $derived(
+		getTranslation(widget.description, currentLocale.value, { fallbackToFirst: false })
+	);
 
 	// The switcher rides along on screens where the user is actively choosing
 	// or filling in a booking. We deliberately omit it from DONE/ERROR/PAYMENT

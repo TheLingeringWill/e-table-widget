@@ -51,15 +51,23 @@ export const useZonedDateUtils = (zonedDateUtils?: ZonedDateUtils): ZonedDateUti
 	return stateZonedDateUtils;
 };
 
-export const getTranslation = (translations?: Translation[], language?: string) => {
+export const getTranslation = (
+	translations?: Translation[],
+	language?: string,
+	// When the requested language has no entry, `fallbackToFirst` (default)
+	// returns the first translation — needed for single-locale arrays like the
+	// widget title and service names so a non-FR visitor still sees them. Pass
+	// `false` for genuinely per-language content (the widget description) so an
+	// untranslated language renders nothing instead of another language's text.
+	{ fallbackToFirst = true }: { fallbackToFirst?: boolean } = {}
+) => {
 	// Match on the base language (uppercased, region stripped) so a 'FR'
-	// request still resolves a 'FR-CA' entry and vice versa. Falls back to the
-	// first entry when the requested language has no translation.
+	// request still resolves a 'FR-CA' entry and vice versa.
 	const base = (lang: string) => lang.toUpperCase().split('-')[0];
 	const target = base(language || 'FR');
 	return (
 		translations?.find?.((t) => base(t.language) === target)?.value ||
-		translations?.[0]?.value ||
+		(fallbackToFirst ? translations?.[0]?.value : undefined) ||
 		''
 	);
 };

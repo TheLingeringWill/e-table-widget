@@ -5,6 +5,7 @@
 	import { step, previousStep } from '$lib/states/step.svelte';
 	import { reservation } from '$lib/states/reservation.svelte';
 	import { useWidget, getTranslation } from '$lib/context.svelte.js';
+	import { currentLocale } from '$lib/states/locale.svelte';
 	import { formatSlotDate } from '$lib/utils/slotFormat';
 	import * as m from '$lib/paraglide/messages';
 	import LanguageSwitcher from './LanguageSwitcher.svelte';
@@ -18,8 +19,12 @@
 
 	const widget = useWidget();
 
-	const title = $derived(getTranslation(widget.title));
-	const description = $derived(getTranslation(widget.description));
+	// Pass the active runtime locale ('en', 'fr', …) so the header shows the
+	// matching translation; getTranslation normalizes case/region and falls
+	// back to the first entry when the language has no translation (e.g. the
+	// title only has an 'FR' entry).
+	const title = $derived(getTranslation(widget.title, currentLocale.value));
+	const description = $derived(getTranslation(widget.description, currentLocale.value));
 
 	// The switcher rides along on screens where the user is actively choosing
 	// or filling in a booking. We deliberately omit it from DONE/ERROR/PAYMENT

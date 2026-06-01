@@ -52,8 +52,13 @@ export const useZonedDateUtils = (zonedDateUtils?: ZonedDateUtils): ZonedDateUti
 };
 
 export const getTranslation = (translations?: Translation[], language?: string) => {
+	// Match on the base language (uppercased, region stripped) so a 'FR'
+	// request still resolves a 'FR-CA' entry and vice versa. Falls back to the
+	// first entry when the requested language has no translation.
+	const base = (lang: string) => lang.toUpperCase().split('-')[0];
+	const target = base(language || 'FR');
 	return (
-		translations?.find?.((t) => t.language === (language || 'FR'))?.value ||
+		translations?.find?.((t) => base(t.language) === target)?.value ||
 		translations?.[0]?.value ||
 		''
 	);

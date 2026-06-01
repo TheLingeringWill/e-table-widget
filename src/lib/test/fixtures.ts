@@ -177,6 +177,15 @@ export function buildAggregateDTO(
 			title: 'Le Bistrot',
 			color: '#1a1a1a',
 			gtmEnabled: false,
+			translations: [
+				{
+					id: 1,
+					language: 'fr',
+					description: 'Bienvenue au Bistrot',
+					createdAt: '2026-01-01T00:00:00Z',
+					updatedAt: '2026-01-01T00:00:00Z'
+				}
+			],
 			createdAt: '2026-01-01T00:00:00Z',
 			updatedAt: '2026-01-01T00:00:00Z'
 		},

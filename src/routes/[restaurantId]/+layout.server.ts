@@ -57,16 +57,12 @@ export const load = async ({ params, url, setHeaders }) => {
 					}
 				]
 			: [],
-		description: widgetDto.description
-			? [
-					{
-						id: 'rest',
-						language: 'FR',
-						value: widgetDto.description,
-						entity_id: 'rest'
-					}
-				]
-			: [],
+		description: (widgetDto.translations ?? []).map((t) => ({
+			id: String(t.id),
+			language: t.language.toUpperCase(),
+			value: t.description,
+			entity_id: 'rest'
+		})),
 		name: 'DEFAULT',
 		theme,
 		whitelist: [],

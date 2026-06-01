@@ -64,6 +64,14 @@ export interface TrackReviewArgVisitRequestDTO {
 	formSubmit?: boolean;
 }
 
+export interface WidgetTranslationResponseDTO {
+	id: number;
+	language: string;
+	description: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
 export interface WidgetResponseDTO {
 	id: number;
 	restaurantId: number;
@@ -72,7 +80,7 @@ export interface WidgetResponseDTO {
 	gtmEnabled: boolean;
 	createdAt: string;
 	updatedAt: string;
-	description?: string | null;
+	translations: WidgetTranslationResponseDTO[];
 	gtmId?: string | null;
 }
 

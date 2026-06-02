@@ -1,7 +1,6 @@
 <script lang="ts">
 	import TextInput from 'maket/TextInput';
 	import { CaretLeft, Check, ClockCounterClockwise, Info } from 'phosphor-svelte';
-	import Button from './Button.svelte';
 	import { onMount } from 'svelte';
 	import intlTelInput from 'intl-tel-input';
 	import 'intl-tel-input/build/css/intlTelInput.css';
@@ -15,6 +14,16 @@
 	import type { CountryCode } from 'libphonenumber-js';
 	import type { BookingCivility } from '$lib/api-types';
 	import * as m from '$lib/paraglide/messages';
+	import { useWidget } from '$lib/context.svelte';
+
+	const widgetCtx = useWidget();
+	const theme = $derived(
+		widgetCtx.theme as {
+			backgroundColor?: string;
+			fontColor?: string;
+			buttonBorderRadius?: number;
+		}
+	);
 
 	let lastNameErrors: string[] = $state([]);
 	let firstNameErrors: string[] = $state([]);
@@ -322,7 +331,17 @@
 				</div>
 			</div>
 			<div class="flex items-center gap-8">
-				<Button onclick={validate} revert>{m.contact_continue()}</Button>
+				<button
+					type="button"
+					class="flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold transition-all hover:brightness-110 focus:brightness-95 focus:outline-none"
+					style="background: {theme?.backgroundColor};
+					       color: {theme?.fontColor};
+					       border: 1px solid {theme?.backgroundColor};
+					       border-radius: {theme?.buttonBorderRadius ?? 8}px;"
+					onclick={validate}
+				>
+					{m.contact_continue()}
+				</button>
 			</div>
 		</div>
 	</form>

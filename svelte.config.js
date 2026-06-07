@@ -7,7 +7,15 @@ const config = {
 	// for more information about preprocessors
 	preprocess: vitePreprocess(),
 	kit: {
-		adapter: adapter({ out: 'build' })
+		adapter: adapter({ out: 'build' }),
+		version: {
+			// Poll /_app/version.json in the background. When the build version
+			// changes, SvelteKit flips `updated.current` to true (one-way). This
+			// does NOT reload by itself — Widget.svelte reacts to the flag and
+			// reloads. No-op under `vite dev`. version.name defaults to the build
+			// timestamp, which changes every build.
+			pollInterval: 60000
+		}
 	}
 };
 

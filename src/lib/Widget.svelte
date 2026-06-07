@@ -10,6 +10,11 @@
 		borderRadius: 12,
 		buttonBorderRadius: 8
 	};
+
+	// One reload per document max — guards against a reload loop if the edge ever
+	// serves a stale version.json that keeps reporting "newer". A real reload
+	// starts a fresh document where this re-initializes to false.
+	let reloadedForUpdate = false;
 </script>
 
 <script lang="ts">
@@ -29,6 +34,7 @@
 	import Summary from './Widget/Summary.svelte';
 	import { gotoStep, step } from '$lib/states/step.svelte';
 	import { browser } from '$app/environment';
+	import { updated } from '$app/state';
 	import { parseSlotDateAsCalendarDate, slotKey } from '$lib/utils/slotFormat';
 	import { contact, rememberMe, prefilled } from './states/contact.svelte';
 	import { reservation, reservationTemp } from './states/reservation.svelte';
@@ -300,6 +306,14 @@
 			builderListener();
 			mounted = true;
 		}
+
+		// Force an immediate version check rather than waiting for the poll
+		// interval — the common case is "deployed while this iframe sat open".
+		// Fire-and-forget; updated.check() flips updated.current, which the
+		// $effect below observes and reloads on.
+		if (browser) {
+			updated.check().catch(() => {});
+		}
 	});
 
 	$effect(() => {
@@ -387,6 +401,20 @@
 					pax: selection.pax
 				});
 				break;
+		}
+	});
+
+	// Reload onto a freshly deployed version once SvelteKit's background poll
+	// (kit.version.pollInterval) detects a new build. pollInterval only flips
+	// updated.current; it does not reload by itself, and this single-screen
+	// iframe never navigates, so we trigger the reload here. Deploys run at
+	// midnight, so we don't gate on the booking step — just refresh.
+	$effect(() => {
+		if (!browser || !mounted) return; // not during SSR / before initial load
+		if (reloadedForUpdate) return; // one-shot per document
+		if (updated.current) {
+			reloadedForUpdate = true;
+			location.reload();
 		}
 	});
 </script>

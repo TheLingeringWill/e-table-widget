@@ -409,6 +409,7 @@
 	// updated.current; it does not reload by itself, and this single-screen
 	// iframe never navigates, so we trigger the reload here. Deploys run at
 	// midnight, so we don't gate on the booking step — just refresh.
+	// (Verified end-to-end against staging via version.json polling.)
 	$effect(() => {
 		if (!browser || !mounted) return; // not during SSR / before initial load
 		if (reloadedForUpdate) return; // one-shot per document

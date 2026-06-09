@@ -80,9 +80,9 @@ Note: the legacy `[widgetId]` URL segment is gone — widgets are 1:1 with resta
 `+layout.server.ts` builds the theme from the REST aggregate. Convention (auto-contrast added 2026-06-09):
 
 - `backgroundColor` = `widget.color` (brand surface — can be light _or_ dark)
-- `fontColor` / `borderColor` = `getContrastColor(widget.color)` — auto `#000000` on a light brand, `#ffffff` on a dark one (WCAG luminance, threshold `0.179`, in `src/lib/utils/contrastColor.ts`). This is what keeps a light brand from rendering white-on-light (Zenchef-style).
-- `buttonColor` = hardcoded `#ffffff` (the white CTA surface)
-- `buttonTextColor` = `brandTextOnLight(widget.color)` — the brand color when it's dark enough to read on the white button, else `#000000`
+- `fontColor` / `borderColor` = `getContrastColor(widget.color)` — auto `#000000` on a light brand, `#ffffff` on a dark one (WCAG luminance, cutoff `0.178`, in `src/lib/utils/contrastColor.ts`). This is what keeps a light brand from rendering white-on-light (Zenchef-style).
+- `buttonColor` = the contrast color (filled contrast CTA: white button on a dark brand, black button on a light one)
+- `buttonTextColor` = the brand color directly on both sides of the cutoff — `brandTextOnLight(widget.color)` on the white button, `brandTextOnDark(widget.color)` on the black one — falling back to `#000000`/`#ffffff` when the brand can't read on the button surface
 
 `widget.color` is the brand surface, not a font color. Inverting this is the most common mistake. The foreground is no longer hardcoded white: for a dark brand the computed values are bit-for-bit the old behavior; only light brands change.
 

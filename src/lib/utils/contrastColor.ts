@@ -71,3 +71,19 @@ export function brandTextOnLight(brand: string): string {
 	if (luminance === null || luminance > READS_ON_WHITE_CUTOFF) return '#000000';
 	return brand;
 }
+
+/**
+ * Text color for the brand color placed ON the black CTA button — the mirror
+ * of `brandTextOnLight`. Keeps the brand color when it's light enough to read
+ * on black (preserving brand identity); falls back to white when the brand is
+ * too dark — or can't be parsed.
+ *
+ * Uses the same contrast-parity cutoff: above it, contrast vs black exceeds
+ * contrast vs white, so any brand that flips the surface foreground to black
+ * also reads on the black button.
+ */
+export function brandTextOnDark(brand: string): string {
+	const luminance = hexLuminance(brand);
+	if (luminance === null || luminance <= READS_ON_WHITE_CUTOFF) return '#ffffff';
+	return brand;
+}

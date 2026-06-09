@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getContrastColor, brandTextOnLight } from './contrastColor';
+import { getContrastColor, brandTextOnLight, brandTextOnDark } from './contrastColor';
 
 describe('getContrastColor', () => {
 	// Cutoff is the WCAG contrast-parity luminance (0.178): only genuinely dark
@@ -77,5 +77,31 @@ describe('brandTextOnLight', () => {
 
 	it('falls back to black for invalid input (treated as light)', () => {
 		expect(brandTextOnLight('')).toBe('#000000');
+	});
+});
+
+describe('brandTextOnDark', () => {
+	// Every brand light enough to flip the surface foreground to black (lum >
+	// cutoff) keeps its own color as text on the black CTA button.
+	it('keeps a light/pastel brand color unchanged (reads on black)', () => {
+		expect(brandTextOnDark('#f5e6c8')).toBe('#f5e6c8');
+		expect(brandTextOnDark('#ffffff')).toBe('#ffffff');
+	});
+
+	it('keeps a mid-tone brand color unchanged (reads on black)', () => {
+		expect(brandTextOnDark('#8a9a85')).toBe('#8a9a85');
+		expect(brandTextOnDark('#708173')).toBe('#708173'); // sage green, lum 0.20
+		expect(brandTextOnDark('#db9648')).toBe('#db9648'); // orange, lum 0.37
+	});
+
+	it('falls back to white for a dark brand (would not read on black)', () => {
+		expect(brandTextOnDark('#022c22')).toBe('#ffffff');
+		expect(brandTextOnDark('#1a1a40')).toBe('#ffffff');
+		expect(brandTextOnDark('#000000')).toBe('#ffffff');
+	});
+
+	it('falls back to white for invalid input', () => {
+		expect(brandTextOnDark('')).toBe('#ffffff');
+		expect(brandTextOnDark('not-a-color')).toBe('#ffffff');
 	});
 });

@@ -4,10 +4,23 @@
  */
 
 /**
- * Luminance where contrast vs black equals contrast vs white (WCAG 2.x).
- * Above it a color is "light" → needs dark text; at/below it → light text.
+ * Cutoff for foreground ON the brand surface (text, borders, day squares).
+ * Zenchef keeps white text on the brand color unless the brand is genuinely
+ * LIGHT/pastel — not at the contrast-parity point (0.179), which would flip a
+ * mid-tone like sage green (lum ≈ 0.30) to black even though white reads fine
+ * there and is the desired look. 0.45 keeps white through the mid-tones and
+ * only switches to black for near-white / pale brands.
  */
-const LUMINANCE_THRESHOLD = 0.179;
+const SURFACE_LIGHT_CUTOFF = 0.45;
+
+/**
+ * Cutoff for the brand color used as TEXT on the white CTA button. Here the
+ * background is white, so the brand must have real contrast against white to
+ * stay legible — that is the contrast-parity luminance (0.179, where contrast
+ * vs black equals contrast vs white). A brand above it (e.g. sage green at
+ * 0.30, only ~3:1 on white) falls back to black; a dark brand is kept.
+ */
+const READS_ON_WHITE_CUTOFF = 0.179;
 
 /**
  * WCAG 2.x relative luminance of a hex color, or `null` if it can't be parsed.
@@ -29,18 +42,18 @@ function hexLuminance(hex: string): number | null {
 }
 
 /**
- * Pick a legible foreground (black or white) for a brand/background color,
- * Zenchef-style.
+ * Pick a legible foreground (black or white) for the brand SURFACE, Zenchef-
+ * style: keep white unless the brand is genuinely light/pastel.
  *
- * Compares the color's luminance to LUMINANCE_THRESHOLD — the luminance where
- * contrast vs black equals contrast vs white. Above it → dark text (#000); else
- * white. Invalid/empty input → '#ffffff' (the previous hardcoded value), so
- * this is always at least as safe as the old behavior.
+ * Flips to black only when luminance exceeds SURFACE_LIGHT_CUTOFF, so mid-tone
+ * brands (e.g. sage green) keep white text — matching the reference widget.
+ * Invalid/empty input → '#ffffff' (the previous hardcoded value), so this is
+ * always at least as safe as the old behavior.
  */
 export function getContrastColor(hex: string): '#ffffff' | '#000000' {
 	const luminance = hexLuminance(hex);
 	if (luminance === null) return '#ffffff';
-	return luminance > LUMINANCE_THRESHOLD ? '#000000' : '#ffffff';
+	return luminance > SURFACE_LIGHT_CUTOFF ? '#000000' : '#ffffff';
 }
 
 /**
@@ -49,10 +62,11 @@ export function getContrastColor(hex: string): '#ffffff' | '#000000' {
  * brand identity); falls back to black when the brand is too light — or can't
  * be parsed (an unparseable string must never be emitted as a CSS color).
  *
- * A brand reads on white iff its luminance is low; reuse the same cutoff.
+ * Uses READS_ON_WHITE_CUTOFF (stricter than the surface cutoff): the button
+ * background is white, so the brand needs real contrast against white to stay.
  */
 export function brandTextOnLight(brand: string): string {
 	const luminance = hexLuminance(brand);
-	if (luminance === null || luminance > LUMINANCE_THRESHOLD) return '#000000';
+	if (luminance === null || luminance > READS_ON_WHITE_CUTOFF) return '#000000';
 	return brand;
 }

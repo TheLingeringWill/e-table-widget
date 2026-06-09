@@ -607,10 +607,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 			border-color: ${theme.borderColor} !important;
 		}
 		/* Selectable rows in the steps (services, slots, waitlist, alternatives)
-		   used to hardcode a white border + white hover tint, invisible on a light
-		   brand. Drive both off the theme border color via currentColor-style mix. */
+		   used to hardcode a white border, invisible on a light brand. Drive the
+		   border off the theme color — solid, exactly like the calendar day cells
+		   (.ui-calendar-day) — so every step gets the same black border. */
 		.themed-border {
-			border-color: color-mix(in srgb, ${theme.borderColor} 35%, transparent) !important;
+			border-color: ${theme.borderColor} !important;
 		}
 		.themed-border:hover {
 			background-color: color-mix(in srgb, ${theme.borderColor} 10%, transparent) !important;

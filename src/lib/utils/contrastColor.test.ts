@@ -2,33 +2,34 @@ import { describe, it, expect } from 'vitest';
 import { getContrastColor, brandTextOnLight } from './contrastColor';
 
 describe('getContrastColor', () => {
-	// Two anchors the user verified by eye (cutoff 0.28 sits between them):
-	//   sage green #708173 (lum 0.20) → WHITE
-	//   light orange #db9648 (lum 0.37) → BLACK
-	it('uses white on sage green and black on the orange (the calibrated anchors)', () => {
-		expect(getContrastColor('#708173')).toBe('#ffffff');
-		expect(getContrastColor('#db9648')).toBe('#000000');
+	// Cutoff is the WCAG contrast-parity luminance (0.178): only genuinely dark
+	// brands stay white; mid-tones (incl. sage green) flip to black.
+	it('uses black on both sage green and the orange at the 0.178 cutoff', () => {
+		expect(getContrastColor('#708173')).toBe('#000000'); // sage green, lum 0.20
+		expect(getContrastColor('#db9648')).toBe('#000000'); // orange, lum 0.37
 	});
 
-	// WHITE: dark and muted-dark brands (lum <= 0.28).
-	it.each(['#022c22', '#000000', '#1a1a40', '#7a0019', '#708173', '#7f8f79', '#808080', '022c22'])(
-		'returns white on dark/muted brand %s',
+	// WHITE: only genuinely dark brands (lum <= 0.178).
+	it.each(['#022c22', '#000000', '#1a1a40', '#7a0019', '022c22'])(
+		'returns white on dark brand %s',
 		(c) => expect(getContrastColor(c)).toBe('#ffffff')
 	);
 
-	// BLACK: clearly-light brands — the orange, lighter greys, and pastels.
+	// BLACK: mid-tones and light brands — sage green, greys, the orange, pastels.
 	it.each([
+		'#708173', // sage green, lum 0.20
+		'#7f8f79',
+		'#808080', // mid-grey, lum 0.22
 		'#db9648', // orange the user tested
 		'#d19956',
 		'#8a9a85',
-		'#94a48f',
 		'#a0a0a0',
 		'#c0c0c0',
 		'#ffd700',
 		'#f5e6c8',
 		'#ffffff',
 		'#fafafa'
-	])('returns black on light brand %s', (c) => expect(getContrastColor(c)).toBe('#000000'));
+	])('returns black on mid-tone/light brand %s', (c) => expect(getContrastColor(c)).toBe('#000000'));
 
 	it('expands 3-digit shorthand', () => {
 		expect(getContrastColor('#fff')).toBe('#000000');

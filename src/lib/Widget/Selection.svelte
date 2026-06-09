@@ -1,5 +1,13 @@
 <script lang="ts">
-	import { ArrowLeft, ArrowRight, Calendar, CallBell, Clock, ForkKnife } from 'phosphor-svelte';
+	import {
+		ArrowLeft,
+		ArrowRight,
+		Calendar,
+		CallBell,
+		Clock,
+		ForkKnife,
+		Sparkle
+	} from 'phosphor-svelte';
 	import AccordionGroup from '../AccordionGroup.svelte';
 	import Button from './Button.svelte';
 	import Spinner from '../Spinner.svelte';
@@ -32,9 +40,11 @@
 	let loadingDates = $state(false);
 	let loadingSlots = $state(false);
 	let loadingAlternative = $state(false);
+	let loadingExperiences = $state(false);
 
 	let services = $state<NonNullable<typeof selection.service>[]>([]);
 	let slots = $state<NonNullable<typeof selection.slot>[]>([]);
+	let experiences = $state<NonNullable<typeof selection.experience>[]>([]);
 	let disabledDates = $state<Date[]>([]);
 	let maxCalendarDate = $state<Date | undefined>(undefined);
 
@@ -183,6 +193,10 @@
 			openedAccordion.index = 2;
 		} else if (selection.slot === null) {
 			openedAccordion.index = 3;
+		} else if (experiences.length > 0 && selection.experience === null) {
+			// Optional experiences step (index 4, only present when the chosen
+			// service has experiences) — surface it once a slot is picked.
+			openedAccordion.index = 4;
 		} else {
 			openedAccordion.index = null;
 		}
@@ -222,6 +236,35 @@
 		}
 	};
 
+	// Load the optional experiences attached to the chosen service. Clears any
+	// previously-picked experience that no longer belongs to the new service.
+	const getExperiences = async () => {
+		if (!selection.service) {
+			experiences = [];
+			selection.experience = null;
+			return;
+		}
+		loadingExperiences = true;
+		const [res, error] = await api.getExperiences({
+			restaurantId,
+			serviceId: selection.service.id
+		});
+		if (error || !res) {
+			experiences = [];
+			selection.experience = null;
+			loadingExperiences = false;
+			return;
+		}
+		experiences = res;
+		if (
+			selection.experience !== null &&
+			!experiences.find((e) => e.id === selection.experience?.id)
+		) {
+			selection.experience = null;
+		}
+		loadingExperiences = false;
+	};
+
 	const onServiceChange = async () => {
 		if (
 			selection.service &&
@@ -238,6 +281,8 @@
 
 		// Reset waitlist state when service changes
 		resetWaitlist();
+
+		await getExperiences();
 
 		if (selection.date && selection.service && selection.pax) {
 			await getServiceSlots();
@@ -407,7 +452,21 @@
 				loading: loadingSlots,
 				contentClass: 'flex flex-wrap gap-2 justify-center',
 				disabled: !selection.date || !selection.service || !selection.pax
-			}
+			},
+			...(experiences.length > 0
+				? [
+						{
+							id: 'experiences',
+							icon: Sparkle,
+							title: selection.experience
+								? getTranslation(selection.experience.name)
+								: m.selection_pickExperience(),
+							loading: loadingExperiences,
+							contentClass: 'flex flex-wrap gap-3 justify-center px-5 py-3',
+							disabled: !selection.date || !selection.service || !selection.pax || !selection.slot
+						}
+					]
+				: [])
 		]}
 	>
 		{#snippet separator()}
@@ -678,6 +737,48 @@
 							{/if}
 						</div>
 					{/if}
+				</div>
+			{:else if item.id === 'experiences'}
+				<div class="flex flex-wrap justify-center gap-3 w-full">
+					{#each experiences as experience (experience.id)}
+						{@const active = experience.id === selection.experience?.id}
+						<button
+							data-active={active}
+							onclick={() => {
+								selection.experience = active ? null : experience;
+								pushGtmEvent('experience_selected', {
+									experience_id: experience.id,
+									experience_name: getTranslation(experience.name)
+								});
+								openAccordion();
+							}}
+							class="flex flex-col w-32 rounded-lg overflow-hidden border-2 hover:bg-white hover:bg-opacity-15 transition-all"
+							aria-label={getTranslation(experience.name)}
+						>
+							<div
+								class="w-full aspect-[4/3] bg-white bg-opacity-10 flex items-center justify-center overflow-hidden"
+							>
+								{#if experience.imageUrl}
+									<img
+										src={experience.imageUrl}
+										alt={getTranslation(experience.name)}
+										class="w-full h-full object-cover"
+									/>
+								{:else}
+									<Sparkle size={24} class="opacity-40" />
+								{/if}
+							</div>
+							<div class="flex flex-col gap-0.5 px-2 py-1.5 text-left">
+								<b class="text-sm truncate">{getTranslation(experience.name)}</b>
+								<span class="text-xs opacity-70">
+									{(experience.priceCents / 100).toLocaleString(undefined, {
+										style: 'currency',
+										currency: 'EUR'
+									})}
+								</span>
+							</div>
+						</button>
+					{/each}
 				</div>
 			{/if}
 		{/snippet}

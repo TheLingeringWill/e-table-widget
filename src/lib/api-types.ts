@@ -204,6 +204,7 @@ export interface CreateBookingRequestDTO {
 	phone?: string | null;
 	paymentIntentId?: string | null;
 	setupIntentId?: string | null;
+	experienceId?: number | null;
 }
 
 export interface CreateBookingResponseDTO extends BookingDetailResponseDTO {
@@ -299,6 +300,15 @@ export interface CreateSetupIntentResponseDTO {
 	stripeConnectAccountId: string;
 }
 
+// Experience-driven SetupIntent: amount comes from the experience price instead
+// of the slot deposit policy. Same response shape as the slot path.
+export interface CreateSetupIntentForExperienceRequestDTO {
+	experienceId: number;
+	email?: string;
+	firstName?: string;
+	lastName?: string;
+}
+
 export interface SetupIntentResponseDTO {
 	id: string;
 	clientSecret: string;
@@ -369,6 +379,32 @@ export interface LegacyService {
 	endTime: number;
 	minPaxPerReservation: number;
 	maxPaxPerReservation: number;
+	[k: string]: unknown;
+}
+
+// REST `ExperienceResponseDTO` — an offer attached to one service. `name`/`note`
+// arrive per-language; the BFF resolves them to translation arrays before the UI
+// sees them (mirrors how shifts become LegacyService).
+export interface ExperienceResponseDTO {
+	id: number;
+	serviceId: number;
+	imageUrl?: string | null;
+	priceCents: number;
+	paymentOption: 'none' | 'save_card';
+	active: boolean;
+	translations: { language: string; name: string; note?: string | null }[];
+}
+
+// Widget-state shape for an experience tile (string id, translation-array
+// name/note), mirroring LegacyService.
+export interface LegacyExperience {
+	id: string;
+	serviceId: string;
+	imageUrl?: string;
+	priceCents: number;
+	paymentOption: 'none' | 'save_card';
+	name: LegacyTranslationArray;
+	note?: LegacyTranslationArray;
 	[k: string]: unknown;
 }
 

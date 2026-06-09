@@ -53,6 +53,7 @@
 					email: contact.email
 				}
 			},
+			experienceId: selection.experience?.id,
 			joiningWaitlist: waitlist.isWaitlist
 		};
 
@@ -67,20 +68,29 @@
 		// re-run createSetupIntent and re-prompt the guest for a card they've saved.
 		const alreadyHasPayment =
 			reservation.paymentStatus === 'requires_capture' || !!reservation.stripeSetupIntentId;
+		// A `save_card` experience drives the deposit by its own price, independent
+		// of the slot's capture policy — prefer the experience-aware setup intent
+		// when one is selected.
+		const experienceRequiresCard = selection.experience?.paymentOption === 'save_card';
 		if (!waitlist.isWaitlist && !alreadyHasPayment) {
-			// New bookings: try to pre-create a SetupIntent (saved-card model). If
-			// the slot has no deposit policy the API returns 409 "no deposit
-			// required" and we fall through to the regular create path. Otherwise we
-			// collect the clientSecret and route to PAYMENT, where Stripe Elements
-			// will save the card; the booking itself is then persisted by
-			// Payment.svelte calling `api.book(...)` synchronously with
-			// `setupIntentId` after `confirmCardSetup` resolves.
-			const [siRes, siErr] = await api.createSetupIntent({
-				restaurantId: widget.restaurantId,
-				date: { date: selection.slot.date, time: selection.slot.time },
-				pax: selection.pax,
-				countryCode: contact.countryCode
-			});
+			// New bookings: try to pre-create a SetupIntent (saved-card model). The
+			// experience path uses the experience price; the slot path uses the slot
+			// deposit policy. Either way a 409 ("no deposit / saved card required")
+			// falls through to the regular create path; success collects the
+			// clientSecret and routes to PAYMENT, where Stripe Elements saves the
+			// card and Payment.svelte persists the booking with `setupIntentId` (and
+			// `experienceId`) after `confirmCardSetup`.
+			const [siRes, siErr] = experienceRequiresCard
+				? await api.createExperienceSetupIntent({
+						restaurantId: widget.restaurantId,
+						experienceId: selection.experience!.id
+					})
+				: await api.createSetupIntent({
+						restaurantId: widget.restaurantId,
+						date: { date: selection.slot.date, time: selection.slot.time },
+						pax: selection.pax,
+						countryCode: contact.countryCode
+					});
 			if (siErr) {
 				return gotoError(null, 'CREATE_PAYMENT_INTENT_FAILED');
 			}

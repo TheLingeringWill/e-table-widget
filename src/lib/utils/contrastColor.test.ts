@@ -7,14 +7,26 @@ describe('getContrastColor', () => {
 		(c) => expect(getContrastColor(c)).toBe('#ffffff')
 	);
 
-	// Mid-tone brands (sage green etc.) must keep WHITE text — the reported bug
-	// was these flipping to black at the old contrast-parity cutoff (0.179).
-	it.each(['#8a9a85', '#94a48f', '#7f8f79', '#808080', '#a0a0a0'])(
-		'returns white on mid-tone brand %s (Zenchef keeps white)',
-		(c) => expect(getContrastColor(c)).toBe('#ffffff')
+	// Mid-tone brands must keep WHITE text — the reported bug was these flipping
+	// to black. Calibrated to the reference widget, which renders white on both
+	// sage green (#708173) and a light orange (#d19956, lum 0.37), and on greys
+	// up to ~#b0b0b0. These are the exact colors the user tested.
+	it.each([
+		'#708173', // sage green (restaurant 1)
+		'#d19956', // orange (user's Zenchef test) — lum 0.37
+		'#d39e5f', // same orange, with overlay
+		'#8a9a85',
+		'#94a48f',
+		'#808080',
+		'#a0a0a0',
+		'#b0b0b0',
+		'#c0c0c0' // silver, lum 0.53 — still white
+	])('returns white on mid-tone brand %s (Zenchef keeps white)', (c) =>
+		expect(getContrastColor(c)).toBe('#ffffff')
 	);
 
-	it.each(['#ffffff', '#fafafa', '#f5e6c8', '#ffd700', '#e8e8e8', 'fafafa'])(
+	// Only genuinely light / pastel brands (lum ≥ ~0.70) flip to black.
+	it.each(['#ffffff', '#fafafa', '#f5e6c8', '#ffd700', '#e8e8e8', '#ffe4b5', '#f0e68c', 'fafafa'])(
 		'returns black on light brand %s',
 		(c) => expect(getContrastColor(c)).toBe('#000000')
 	);
@@ -29,8 +41,8 @@ describe('getContrastColor', () => {
 		expect(getContrastColor('022C22')).toBe('#ffffff');
 	});
 
-	it('silver #c0c0c0 picks black (genuinely light, lum ≈ 0.53 > 0.45)', () => {
-		expect(getContrastColor('#c0c0c0')).toBe('#000000');
+	it('pale beige #f5deb3 picks black (genuinely light, lum > 0.65)', () => {
+		expect(getContrastColor('#f5deb3')).toBe('#000000');
 	});
 
 	it.each(['', 'not-a-color', '#12', '#1234', '#1234567', undefined as unknown as string])(

@@ -6,12 +6,13 @@
 /**
  * Cutoff for foreground ON the brand surface (text, borders, day squares).
  * Zenchef keeps white text on the brand color unless the brand is genuinely
- * LIGHT/pastel — not at the contrast-parity point (0.179), which would flip a
- * mid-tone like sage green (lum ≈ 0.30) to black even though white reads fine
- * there and is the desired look. 0.45 keeps white through the mid-tones and
- * only switches to black for near-white / pale brands.
+ * LIGHT/pastel — NOT at the contrast-parity point (0.179). Measured against the
+ * reference widget: it renders white on sage green (#708173, lum 0.20) AND on a
+ * light orange (#d19956, lum 0.37) — and only flips to black for true pastels
+ * (cream/gold/beige, lum ≥ 0.70). 0.65 sits in that gap: every saturated mid-
+ * tone keeps white; only near-white / pale brands get black text.
  */
-const SURFACE_LIGHT_CUTOFF = 0.45;
+const SURFACE_LIGHT_CUTOFF = 0.65;
 
 /**
  * Cutoff for the brand color used as TEXT on the white CTA button. Here the

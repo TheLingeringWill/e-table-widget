@@ -28,19 +28,24 @@ export const load = async ({ params, url, setHeaders }) => {
 	}
 	const { restaurant, widget: widgetDto } = result.data;
 
-	// PRD §6.4 (rev 8): widget.color is the brand SURFACE (the widget identity).
+	// PRD §6.4 (rev 9): widget.color is the brand SURFACE (the widget identity).
 	// The foreground (text + separators/borders) auto-picks black or white from
-	// the brand color's luminance — Zenchef-style — so a LIGHT brand color stays
-	// legible instead of rendering white-on-light. The white CTA button keeps
-	// brand-colored text when the brand reads on white, else falls back to black
-	// (brandTextOnLight). backgroundColor + buttonColor are untouched.
+	// the brand color's luminance — Zenchef-style — so a LIGHT brand stays legible
+	// instead of rendering white-on-light. The CTA button is a FILLED contrast
+	// button: its background is the contrast color (black on a light brand, white
+	// on a dark one) with the opposite color as text — so on a light brand the
+	// button reads solid black, matching the rest of the foreground.
 	const contrast = getContrastColor(widgetDto.color);
+	const onContrast = contrast === '#000000' ? '#ffffff' : brandTextOnLight(widgetDto.color);
 	const theme = {
 		...defaultTheme,
 		backgroundColor: widgetDto.color,
 		fontColor: contrast,
-		buttonColor: '#ffffff',
-		buttonTextColor: brandTextOnLight(widgetDto.color),
+		buttonColor: contrast,
+		buttonTextColor: onContrast,
+		// The .revert / .color-revert surfaces sit on a fixed near-white (#f0f0f0)
+		// background, so their text must read on white regardless of brand.
+		revertTextColor: brandTextOnLight(widgetDto.color),
 		borderColor: contrast
 	};
 

@@ -6,6 +6,7 @@
 		backgroundColor: '#022c22',
 		buttonColor: '#ffffff',
 		buttonTextColor: '#022c22',
+		revertTextColor: '#022c22',
 		borderColor: '#ffffff',
 		borderRadius: 12,
 		buttonBorderRadius: 8
@@ -605,6 +606,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		.ui-calendar-day {
 			border-color: ${theme.borderColor} !important;
 		}
+		/* Selectable rows in the steps (services, slots, waitlist, alternatives)
+		   used to hardcode a white border + white hover tint, invisible on a light
+		   brand. Drive both off the theme border color via currentColor-style mix. */
+		.themed-border {
+			border-color: color-mix(in srgb, ${theme.borderColor} 35%, transparent) !important;
+		}
+		.themed-border:hover {
+			background-color: color-mix(in srgb, ${theme.borderColor} 10%, transparent) !important;
+		}
 		#widget [data-active="true"],
 		#widget [data-selected="true"] {
 			background: ${theme.fontColor} !important;
@@ -614,10 +624,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
 		#button.revert {
 			background: #f0f0f0f0;
-			color: ${theme.buttonTextColor};
+			color: ${theme.revertTextColor};
 		}
 		.color-revert {
-			color: ${theme.buttonTextColor};
+			color: ${theme.revertTextColor};
 		}
 		.max-w-small {
 			max-width: 600px;

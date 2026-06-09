@@ -675,26 +675,6 @@
 									</button>
 								</div>
 								{@render alternativesSection()}
-							{:else}
-								<div class="flex flex-col items-center py-4 px-4 w-full">
-									<p class="text-base font-semibold mb-1">{m.selection_noSlotsAvailable()}</p>
-									<p class="text-xs text-center opacity-50 mb-3">
-										{m.selection_noTablesTryAnotherDate()}
-									</p>
-									<button
-										onclick={() => {
-											openedAccordion.index = 0;
-										}}
-										class="themed-border w-full flex items-center justify-between px-3 py-2 rounded border transition-all"
-									>
-										<div class="flex items-center gap-2">
-											<Calendar size={16} class="opacity-60" />
-											<span class="text-xs">{m.selection_chooseAnotherDate()}</span>
-										</div>
-										<ArrowRight size={14} class="opacity-40" />
-									</button>
-								</div>
-								{@render alternativesSection()}
 							{/if}
 						</div>
 					{/if}

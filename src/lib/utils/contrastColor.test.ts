@@ -2,34 +2,33 @@ import { describe, it, expect } from 'vitest';
 import { getContrastColor, brandTextOnLight } from './contrastColor';
 
 describe('getContrastColor', () => {
-	it.each(['#022c22', '#000000', '#1a1a40', '#7a0019', '022c22'])(
-		'returns white on dark brand %s',
+	// Two anchors the user verified by eye (cutoff 0.28 sits between them):
+	//   sage green #708173 (lum 0.20) → WHITE
+	//   light orange #db9648 (lum 0.37) → BLACK
+	it('uses white on sage green and black on the orange (the calibrated anchors)', () => {
+		expect(getContrastColor('#708173')).toBe('#ffffff');
+		expect(getContrastColor('#db9648')).toBe('#000000');
+	});
+
+	// WHITE: dark and muted-dark brands (lum <= 0.28).
+	it.each(['#022c22', '#000000', '#1a1a40', '#7a0019', '#708173', '#7f8f79', '#808080', '022c22'])(
+		'returns white on dark/muted brand %s',
 		(c) => expect(getContrastColor(c)).toBe('#ffffff')
 	);
 
-	// Mid-tone brands must keep WHITE text — the reported bug was these flipping
-	// to black. Calibrated to the reference widget, which renders white on both
-	// sage green (#708173) and a light orange (#d19956, lum 0.37), and on greys
-	// up to ~#b0b0b0. These are the exact colors the user tested.
+	// BLACK: clearly-light brands — the orange, lighter greys, and pastels.
 	it.each([
-		'#708173', // sage green (restaurant 1)
-		'#d19956', // orange (user's Zenchef test) — lum 0.37
-		'#d39e5f', // same orange, with overlay
+		'#db9648', // orange the user tested
+		'#d19956',
 		'#8a9a85',
 		'#94a48f',
-		'#808080',
 		'#a0a0a0',
-		'#b0b0b0',
-		'#c0c0c0' // silver, lum 0.53 — still white
-	])('returns white on mid-tone brand %s (Zenchef keeps white)', (c) =>
-		expect(getContrastColor(c)).toBe('#ffffff')
-	);
-
-	// Only genuinely light / pastel brands (lum ≥ ~0.70) flip to black.
-	it.each(['#ffffff', '#fafafa', '#f5e6c8', '#ffd700', '#e8e8e8', '#ffe4b5', '#f0e68c', 'fafafa'])(
-		'returns black on light brand %s',
-		(c) => expect(getContrastColor(c)).toBe('#000000')
-	);
+		'#c0c0c0',
+		'#ffd700',
+		'#f5e6c8',
+		'#ffffff',
+		'#fafafa'
+	])('returns black on light brand %s', (c) => expect(getContrastColor(c)).toBe('#000000'));
 
 	it('expands 3-digit shorthand', () => {
 		expect(getContrastColor('#fff')).toBe('#000000');
@@ -41,7 +40,7 @@ describe('getContrastColor', () => {
 		expect(getContrastColor('022C22')).toBe('#ffffff');
 	});
 
-	it('pale beige #f5deb3 picks black (genuinely light, lum > 0.65)', () => {
+	it('pale beige #f5deb3 picks black (genuinely light)', () => {
 		expect(getContrastColor('#f5deb3')).toBe('#000000');
 	});
 

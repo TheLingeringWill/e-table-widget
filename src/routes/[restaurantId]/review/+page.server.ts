@@ -32,49 +32,54 @@ export const load: PageServerLoad = async ({ params, url }) => {
 			restaurantName,
 			reservation: null,
 			reservationId,
-			arg
+			arg,
+			thankYou: false
 		};
 	}
 
 	const ratingNum = parseFloat(rating);
-	const threshold = reviewSettings?.reviewRedirectThreshold ?? 4;
-	const externalBranch = ratingNum >= threshold && !!reviewSettings?.reviewUrl;
+	const threshold = reviewSettings?.reviewRedirectThreshold ?? 5;
+	const highRating = ratingNum >= 1 && ratingNum <= 5 && ratingNum >= threshold;
 
 	if (arg) {
 		try {
 			await api.trackReviewArgVisit({
 				arg,
 				linkClick: true,
-				externalRedirect: externalBranch
+				externalRedirect: highRating && !!reviewSettings?.reviewUrl
 			});
 		} catch {
 			// tracking is best-effort — never block the redirect
 		}
 	}
 
-	if (externalBranch) {
-		// The external redirect skips the leave-a-review form, so the review
-		// (and the reward email the API sends on upsert) must be recorded here.
-		// Best-effort: a recording failure must not break the redirect UX.
-		if (ratingNum >= 1 && ratingNum <= 5) {
-			const numericReservationId = Number(reservationId);
-			const bookingId =
-				reservationId && Number.isFinite(numericReservationId) ? numericReservationId : null;
+	if (highRating) {
+		// Threshold-or-above ratings are never stored in our DB: reward the
+		// customer (champagne flag + reward message) and send them to the
+		// external review page. Best-effort: a reward failure must not break
+		// the redirect UX.
+		const numericReservationId = Number(reservationId);
+		if (reservationId && Number.isFinite(numericReservationId)) {
 			try {
-				const upsertResult = await api.upsertReview({
-					rating: ratingNum,
-					bookingId,
-					comment: null,
-					arg
-				});
-				if (!upsertResult.ok) {
-					console.error('review upsert failed before external redirect', upsertResult.error);
+				const rewardResult = await api.rewardReview({ bookingId: numericReservationId });
+				if (!rewardResult.ok) {
+					console.error('review reward failed before external redirect', rewardResult.error);
 				}
 			} catch (err) {
-				console.error('review upsert failed before external redirect', err);
+				console.error('review reward failed before external redirect', err);
 			}
 		}
-		throw redirect(302, reviewSettings!.reviewUrl!);
+		if (reviewSettings?.reviewUrl) {
+			throw redirect(302, reviewSettings.reviewUrl);
+		}
+		// No external review URL configured — show an inline thank-you instead.
+		return {
+			restaurantName,
+			reservation: null,
+			reservationId,
+			arg,
+			thankYou: true
+		};
 	}
 
 	const leaveReviewUrl = new URL(`/${params.restaurantId}/leave-a-review`, url.origin);

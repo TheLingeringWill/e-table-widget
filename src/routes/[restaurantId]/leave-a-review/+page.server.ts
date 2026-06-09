@@ -76,6 +76,38 @@ export const actions: Actions = {
 		}
 
 		const api = createWidgetApi(rid);
+
+		// Crafted-URL guard: a direct form POST can carry any rating, but
+		// threshold-or-above ratings are never stored in our DB. Mirror the
+		// /review redirect path — reward (best-effort) and show the thank-you
+		// screen, no upsert. The threshold comes from the aggregate; the
+		// dedicated review-settings endpoint is owner-only and rejects the
+		// widget role.
+		const aggregate = await api.getAggregate();
+		const threshold = aggregate.ok ? (aggregate.data.review.reviewRedirectThreshold ?? 5) : 5;
+		if (rating >= threshold) {
+			if (bookingId !== null) {
+				try {
+					const rewardResult = await api.rewardReview({ bookingId });
+					if (!rewardResult.ok) {
+						console.error('review reward failed on form submit', rewardResult.error);
+					}
+				} catch (err) {
+					console.error('review reward failed on form submit', err);
+				}
+			}
+
+			if (arg) {
+				try {
+					await api.trackReviewArgVisit({ arg, formSubmit: true });
+				} catch {
+					// tracking is best-effort — never surface as a form error
+				}
+			}
+
+			return { success: true };
+		}
+
 		const upsertResult = await api.upsertReview({
 			rating,
 			bookingId,

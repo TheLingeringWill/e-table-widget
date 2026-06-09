@@ -15,6 +15,7 @@ import type {
 	PaymentIntentResponseDTO,
 	RestaurantAggregateResponseDTO,
 	ReviewSettingsResponseDTO,
+	RewardReviewRequestDTO,
 	SetupIntentResponseDTO,
 	TrackReviewArgVisitRequestDTO,
 	UpdateBookingRequestDTO,
@@ -91,6 +92,13 @@ export function createWidgetApi(restaurantId: number) {
 		},
 		upsertReview(body: UpsertReviewRequestDTO): Promise<RestResult<{ id: number }>> {
 			return restCall(`/restaurants/${restaurantId}/reviews/upsert`, {
+				restaurantId,
+				method: 'POST',
+				body
+			});
+		},
+		rewardReview(body: RewardReviewRequestDTO): Promise<RestResult<void>> {
+			return restCall(`/restaurants/${restaurantId}/reviews/reward`, {
 				restaurantId,
 				method: 'POST',
 				body

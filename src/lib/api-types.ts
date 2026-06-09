@@ -248,6 +248,10 @@ export interface UpsertReviewRequestDTO {
 	arg?: string | null;
 }
 
+export interface RewardReviewRequestDTO {
+	bookingId: number;
+}
+
 export interface PaymentIntentResponseDTO {
 	clientSecret: string;
 	amountCents: number;

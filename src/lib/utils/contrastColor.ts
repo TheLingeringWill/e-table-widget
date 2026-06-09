@@ -5,16 +5,14 @@
 
 /**
  * Cutoff for foreground ON the brand surface (text, borders, day squares).
- * Picks white on dark/muted brands, black once the brand is clearly light.
+ * Picks white on dark brands, black once the brand is light.
  *
- * Calibrated to two real reference points the user verified:
- *   - sage green #708173 (lum 0.20) → WHITE text
- *   - light orange #db9648 (lum 0.37) → BLACK text
- * The flip therefore sits between them; 0.28 is the midpoint and what we use.
- * (This is intentionally lower than the 0.179 contrast-parity point, which
- * would force black on the sage green too.)
+ * Set to ~the canonical WCAG contrast-parity luminance (0.178) — the point
+ * where contrast vs black equals contrast vs white. At this cutoff mid-tones
+ * like sage green (#708173, lum 0.20) flip to BLACK; only genuinely dark brands
+ * (deep green, navy, black) stay white.
  */
-const SURFACE_LIGHT_CUTOFF = 0.28;
+const SURFACE_LIGHT_CUTOFF = 0.178;
 
 /**
  * Cutoff for the brand color used as TEXT on the white CTA button. Here the

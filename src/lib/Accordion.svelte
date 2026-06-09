@@ -33,10 +33,10 @@
 	});
 </script>
 
-<div class="relative {isOpen ? 'bg-white bg-opacity-5' : ''}">
+<div class="accordion-row relative" data-open={isOpen}>
 	<div class="px-2 py-1">
 		<button
-			class="flex items-center justify-between p-2 rounded hover:bg-white hover:bg-opacity-5 cursor-pointer w-full disabled:cursor-not-allowed disabled:opacity-50"
+			class="accordion-header flex items-center justify-between p-2 rounded cursor-pointer w-full disabled:cursor-not-allowed"
 			{disabled}
 			onclick={() => {
 				if (disabled) return;
@@ -74,3 +74,20 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	/* Open/hover tints follow the (theme-driven) foreground via currentColor, so
+	   they read on a light brand surface too — the old hardcoded `bg-white`
+	   tints were invisible on a light brand. */
+	.accordion-row[data-open='true'] {
+		background-color: color-mix(in srgb, currentColor 5%, transparent);
+	}
+	.accordion-header:not(:disabled):hover {
+		background-color: color-mix(in srgb, currentColor 6%, transparent);
+	}
+	/* An inactive (not-yet-available) step is dimmed, but only lightly — at the
+	   old opacity-50 the black text washed out to grey on a light brand. */
+	.accordion-header:disabled {
+		opacity: 0.7;
+	}
+</style>

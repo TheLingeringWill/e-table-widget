@@ -452,7 +452,7 @@
 											openAccordion();
 										});
 									}}
-									class="flex flex-row items-center gap-2 min-w-0 px-4 py-2 text-base w-full rounded hover:bg-white hover:bg-opacity-15 border-2 disabled:opacity-50 disabled:pointer-events-none"
+									class="themed-border flex flex-row items-center gap-2 min-w-0 px-4 py-2 text-base w-full rounded border-2 disabled:opacity-50 disabled:pointer-events-none"
 								>
 									<div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
 										<b>{getTranslation(service.name)}</b>
@@ -498,7 +498,7 @@
 								openAccordion();
 							});
 						}}
-						class="flex items-center justify-center p-5 rounded hover:bg-white hover:bg-opacity-15 w-10 h-10 text-base border-2 disabled:opacity-30 disabled:cursor-not-allowed"
+						class="themed-border flex items-center justify-center p-5 rounded w-10 h-10 text-base border-2 disabled:opacity-30 disabled:cursor-not-allowed"
 					>
 						{pax}
 					</button>
@@ -544,7 +544,7 @@
 										{#each alternatives as altSlot}
 											<button
 												onclick={() => handleSelectAlternative(altSlot)}
-												class="flex items-center justify-between gap-3 px-4 py-2 text-base w-full rounded border-2 border-white border-opacity-20 hover:bg-white hover:bg-opacity-10 transition-all"
+												class="themed-border flex items-center justify-between gap-3 px-4 py-2 text-base w-full rounded border-2 transition-all"
 											>
 												<span>{altSlot.time}</span>
 											</button>
@@ -561,7 +561,7 @@
 
 							<button
 								onclick={handleJoinWaitlist}
-								class="w-full px-4 py-3 rounded border border-white border-opacity-30 hover:bg-white hover:bg-opacity-10 transition-all text-sm font-medium"
+								class="themed-border w-full px-4 py-3 rounded border transition-all text-sm font-medium"
 							>
 								{m.selection_joinWaitlist()}
 							</button>
@@ -649,7 +649,7 @@
 												window.location.href = buildAlternativeWidgetUrl(alternativeRestaurant);
 											}
 										}}
-										class="w-full px-3 py-2 border border-white border-opacity-20 rounded bg-white bg-opacity-5 hover:bg-opacity-10 transition-all text-left group"
+										class="themed-border w-full px-3 py-2 border rounded transition-all text-left group"
 									>
 										<div class="flex items-center justify-between">
 											<div class="flex-1 min-w-0">
@@ -701,7 +701,7 @@
 										onclick={() => {
 											openedAccordion.index = 0;
 										}}
-										class="w-full flex items-center justify-between px-3 py-2 rounded border border-white border-opacity-20 hover:bg-white hover:bg-opacity-10 transition-all"
+										class="themed-border w-full flex items-center justify-between px-3 py-2 rounded border transition-all"
 									>
 										<div class="flex items-center gap-2">
 											<Calendar size={16} class="opacity-60" />
@@ -733,7 +733,7 @@
 												window.location.href = buildAlternativeWidgetUrl(alternativeRestaurant);
 											}
 										}}
-										class="w-full px-3 py-2 border border-white border-opacity-20 rounded bg-white bg-opacity-5 hover:bg-opacity-10 transition-all text-left group"
+										class="themed-border w-full px-3 py-2 border rounded transition-all text-left group"
 									>
 										<div class="flex items-center justify-between">
 											<div class="flex-1 min-w-0">
@@ -765,7 +765,7 @@
 										onclick={() => {
 											openedAccordion.index = 0;
 										}}
-										class="w-full flex items-center justify-between px-3 py-2 rounded border border-white border-opacity-20 hover:bg-white hover:bg-opacity-10 transition-all"
+										class="themed-border w-full flex items-center justify-between px-3 py-2 rounded border transition-all"
 									>
 										<div class="flex items-center gap-2">
 											<Calendar size={16} class="opacity-60" />

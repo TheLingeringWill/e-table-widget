@@ -19,6 +19,7 @@ import { convertToE164 } from '$lib/utils/phone';
 import { createWidgetApi } from '$lib/server/api/widget-api';
 import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
 import { shiftToLegacyService, type LiveDay } from '$lib/server/api/adapters/service';
+import { experienceToLegacyExperience } from '$lib/server/api/adapters/experience';
 import { filterByPax, slotToLegacySlot } from '$lib/server/api/adapters/slot-state';
 import {
 	resolveBookingStatus,
@@ -88,6 +89,24 @@ export const router = {
 		const shifts = days.flatMap((d) => d.shifts);
 		return shifts.filter((s) => s.bookable === true).map(shiftToLegacyService);
 	}),
+	getExperiences: procedure(
+		object({ restaurantId: string(), serviceId: string() }),
+		async ({ input }) => {
+			// Fetch all the restaurant's experiences and keep the active ones whose
+			// service matches the chosen tile, mapped to the legacy widget shape.
+			const rid = Number(input.restaurantId);
+			if (!Number.isFinite(rid)) {
+				throw new Error(`getExperiences: invalid restaurant id ${input.restaurantId}`);
+			}
+			const result = await createWidgetApi(rid).getExperiences();
+			if (!result.ok) {
+				throw new Error(`getExperiences: ${result.error.code} ${result.error.message}`);
+			}
+			return result.data
+				.filter((e) => e.active && String(e.serviceId) === input.serviceId)
+				.map(experienceToLegacyExperience);
+		}
+	),
 	getServiceSlots: procedure(
 		object({
 			restaurantId: string(),
@@ -175,6 +194,7 @@ export const router = {
 			),
 			paymentIntentId: optional(string()),
 			setupIntentId: optional(string()),
+			experienceId: optional(string()),
 			joiningWaitlist: optional(boolean())
 		}),
 		async ({ input, event }) => {
@@ -309,7 +329,8 @@ export const router = {
 							email: r.contact.email,
 							phone: normalizedPhone,
 							paymentIntentId: input.paymentIntentId ?? null,
-							setupIntentId: input.setupIntentId ?? null
+							setupIntentId: input.setupIntentId ?? null,
+							experienceId: input.experienceId ? Number(input.experienceId) : null
 						} satisfies CreateBookingRequestDTO,
 						{ force: resolvedStatus === 'waiting_list' || resolvedStatus === 'to_confirm' }
 					);
@@ -395,6 +416,39 @@ export const router = {
 					return { ok: false as const, error: result.error };
 				}
 				throw new Error(`createSetupIntent: ${result.error.code} ${result.error.message}`);
+			}
+			return {
+				ok: true as const,
+				setupIntentId: result.data.setupIntentId,
+				clientSecret: result.data.clientSecret,
+				amount: result.data.amountCents,
+				stripeAccountId: result.data.stripeConnectAccountId
+			};
+		}
+	),
+	createExperienceSetupIntent: procedure(
+		object({
+			restaurantId: string(),
+			experienceId: string()
+		}),
+		async ({ input }) => {
+			// Price-driven SetupIntent for a `save_card` experience. Same response
+			// shape as createSetupIntent so Payment.svelte's confirmCardSetup path is
+			// unchanged. A 409 means the experience does not require a saved card.
+			const rid = Number(input.restaurantId);
+			if (!Number.isFinite(rid)) {
+				throw new Error(`createExperienceSetupIntent: invalid restaurant id ${input.restaurantId}`);
+			}
+			const result = await createWidgetApi(rid).createExperienceSetupIntent({
+				experienceId: Number(input.experienceId)
+			});
+			if (!result.ok) {
+				if (result.error.code === 'http_409' || result.error.code === 'no_deposit_required') {
+					return { ok: false as const, error: result.error };
+				}
+				throw new Error(
+					`createExperienceSetupIntent: ${result.error.code} ${result.error.message}`
+				);
 			}
 			return {
 				ok: true as const,

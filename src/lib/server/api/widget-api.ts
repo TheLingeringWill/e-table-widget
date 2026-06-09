@@ -10,8 +10,10 @@ import type {
 	CreateBookingResponseDTO,
 	CreatePaymentIntentRequestDTO,
 	CreatePaymentIntentResponseDTO,
+	CreateSetupIntentForExperienceRequestDTO,
 	CreateSetupIntentRequestDTO,
 	CreateSetupIntentResponseDTO,
+	ExperienceResponseDTO,
 	PaymentIntentResponseDTO,
 	RestaurantAggregateResponseDTO,
 	ReviewSettingsResponseDTO,
@@ -137,6 +139,20 @@ export function createWidgetApi(restaurantId: number) {
 				method: 'POST',
 				body
 			});
+		},
+		createExperienceSetupIntent(
+			body: CreateSetupIntentForExperienceRequestDTO
+		): Promise<RestResult<CreateSetupIntentResponseDTO>> {
+			return restCall(`/restaurants/${restaurantId}/setup-intents/experience`, {
+				restaurantId,
+				method: 'POST',
+				body
+			});
+		},
+		getExperiences(): Promise<RestResult<ExperienceResponseDTO[]>> {
+			// All experiences for the restaurant; the BFF filters to the chosen
+			// service before the UI sees them.
+			return restCall(`/restaurants/${restaurantId}/experiences`, { restaurantId });
 		},
 		confirmSavedCard(
 			id: number,

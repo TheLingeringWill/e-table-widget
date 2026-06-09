@@ -1,4 +1,4 @@
-import type { LegacyService, LegacySlot } from '$lib/api-types';
+import type { LegacyExperience, LegacyService, LegacySlot } from '$lib/api-types';
 import { gotoStep } from './step.svelte';
 
 export let openedAccordion: {
@@ -17,11 +17,13 @@ export let selection: {
 	pax: number | null;
 	date: Date | null;
 	slot: LegacySlot | null;
+	experience: LegacyExperience | null;
 } = $state({
 	service: null,
 	pax: null,
 	date: null,
-	slot: null
+	slot: null,
+	experience: null
 });
 
 export const resetSelection = () => {
@@ -29,6 +31,7 @@ export const resetSelection = () => {
 	selection.pax = null;
 	selection.date = null;
 	selection.slot = null;
+	selection.experience = null;
 };
 
 export const gotoSelection = (openAccordion: number | null = -1, reset = false) => {

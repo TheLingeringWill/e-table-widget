@@ -53,6 +53,27 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	}
 
 	if (externalBranch) {
+		// The external redirect skips the leave-a-review form, so the review
+		// (and the reward email the API sends on upsert) must be recorded here.
+		// Best-effort: a recording failure must not break the redirect UX.
+		if (ratingNum >= 1 && ratingNum <= 5) {
+			const numericReservationId = Number(reservationId);
+			const bookingId =
+				reservationId && Number.isFinite(numericReservationId) ? numericReservationId : null;
+			try {
+				const upsertResult = await api.upsertReview({
+					rating: ratingNum,
+					bookingId,
+					comment: null,
+					arg
+				});
+				if (!upsertResult.ok) {
+					console.error('review upsert failed before external redirect', upsertResult.error);
+				}
+			} catch (err) {
+				console.error('review upsert failed before external redirect', err);
+			}
+		}
 		throw redirect(302, reviewSettings!.reviewUrl!);
 	}
 

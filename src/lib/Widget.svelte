@@ -599,6 +599,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 			background: ${theme.buttonColor};
 			color: ${theme.buttonTextColor};
 		}
+		/* Calendar day cells get a Tailwind border-2 with no color, so they fall
+		   back to a hardcoded light grey. Drive their border off the theme so the
+		   day-square traits track the foreground (black on a light brand). */
+		.ui-calendar-day {
+			border-color: ${theme.borderColor} !important;
+		}
 		#widget [data-active="true"],
 		#widget [data-selected="true"] {
 			background: ${theme.fontColor} !important;

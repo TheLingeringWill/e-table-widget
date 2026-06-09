@@ -6,6 +6,13 @@
 		SUPPORTED_LOCALES,
 		type Locale
 	} from '$lib/states/locale.svelte';
+	import { useWidget } from '$lib/context.svelte';
+
+	// The trigger sits on the brand surface, so its text must track the theme
+	// foreground (auto black/white) — not a hardcoded white that vanishes on a
+	// light brand. The dropdown itself is always a white popup with dark text.
+	const widget = useWidget();
+	const fontColor = $derived((widget.theme?.fontColor as string) ?? '#ffffff');
 
 	const LABELS: Record<Locale, string> = {
 		fr: 'Français',
@@ -96,7 +103,8 @@
 	aria-expanded={open}
 	aria-label="Change language"
 	onclick={toggle}
-	class="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-semibold uppercase tracking-wide text-white text-opacity-80 hover:bg-white hover:bg-opacity-10 focus:outline-none focus-visible:bg-white focus-visible:bg-opacity-10 transition-colors data-[open=true]:bg-white data-[open=true]:bg-opacity-15"
+	class="lang-trigger flex h-10 w-10 items-center justify-center rounded-lg text-sm font-semibold uppercase tracking-wide focus:outline-none transition-colors"
+	style="color: {fontColor};"
 	data-open={open}
 >
 	{currentLocale.value}
@@ -130,3 +138,19 @@
 		{/each}
 	</div>
 {/if}
+
+<style>
+	/* Hover/open tint follows the (theme-driven) text color via currentColor, so
+	   it reads on both dark and light brand surfaces — the old hardcoded white
+	   tint was invisible on a light brand. The trigger text itself is slightly
+	   dimmed to mirror the previous text-opacity-80. */
+	.lang-trigger {
+		opacity: 0.8;
+	}
+	.lang-trigger:hover,
+	.lang-trigger:focus-visible,
+	.lang-trigger[data-open='true'] {
+		opacity: 1;
+		background-color: color-mix(in srgb, currentColor 12%, transparent);
+	}
+</style>

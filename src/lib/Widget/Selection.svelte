@@ -636,7 +636,7 @@
 												});
 											}
 										}}
-										class="flex items-center justify-between gap-3 px-4 py-2 text-base w-full rounded hover:bg-white hover:bg-opacity-15 border-2"
+										class="themed-border flex items-center justify-between gap-3 px-4 py-2 text-base w-full rounded border-2"
 									>
 										<div class="flex items-center gap-3">
 											{slot.time}

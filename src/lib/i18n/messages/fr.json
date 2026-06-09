@@ -146,6 +146,7 @@
 	"selection_pickService": "Sélectionnez un service",
 	"selection_pickTime": "Sélectionnez un horaire",
 	"selection_searchingAlternatives": "Recherche d'alternatives...",
+	"selection_tryAlternativeRestaurants": "Essayez un restaurant du même groupe",
 	"selection_slotUnavailable": "Ce créneau est actuellement indisponible",
 	"selection_slotUnavailableDetails": "{time} - {pax} couverts",
 	"selection_groupContactNotice": "Pour les demandes de groupes de plus de {maxPax} personnes, nous vous invitons à nous contacter au {contactInfo}.",

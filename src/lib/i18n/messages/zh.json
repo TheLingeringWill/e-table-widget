@@ -146,6 +146,7 @@
 	"selection_pickService": "选择服务",
 	"selection_pickTime": "选择时间",
 	"selection_searchingAlternatives": "正在搜索其他时段...",
+	"selection_tryAlternativeRestaurants": "试试同集团的其他餐厅",
 	"selection_slotUnavailable": "此时段暂不可用",
 	"selection_slotUnavailableDetails": "{time} - {pax}位客人",
 	"selection_groupContactNotice": "For group requests of more than {maxPax} guests, please contact us at {contactInfo}.",

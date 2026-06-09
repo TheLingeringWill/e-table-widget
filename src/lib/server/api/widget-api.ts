@@ -19,6 +19,7 @@ import type {
 	TrackReviewArgVisitRequestDTO,
 	UpdateBookingRequestDTO,
 	UpsertReviewRequestDTO,
+	WidgetAlternativeRestaurantResponseDTO,
 	WidgetResponseDTO
 } from './types';
 
@@ -31,6 +32,13 @@ export function createWidgetApi(restaurantId: number) {
 		},
 		getWidget(): Promise<RestResult<WidgetResponseDTO>> {
 			return restCall(`/restaurants/${restaurantId}/widget`, { restaurantId });
+		},
+		getWidgetAlternatives(): Promise<
+			RestResult<{ restaurants: WidgetAlternativeRestaurantResponseDTO[] }>
+		> {
+			// Owner-curated sibling restaurants shown on the no-slot path. The API
+			// returns `[]` when the toggle is off or the restaurant is ungrouped.
+			return restCall(`/restaurants/${restaurantId}/widget/alternatives`, { restaurantId });
 		},
 		getAvailabilities(params: {
 			startDate: string;

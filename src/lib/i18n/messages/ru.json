@@ -146,6 +146,7 @@
 	"selection_pickService": "Выберите услугу",
 	"selection_pickTime": "Выберите время",
 	"selection_searchingAlternatives": "Поиск альтернатив...",
+	"selection_tryAlternativeRestaurants": "Попробуйте ресторан этой же группы",
 	"selection_slotUnavailable": "Этот слот сейчас недоступен",
 	"selection_slotUnavailableDetails": "{time} — {pax} чел.",
 	"selection_groupContactNotice": "Для групп более {maxPax} чел. свяжитесь с нами: {contactInfo}.",

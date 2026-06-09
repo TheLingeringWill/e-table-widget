@@ -38,9 +38,11 @@
 	let disabledDates = $state<Date[]>([]);
 	let maxCalendarDate = $state<Date | undefined>(undefined);
 
-	// Alternative restaurant state
-	type AlternativeResult = Awaited<ReturnType<typeof api.getAlternativeRestaurant>>[0];
-	let alternativeRestaurant = $state<AlternativeResult | null>(null);
+	// Owner-curated alternative (sibling) restaurants, shown at the bottom of
+	// the slot step when no slot is available. The RPC returns the resolved
+	// list (already same-group + live, in stored order) or `[]`.
+	type WidgetAlternative = Awaited<ReturnType<typeof api.getWidgetAlternatives>>[0][number];
+	let alternatives = $state<WidgetAlternative[]>([]);
 
 	const getServices = async () => {
 		if (!selection.date || loadingServices) {
@@ -87,7 +89,12 @@
 		const startDate = zonedDateUtils.format('YYYY-MM-DD', today);
 		const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 120);
 		const endDate = zonedDateUtils.format('YYYY-MM-DD', end);
-		const [res, error] = await api.getAvailableDates({ restaurantId, startDate, endDate, timezone: zonedDateUtils.timezone });
+		const [res, error] = await api.getAvailableDates({
+			restaurantId,
+			startDate,
+			endDate,
+			timezone: zonedDateUtils.timezone
+		});
 		if (error || !res) {
 			loadingDates = false;
 			return;
@@ -116,7 +123,7 @@
 			return;
 		}
 		loadingSlots = true;
-		alternativeRestaurant = null; // Reset alternative when fetching new slots
+		alternatives = []; // Reset alternatives when fetching new slots
 		const start = new Date();
 		const [res, error] = await api.getServiceSlots({
 			restaurantId,
@@ -159,10 +166,11 @@
 		}
 		loadingSlots = false;
 
-		// Check if all slots are unavailable and trigger alternative search
+		// When no slot is available, surface the owner-curated sibling
+		// restaurants (if any) at the bottom of the slot step.
 		const hasAvailableSlot = slots.some((slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED');
-		if (!hasAvailableSlot && slots.length > 0) {
-			searchAlternativeRestaurant();
+		if (!hasAvailableSlot) {
+			loadWidgetAlternatives();
 		}
 	};
 
@@ -247,39 +255,35 @@
 
 	const onSlotChange = async () => {};
 
-	// Search for alternative restaurant when current restaurant is fully booked
-	const searchAlternativeRestaurant = async () => {
-		if (!selection.date || !selection.service || !selection.pax) return;
-
-		// Use first slot time as reference, or service start time if no slots.
-		// Both branches produce 'HH:MM' to match the new requestedTime schema.
-		const referenceTime =
-			slots.length > 0 ? slots[0].time : formatTime(selection.service.startTime);
-
+	// Fetch the owner-curated sibling restaurants for the no-slot path. The RPC
+	// self-gates (returns [] when disabled or ungrouped) and never throws.
+	const loadWidgetAlternatives = async () => {
 		loadingAlternative = true;
-		alternativeRestaurant = null;
-
-		const [res, error] = await api.getAlternativeRestaurant({
-			restaurantId,
-			date: zonedDateUtils.format('YYYY-MM-DD', selection.date),
-			serviceId: selection.service.id,
-			pax: selection.pax,
-			requestedTime: referenceTime
-		});
-
-		if (!error && res) {
-			alternativeRestaurant = res;
-			if (res.found) {
-				pushGtmEvent('alternative_restaurant_shown', {
-					original_restaurant_id: restaurantId,
-					alternative_restaurant_id: res.restaurant.id,
-					alternative_restaurant_name: res.restaurant.name,
-					date: selection.date?.toISOString()
-				});
-			}
+		alternatives = [];
+		const [res, error] = await api.getWidgetAlternatives({ restaurantId });
+		if (!error && res && res.length > 0) {
+			alternatives = res;
+			pushGtmEvent('alternative_restaurants_shown', {
+				original_restaurant_id: restaurantId,
+				alternative_restaurant_count: res.length
+			});
 		}
-
 		loadingAlternative = false;
+	};
+
+	// Navigate to a sibling restaurant's own booking widget, carrying the
+	// current date/pax selection like the old buildAlternativeWidgetUrl did.
+	const goToAlternative = (alt: WidgetAlternative) => {
+		pushGtmEvent('alternative_restaurant_clicked', {
+			original_restaurant_id: restaurantId,
+			alternative_restaurant_id: alt.id,
+			alternative_restaurant_name: alt.name
+		});
+		const url = new URL(alt.widgetLink);
+		if (selection.date)
+			url.searchParams.set('date', zonedDateUtils.format('YYYY-MM-DD', selection.date));
+		if (selection.pax) url.searchParams.set('pax', String(selection.pax));
+		window.location.href = url.toString();
 	};
 
 	// Get alternative slots from the same service (available slots only)
@@ -328,26 +332,42 @@
 	const handleBackFromWaitlist = () => {
 		waitlist.selectedUnavailableSlot = null;
 	};
-
-	// Build URL for redirecting to alternative restaurant's widget
-	const buildAlternativeWidgetUrl = (alt: NonNullable<AlternativeResult>) => {
-		if (!alt.found || !selection.date) return '';
-
-		// Base widget URL
-		const baseUrl = `/${alt.restaurant.id}/${alt.restaurant.widgetId}`;
-
-		// Add query parameters for pre-selection. The receiving widget's
-		// Widget.svelte reads `date` (YYYY-MM-DD) and `time` (HH:MM) directly
-		// into reservationTemp.startDate as strings.
-		const params = new URLSearchParams();
-		params.set('date', zonedDateUtils.format('YYYY-MM-DD', selection.date));
-		params.set('serviceId', alt.service.id);
-		params.set('pax', String(selection.pax));
-		params.set('time', alt.slot.time);
-
-		return `${baseUrl}?${params.toString()}`;
-	};
 </script>
+
+{#snippet alternativesSection()}
+	{#if loadingAlternative}
+		<div class="flex flex-col items-center justify-center gap-2 py-4">
+			<Spinner />
+			<div class="text-xs text-center opacity-70">{m.selection_searchingAlternatives()}</div>
+		</div>
+	{:else if alternatives.length > 0}
+		<div class="w-full px-4 pt-3 pb-4">
+			<p class="text-xs opacity-70 mb-2">{m.selection_tryAlternativeRestaurants()}</p>
+			<div class="flex gap-3 overflow-x-auto pb-1">
+				{#each alternatives as alt (alt.id)}
+					<button
+						onclick={() => goToAlternative(alt)}
+						class="flex flex-col items-center gap-1.5 shrink-0 w-20 group"
+						aria-label={alt.name}
+					>
+						<div
+							class="w-20 h-20 rounded-xl overflow-hidden bg-white flex items-center justify-center transition-all group-hover:ring-2 group-hover:ring-white group-hover:ring-opacity-60"
+						>
+							{#if alt.logoUrl}
+								<img src={alt.logoUrl} alt={alt.name} class="w-full h-full object-cover" />
+							{:else}
+								<span class="text-lg font-semibold text-black opacity-60">
+									{alt.name.slice(0, 2).toUpperCase()}
+								</span>
+							{/if}
+						</div>
+						<span class="text-xs text-center w-full truncate">{alt.name}</span>
+					</button>
+				{/each}
+			</div>
+		</div>
+	{/if}
+{/snippet}
 
 <div class="flex flex-col flex-grow min-h-0">
 	<AccordionGroup
@@ -462,7 +482,9 @@
 										</div>
 									</div>
 									{#if service.description?.length > 0}
-										<div class="text-sm truncate min-w-0 flex-1 text-left opacity-70 hidden md:block">
+										<div
+											class="text-sm truncate min-w-0 flex-1 text-left opacity-70 hidden md:block"
+										>
 											•&nbsp;{getTranslation(service.description)}
 										</div>
 									{/if}
@@ -470,9 +492,7 @@
 							{/each}
 						</div>
 					{:else if !loadingServices}
-						<div
-							class="flex flex-col items-center justify-center w-full gap-5 p-6"
-						>
+						<div class="flex flex-col items-center justify-center w-full gap-5 p-6">
 							<div>{m.selection_noServiceToday()}</div>
 							<Button
 								onclick={() => {
@@ -505,15 +525,24 @@
 				{/each}
 				{#if paxLocked}
 					<p class="w-full text-xs opacity-70 mt-2 px-1">
-						{m.selection_paxLockedByPayment({ phone: widgetCtx.restaurant.phone ?? '', email: widgetCtx.restaurant.email ?? '' })}
+						{m.selection_paxLockedByPayment({
+							phone: widgetCtx.restaurant.phone ?? '',
+							email: widgetCtx.restaurant.email ?? ''
+						})}
 					</p>
 				{:else if selection.service && (widgetCtx.restaurant.phone || widgetCtx.restaurant.email)}
 					{@const phone = widgetCtx.restaurant.phone}
 					{@const email = widgetCtx.restaurant.email}
 					{@const maxPax = selection.service.maxPaxPerReservation}
-					{@const phonePart = phone ? `<a href="tel:${phone}" style="text-decoration:underline;opacity:1;font-weight:bold">${phone}</a>` : ''}
-					{@const emailPart = email ? `<a href="mailto:${email}" style="text-decoration:underline;opacity:1;font-weight:bold">${email}</a>` : ''}
-					{@const contactInfo = [phonePart, emailPart].filter(Boolean).join(` ${m.selection_or()} `)}
+					{@const phonePart = phone
+						? `<a href="tel:${phone}" style="text-decoration:underline;opacity:1;font-weight:bold">${phone}</a>`
+						: ''}
+					{@const emailPart = email
+						? `<a href="mailto:${email}" style="text-decoration:underline;opacity:1;font-weight:bold">${email}</a>`
+						: ''}
+					{@const contactInfo = [phonePart, emailPart]
+						.filter(Boolean)
+						.join(` ${m.selection_or()} `)}
 					<p class="w-full text-xs opacity-70 mt-2 px-1">
 						{@html m.selection_groupContactNotice({ maxPax: String(maxPax), contactInfo })}
 					</p>
@@ -617,144 +646,15 @@
 							{/each}
 						</div>
 
-						<!-- Show alternative restaurant if all slots are unavailable -->
+						<!-- Owner-curated sibling restaurants when all slots are unavailable -->
 						{#if !hasAvailableSlots}
-							{#if loadingAlternative}
-								<div class="flex flex-col items-center justify-center gap-2 py-4">
-									<Spinner />
-									<div class="text-xs text-center opacity-70">
-										{m.selection_searchingAlternatives()}
-									</div>
-								</div>
-							{:else if alternativeRestaurant?.found}
-								<div class="flex items-center w-full px-4 py-2">
-									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
-									<span class="px-2 text-xs opacity-30">{m.selection_or()}</span>
-									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
-								</div>
-
-								<div class="w-full px-4 pb-3">
-									<button
-										onclick={() => {
-											if (alternativeRestaurant?.found) {
-												pushGtmEvent('alternative_restaurant_clicked', {
-													original_restaurant_id: restaurantId,
-													alternative_restaurant_id: alternativeRestaurant.restaurant.id,
-													alternative_restaurant_name: alternativeRestaurant.restaurant.name,
-													slot_time: slotKey(
-														alternativeRestaurant.slot.date,
-														alternativeRestaurant.slot.time
-													)
-												});
-												window.location.href = buildAlternativeWidgetUrl(alternativeRestaurant);
-											}
-										}}
-										class="w-full px-3 py-2 border border-white border-opacity-20 rounded bg-white bg-opacity-5 hover:bg-opacity-10 transition-all text-left group"
-									>
-										<div class="flex items-center justify-between">
-											<div class="flex-1 min-w-0">
-												<div class="text-sm font-semibold truncate">
-													{alternativeRestaurant.restaurant.name}
-												</div>
-												<div class="text-xs opacity-40 truncate">
-													{alternativeRestaurant.restaurant.address}
-												</div>
-											</div>
-											<div class="flex items-center gap-2 ml-3">
-												<div
-													class="flex items-center gap-1.5 px-2 py-1 rounded bg-white bg-opacity-10"
-												>
-													<span class="text-xs font-medium">{alternativeRestaurant.slot.time}</span>
-												</div>
-												<ArrowRight size={14} class="opacity-40 group-hover:opacity-70" />
-											</div>
-										</div>
-									</button>
-								</div>
-							{/if}
+							{@render alternativesSection()}
 						{/if}
 					{:else}
 						<!-- No slots at all -->
 						<div class="flex flex-col items-center w-full">
 							{#if loadingSlots}
 								<!-- Show nothing while loading slots -->
-							{:else if loadingAlternative}
-								<div class="flex flex-col items-center justify-center gap-2 py-4">
-									<Spinner />
-									<div class="text-xs text-center opacity-70">
-										{m.selection_searchingAlternatives()}
-									</div>
-								</div>
-							{:else if alternativeRestaurant?.found}
-								<div class="flex flex-col items-center py-3 px-4 w-full">
-									<p class="text-base font-semibold mb-1">{m.selection_noSlotsAvailable()}</p>
-									<p class="text-xs text-center opacity-50 mb-3">
-										{m.selection_noTablesForDate({
-											pax: selection.pax ?? 0,
-											date: zonedDateUtils.format('DD MMM', selection.date)
-										})}
-									</p>
-								</div>
-
-								<div class="w-full px-4 pb-2">
-									<button
-										onclick={() => {
-											openedAccordion.index = 0;
-										}}
-										class="w-full flex items-center justify-between px-3 py-2 rounded border border-white border-opacity-20 hover:bg-white hover:bg-opacity-10 transition-all"
-									>
-										<div class="flex items-center gap-2">
-											<Calendar size={16} class="opacity-60" />
-											<span class="text-xs">{m.selection_chooseAnotherDate()}</span>
-										</div>
-										<ArrowRight size={14} class="opacity-40" />
-									</button>
-								</div>
-
-								<div class="flex items-center w-full px-4 py-2">
-									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
-									<span class="px-2 text-xs opacity-30">{m.selection_or()}</span>
-									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
-								</div>
-
-								<div class="w-full px-4 pb-3">
-									<button
-										onclick={() => {
-											if (alternativeRestaurant?.found) {
-												pushGtmEvent('alternative_restaurant_clicked', {
-													original_restaurant_id: restaurantId,
-													alternative_restaurant_id: alternativeRestaurant.restaurant.id,
-													alternative_restaurant_name: alternativeRestaurant.restaurant.name,
-													slot_time: slotKey(
-														alternativeRestaurant.slot.date,
-														alternativeRestaurant.slot.time
-													)
-												});
-												window.location.href = buildAlternativeWidgetUrl(alternativeRestaurant);
-											}
-										}}
-										class="w-full px-3 py-2 border border-white border-opacity-20 rounded bg-white bg-opacity-5 hover:bg-opacity-10 transition-all text-left group"
-									>
-										<div class="flex items-center justify-between">
-											<div class="flex-1 min-w-0">
-												<div class="text-sm font-semibold truncate">
-													{alternativeRestaurant.restaurant.name}
-												</div>
-												<div class="text-xs opacity-40 truncate">
-													{alternativeRestaurant.restaurant.address}
-												</div>
-											</div>
-											<div class="flex items-center gap-2 ml-3">
-												<div
-													class="flex items-center gap-1.5 px-2 py-1 rounded bg-white bg-opacity-10"
-												>
-													<span class="text-xs font-medium">{alternativeRestaurant.slot.time}</span>
-												</div>
-												<ArrowRight size={14} class="opacity-40 group-hover:opacity-70" />
-											</div>
-										</div>
-									</button>
-								</div>
 							{:else}
 								<div class="flex flex-col items-center py-4 px-4 w-full">
 									<p class="text-base font-semibold mb-1">{m.selection_noSlotsAvailable()}</p>
@@ -774,6 +674,7 @@
 										<ArrowRight size={14} class="opacity-40" />
 									</button>
 								</div>
+								{@render alternativesSection()}
 							{/if}
 						</div>
 					{/if}

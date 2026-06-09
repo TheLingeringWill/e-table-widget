@@ -570,36 +570,17 @@ export const router = {
 			return { error: 'Failed to load payment intent' };
 		}
 	}),
-	getAlternativeRestaurant: procedure(
-		object({
-			restaurantId: string(),
-			date: string(),
-			serviceId: string(),
-			pax: number(),
-			requestedTime: string() // 'HH:MM'
-		}),
-		async () => {
-			// Dropped for v1 per PRD §3 non-goals: the previous implementation
-			// did an owner-graph traversal across restaurants via Prisma which
-			// has no REST equivalent. The Selection.svelte UI keeps its
-			// alternative-restaurant branch gated on `found: true`, so a
-			// constant `false` cleanly disables the feature without any UI
-			// edit. If product wants the feature back, re-introduce it as a
-			// follow-up with a dedicated public REST endpoint.
-			//
-			// Return type widened to include the found-true variant so the
-			// API export's inferred type stays compatible with Selection's
-			// `Awaited<ReturnType<typeof api.getAlternativeRestaurant>>` lookup.
-			return { found: false as const } as
-				| { found: false }
-				| {
-						found: true;
-						restaurant: { id: string; name: string; address: string; widgetId: string };
-						service: { id: string; name: string };
-						slot: { date: string; time: string; state: 'AVAILABLE' | 'ALMOST_FULL' };
-				  };
-		}
-	),
+	getWidgetAlternatives: procedure(object({ restaurantId: string() }), async ({ input, event }) => {
+		// Owner-curated sibling restaurants, shown at the bottom of the slot
+		// step when no slot is available. The API resolves the curated ids in
+		// stored order, filtered to same-group + live, and returns `[]` when
+		// the toggle is off or the restaurant is ungrouped. Any error degrades
+		// to an empty list — the no-slot UX must never break on this.
+		const rid = Number(input.restaurantId) || ridFromEvent(event);
+		if (!Number.isFinite(rid)) return [];
+		const result = await createWidgetApi(rid).getWidgetAlternatives();
+		return result.ok ? result.data.restaurants : [];
+	}),
 	getAvailableDates: procedure(
 		object({ restaurantId: string(), startDate: string(), endDate: string(), timezone: string() }),
 		async ({ input }) => {

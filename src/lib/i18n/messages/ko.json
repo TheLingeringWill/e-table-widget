@@ -146,6 +146,7 @@
 	"selection_pickService": "서비스 선택",
 	"selection_pickTime": "시간 선택",
 	"selection_searchingAlternatives": "대체 시간 검색 중...",
+	"selection_tryAlternativeRestaurants": "계열 레스토랑을 확인해 보세요",
 	"selection_slotUnavailable": "현재 이 시간대는 이용할 수 없습니다",
 	"selection_slotUnavailableDetails": "{time} - {pax}명",
 	"selection_groupContactNotice": "For group requests of more than {maxPax} guests, please contact us at {contactInfo}.",

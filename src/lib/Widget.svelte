@@ -608,10 +608,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
 		#button.revert {
 			background: #f0f0f0f0;
-			color: ${theme.backgroundColor};
+			color: ${theme.buttonTextColor};
 		}
 		.color-revert {
-			color: ${theme.backgroundColor};
+			color: ${theme.buttonTextColor};
 		}
 		.max-w-small {
 			max-width: 600px;

@@ -1,6 +1,7 @@
 import { defaultTheme } from '$lib/Widget.svelte';
 import { error } from '@sveltejs/kit';
 import { createWidgetApi } from '$lib/server/api/widget-api';
+import { getContrastColor, brandTextOnLight } from '$lib/utils/contrastColor';
 
 export const load = async ({ params, url, setHeaders }) => {
 	// Disable caching for widget HTML to ensure theme changes appear immediately
@@ -27,18 +28,20 @@ export const load = async ({ params, url, setHeaders }) => {
 	}
 	const { restaurant, widget: widgetDto } = result.data;
 
-	// PRD §6.4 (rev 7): widget.color drives the dark surface (matches the
-	// live design at restaurant-japonais-ao.com/reservation/ — the brand
-	// color is the widget identity). Fonts + buttons + borders are
-	// hardcoded white for legibility on the brand surface; buttonTextColor
-	// is widget.color so the dark text reads on the white button.
+	// PRD §6.4 (rev 8): widget.color is the brand SURFACE (the widget identity).
+	// The foreground (text + separators/borders) auto-picks black or white from
+	// the brand color's luminance — Zenchef-style — so a LIGHT brand color stays
+	// legible instead of rendering white-on-light. The white CTA button keeps
+	// brand-colored text when the brand reads on white, else falls back to black
+	// (brandTextOnLight). backgroundColor + buttonColor are untouched.
+	const contrast = getContrastColor(widgetDto.color);
 	const theme = {
 		...defaultTheme,
 		backgroundColor: widgetDto.color,
-		fontColor: '#ffffff',
+		fontColor: contrast,
 		buttonColor: '#ffffff',
-		buttonTextColor: widgetDto.color,
-		borderColor: '#ffffff'
+		buttonTextColor: brandTextOnLight(widgetDto.color),
+		borderColor: contrast
 	};
 
 	// Reshape into the legacy widget structure Header.svelte / Widget.svelte

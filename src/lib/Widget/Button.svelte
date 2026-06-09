@@ -25,7 +25,7 @@
 	id="button"
 	class="flex items-center gap-2 transition-all w-full text-center py-3 border text-sm font-semibold justify-center hover:brightness-90 focus:brightness-75 {revert
 		? 'revert'
-		: ''} {className} disabled:cursor-not-allowed disabled:opacity-70"
+		: ''} {className} disabled:cursor-not-allowed"
 	{onclick}
 	{disabled}
 	{...restProps}

@@ -146,6 +146,7 @@
 	"selection_pickService": "Kies een service",
 	"selection_pickTime": "Kies een tijd",
 	"selection_searchingAlternatives": "Alternatieven zoeken...",
+	"selection_tryAlternativeRestaurants": "Probeer een zusterrestaurant",
 	"selection_slotUnavailable": "Dit tijdslot is momenteel niet beschikbaar",
 	"selection_slotUnavailableDetails": "{time} - {pax} gasten",
 	"selection_groupContactNotice": "For group requests of more than {maxPax} guests, please contact us at {contactInfo}.",

@@ -78,10 +78,22 @@ export interface WidgetResponseDTO {
 	title: string;
 	color: string;
 	gtmEnabled: boolean;
+	alternativeRestaurantsEnabled: boolean;
+	alternativeRestaurantIds: number[];
 	createdAt: string;
 	updatedAt: string;
 	translations: WidgetTranslationResponseDTO[];
 	gtmId?: string | null;
+}
+
+// Owner-curated sibling restaurant rendered on the no-slot path. `widgetLink`
+// is the absolute URL of the sibling's own booking widget.
+export interface WidgetAlternativeRestaurantResponseDTO {
+	id: number;
+	name: string;
+	city: string;
+	widgetLink: string;
+	logoUrl?: string | null;
 }
 
 export interface RestaurantAggregateResponseDTO {

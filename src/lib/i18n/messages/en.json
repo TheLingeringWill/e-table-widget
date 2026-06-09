@@ -146,6 +146,7 @@
 	"selection_pickService": "Pick a service",
 	"selection_pickTime": "Pick a time",
 	"selection_searchingAlternatives": "Searching alternatives...",
+	"selection_tryAlternativeRestaurants": "Try a sister restaurant",
 	"selection_slotUnavailable": "This slot is currently unavailable",
 	"selection_slotUnavailableDetails": "{time} - {pax} guests",
 	"selection_groupContactNotice": "For group requests of more than {maxPax} guests, please contact us at {contactInfo}.",

@@ -146,6 +146,7 @@
 	"selection_pickService": "サービスを選択",
 	"selection_pickTime": "時間を選択",
 	"selection_searchingAlternatives": "他の時間帯を検索中...",
+	"selection_tryAlternativeRestaurants": "系列レストランもご検討ください",
 	"selection_slotUnavailable": "この時間帯は現在ご利用いただけません",
 	"selection_slotUnavailableDetails": "{time} - {pax}名様",
 	"selection_groupContactNotice": "For group requests of more than {maxPax} guests, please contact us at {contactInfo}.",

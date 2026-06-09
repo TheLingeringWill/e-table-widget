@@ -177,6 +177,8 @@ export function buildAggregateDTO(
 			title: 'Le Bistrot',
 			color: '#1a1a1a',
 			gtmEnabled: false,
+			alternativeRestaurantsEnabled: false,
+			alternativeRestaurantIds: [],
 			translations: [
 				{
 					id: 1,
@@ -201,15 +203,9 @@ export function buildMockWidgetApi(
 		getWidget: vi.fn().mockResolvedValue({ ok: true, data: {} }),
 		getAvailabilities: vi.fn().mockResolvedValue({ ok: true, data: { data: [] } }),
 		getBooking: vi.fn().mockResolvedValue({ ok: true, data: buildBookingDetailDTO() }),
-		createBooking: vi
-			.fn()
-			.mockResolvedValue({ ok: true, data: { id: 1, status: 'confirmed' } }),
-		updateBooking: vi
-			.fn()
-			.mockResolvedValue({ ok: true, data: { id: 99, status: 'confirmed' } }),
-		setBookingStatus: vi
-			.fn()
-			.mockResolvedValue({ ok: true, data: { status: 'reconfirmed' } }),
+		createBooking: vi.fn().mockResolvedValue({ ok: true, data: { id: 1, status: 'confirmed' } }),
+		updateBooking: vi.fn().mockResolvedValue({ ok: true, data: { id: 99, status: 'confirmed' } }),
+		setBookingStatus: vi.fn().mockResolvedValue({ ok: true, data: { status: 'reconfirmed' } }),
 		upsertReview: vi.fn().mockResolvedValue({ ok: true, data: { id: 1 } }),
 		getReviewSettings: vi.fn().mockResolvedValue({ ok: true, data: {} }),
 		trackReviewArgVisit: vi.fn().mockResolvedValue({ ok: true, data: undefined }),

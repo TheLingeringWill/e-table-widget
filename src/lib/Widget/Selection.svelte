@@ -344,6 +344,9 @@
 	// Handle click on an unavailable slot
 	const handleUnavailableSlotClick = (slot: Slot) => {
 		waitlist.selectedUnavailableSlot = slot;
+		// Surface owner-curated sibling restaurants on the waitlist prompt too,
+		// not only on the empty-slots path. Self-gates and never throws.
+		loadWidgetAlternatives();
 	};
 
 	// Handle joining the waitlist
@@ -613,7 +616,7 @@
 				<div class="w-full">
 					{#if waitlist.selectedUnavailableSlot}
 						<!-- Waitlist prompt for unavailable slot -->
-						{@const alternatives = getAlternativeSlots(waitlist.selectedUnavailableSlot)}
+						{@const alternativeSlots = getAlternativeSlots(waitlist.selectedUnavailableSlot)}
 						<div class="flex flex-col gap-3 px-5 py-3">
 							<div class="text-center">
 								<p class="text-base font-semibold mb-1">{m.selection_slotUnavailable()}</p>
@@ -625,11 +628,11 @@
 								</p>
 							</div>
 
-							{#if alternatives.length > 0}
+							{#if alternativeSlots.length > 0}
 								<div class="flex flex-col gap-2">
 									<p class="text-xs opacity-70 text-center">{m.selection_alternativeSlots()}</p>
 									<div class="flex flex-col gap-2 max-h-[200px] overflow-auto">
-										{#each alternatives as altSlot}
+										{#each alternativeSlots as altSlot}
 											<button
 												onclick={() => handleSelectAlternative(altSlot)}
 												class="themed-border flex items-center justify-between gap-3 px-4 py-2 text-base w-full rounded border-2 transition-all"
@@ -660,6 +663,17 @@
 							>
 								{m.selection_backToSelection()}
 							</button>
+
+							<!-- Owner-curated sibling restaurants, as a secondary
+							     "or book elsewhere" fallback on the waitlist path. -->
+							{#if loadingAlternative || alternatives.length > 0}
+								<div class="flex items-center w-full py-1">
+									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
+									<span class="px-2 text-xs opacity-30">{m.selection_or()}</span>
+									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
+								</div>
+								{@render alternativesSection()}
+							{/if}
 						</div>
 					{:else if slots.length > 0}
 						<!-- Regular slot list (all clickable, no color dots) -->

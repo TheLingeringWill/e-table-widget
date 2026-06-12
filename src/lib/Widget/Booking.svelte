@@ -68,9 +68,10 @@
 		// re-run createSetupIntent and re-prompt the guest for a card they've saved.
 		const alreadyHasPayment =
 			reservation.paymentStatus === 'requires_capture' || !!reservation.stripeSetupIntentId;
-		// A `save_card` experience drives the deposit by its own price, independent
-		// of the slot's capture policy — prefer the experience-aware setup intent
-		// when one is selected.
+		// A `save_card` experience drives the deposit by its own price × pax
+		// (per guest, like the slot capture policy), independent of the slot's
+		// capture policy — prefer the experience-aware setup intent when one is
+		// selected.
 		const experienceRequiresCard = selection.experience?.paymentOption === 'save_card';
 		if (!waitlist.isWaitlist && !alreadyHasPayment) {
 			// New bookings: try to pre-create a SetupIntent (saved-card model). The
@@ -83,7 +84,8 @@
 			const [siRes, siErr] = experienceRequiresCard
 				? await api.createExperienceSetupIntent({
 						restaurantId: widget.restaurantId,
-						experienceId: selection.experience!.id
+						experienceId: selection.experience!.id,
+						pax: selection.pax
 					})
 				: await api.createSetupIntent({
 						restaurantId: widget.restaurantId,

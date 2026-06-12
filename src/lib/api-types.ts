@@ -304,10 +304,12 @@ export interface CreateSetupIntentResponseDTO {
 	stripeConnectAccountId: string;
 }
 
-// Experience-driven SetupIntent: amount comes from the experience price instead
-// of the slot deposit policy. Same response shape as the slot path.
+// Experience-driven SetupIntent: amount is the experience price × pax (per
+// guest, like the slot capture policy) instead of the slot deposit policy.
+// Same response shape as the slot path.
 export interface CreateSetupIntentForExperienceRequestDTO {
 	experienceId: number;
+	pax: number;
 	email?: string;
 	firstName?: string;
 	lastName?: string;

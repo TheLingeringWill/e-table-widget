@@ -440,18 +440,22 @@ export const router = {
 	createExperienceSetupIntent: procedure(
 		object({
 			restaurantId: string(),
-			experienceId: string()
+			experienceId: string(),
+			pax: number()
 		}),
 		async ({ input }) => {
-			// Price-driven SetupIntent for a `save_card` experience. Same response
-			// shape as createSetupIntent so Payment.svelte's confirmCardSetup path is
-			// unchanged. A 409 means the experience does not require a saved card.
+			// Price-driven SetupIntent for a `save_card` experience: the held
+			// amount is the experience price × pax, mirroring the slot capture
+			// policy's per-guest scaling. Same response shape as createSetupIntent
+			// so Payment.svelte's confirmCardSetup path is unchanged. A 409 means
+			// the experience does not require a saved card.
 			const rid = Number(input.restaurantId);
 			if (!Number.isFinite(rid)) {
 				throw new Error(`createExperienceSetupIntent: invalid restaurant id ${input.restaurantId}`);
 			}
 			const result = await createWidgetApi(rid).createExperienceSetupIntent({
-				experienceId: Number(input.experienceId)
+				experienceId: Number(input.experienceId),
+				pax: input.pax
 			});
 			if (!result.ok) {
 				if (result.error.code === 'http_409' || result.error.code === 'no_deposit_required') {

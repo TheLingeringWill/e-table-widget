@@ -429,7 +429,7 @@
 					{@const altOpen = openDesc === `alt:${alt.id}`}
 					<button
 						onclick={() => goToAlternative(alt)}
-						class="themed-border relative flex w-full aspect-[3/1] rounded border-2 text-left transition-all {altOpen
+						class="themed-border relative flex w-full aspect-[2/1] rounded border-2 text-left transition-all {altOpen
 							? 'z-20'
 							: ''}"
 						aria-label={alt.name}
@@ -761,13 +761,8 @@
 							</button>
 
 							<!-- Owner-curated sibling restaurants, as a secondary
-							     "or book elsewhere" fallback on the waitlist path. -->
+							     "book elsewhere" fallback on the waitlist path. -->
 							{#if loadingAlternative || alternatives.length > 0}
-								<div class="flex items-center w-full py-1">
-									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
-									<span class="px-2 text-xs opacity-30">{m.selection_or()}</span>
-									<div class="flex-1 h-px bg-white bg-opacity-10"></div>
-								</div>
 								{@render alternativesSection()}
 							{/if}
 						</div>
@@ -864,7 +859,7 @@
 								});
 								openAccordion();
 							}}
-							class="themed-border relative flex w-full aspect-[3/1] rounded border-2 text-left transition-all data-[active=true]:ring-2 data-[active=true]:ring-offset-1 {expOpen
+							class="themed-border relative flex w-full aspect-[2/1] rounded border-2 text-left transition-all data-[active=true]:ring-2 data-[active=true]:ring-offset-1 {expOpen
 								? 'z-20'
 								: ''}"
 							aria-label={getTranslation(experience.name)}

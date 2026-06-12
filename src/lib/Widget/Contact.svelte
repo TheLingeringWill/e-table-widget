@@ -38,6 +38,10 @@
 		if (reservation.paymentStatus === 'requires_capture' || reservation.stripeSetupIntentId)
 			return false;
 		if (waitlist.isWaitlist) return false;
+		// A `save_card` experience always saves a card (price × pax penalty),
+		// regardless of the slot capture policy — same branch Booking.svelte
+		// takes when creating the setup intent.
+		if (selection.experience?.paymentOption === 'save_card') return true;
 		const svc = selection.service;
 		const slot = selection.slot;
 		const pax = selection.pax;
@@ -123,7 +127,11 @@
 			// a synchronous 'input' event that re-enters this handler with a value that now
 			// starts with '+', so the branch is skipped on re-entry.
 			const raw = input.value;
-			if (raw && !raw.trimStart().startsWith('+') && getPhoneValidationError(raw, country) === null) {
+			if (
+				raw &&
+				!raw.trimStart().startsWith('+') &&
+				getPhoneValidationError(raw, country) === null
+			) {
 				const e164 = convertToE164(raw, country);
 				// Defer like the blur path: setNumber's synchronous 'input' event would
 				// otherwise re-enter our $state updates mid-handler and trip Svelte's

@@ -430,10 +430,12 @@
 							class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pt-8 pb-2 text-white"
 						>
 							<div class="flex flex-col min-w-0">
-								<b class="text-sm leading-tight truncate drop-shadow">{alt.name}</b>
-								{#if alt.city}
-									<span class="text-xs opacity-80 truncate drop-shadow">{alt.city}</span>
-								{/if}
+								<span class="flex items-baseline gap-1.5 min-w-0">
+									<b class="text-sm leading-tight truncate drop-shadow">{alt.name}</b>
+									{#if alt.city}
+										<span class="text-xs opacity-80 shrink-0 drop-shadow">{alt.city}</span>
+									{/if}
+								</span>
 								{#if alt.description}
 									<!-- Native title on the whole line, not just the ⓘ: the full
 									     description must appear wherever the teaser is hovered. -->
@@ -526,7 +528,7 @@
 							headerClass="flex justify-between items-center font-light"
 							weekdayClass="flex items-center justify-center pb-2 font-normal"
 							gridClass="gap-2"
-							dayClass="data-[in-month=false]:pointer-events-none data-[disabled=true]:opacity-30 data-[disabled=true]:pointer-events-none data-[in-month=false]:opacity-25  rounded-sm data-[in-month=true]:border-2 hover:bg-white hover:bg-opacity-15"
+							dayClass="font-semibold data-[in-month=false]:pointer-events-none data-[disabled=true]:opacity-30 data-[disabled=true]:pointer-events-none data-[in-month=false]:opacity-25  rounded-sm data-[in-month=true]:border-2 hover:bg-white hover:bg-opacity-15"
 							class="w-full"
 							buttons={{
 								prev: {
@@ -579,7 +581,7 @@
 									<div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
 										<b>{getTranslation(service.name)}</b>
 										<div>•</div>
-										<div>
+										<div class="font-semibold">
 											{formatTime(service.startTime)} - {formatTime(service.endTime)}
 										</div>
 									</div>
@@ -620,7 +622,7 @@
 								openAccordion();
 							});
 						}}
-						class="themed-border flex items-center justify-center p-5 rounded w-10 h-10 text-base border-2 disabled:opacity-30 disabled:cursor-not-allowed"
+						class="themed-border flex items-center justify-center p-5 rounded w-10 h-10 text-base font-semibold border-2 disabled:opacity-30 disabled:cursor-not-allowed"
 					>
 						{pax}
 					</button>
@@ -677,7 +679,7 @@
 												onclick={() => handleSelectAlternative(altSlot)}
 												class="themed-border flex items-center justify-between gap-3 px-4 py-2 text-base w-full rounded border-2 transition-all"
 											>
-												<span>{altSlot.time}</span>
+												<span class="font-semibold">{altSlot.time}</span>
 											</button>
 										{/each}
 									</div>
@@ -751,7 +753,7 @@
 										}}
 										class="themed-border flex items-center justify-between gap-3 px-4 py-2 text-base w-full rounded border-2"
 									>
-										<div class="flex items-center gap-3">
+										<div class="flex items-center gap-3 font-semibold">
 											{slot.time}
 										</div>
 									</button>

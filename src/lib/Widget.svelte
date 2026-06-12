@@ -616,6 +616,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		.themed-border:hover {
 			background-color: color-mix(in srgb, ${theme.borderColor} 10%, transparent) !important;
 		}
+		/* Drive the Tailwind selected-ring (data-[active]:ring-2 on overlay cards)
+		   off the theme so it reads as the brand color, not the default blue. The
+		   ring offset matches the surface so the gap reads cleanly on any brand. */
+		.themed-border {
+			--tw-ring-color: ${theme.borderColor};
+			--tw-ring-offset-color: ${theme.backgroundColor};
+		}
 		#widget [data-active="true"],
 		#widget [data-selected="true"] {
 			background: ${theme.fontColor} !important;

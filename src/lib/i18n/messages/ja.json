@@ -144,6 +144,7 @@
 	"selection_pickDate": "日付を選択",
 	"selection_pickPax": "人数を選択",
 	"selection_pickService": "サービスを選択",
+	"selection_experiencePricePerGuest": "{price} / 名",
 	"selection_pickExperience": "体験を選ぶ",
 	"selection_pickTime": "時間を選択",
 	"selection_searchingAlternatives": "他の時間帯を検索中...",

@@ -144,6 +144,7 @@
 	"selection_pickDate": "Wählen Sie ein Datum",
 	"selection_pickPax": "Wählen Sie die Anzahl der Gäste",
 	"selection_pickService": "Wählen Sie einen Service",
+	"selection_experiencePricePerGuest": "{price} / Gast",
 	"selection_pickExperience": "Erlebnis wählen",
 	"selection_pickTime": "Wählen Sie eine Uhrzeit",
 	"selection_searchingAlternatives": "Suche nach Alternativen...",

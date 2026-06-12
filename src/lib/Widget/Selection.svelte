@@ -4,8 +4,10 @@
 		ArrowRight,
 		Calendar,
 		CallBell,
+		Check,
 		Clock,
 		ForkKnife,
+		Info,
 		Sparkle
 	} from 'phosphor-svelte';
 	import AccordionGroup from '../AccordionGroup.svelte';
@@ -406,28 +408,33 @@
 				{#each alternatives as alt (alt.id)}
 					<button
 						onclick={() => goToAlternative(alt)}
-						class="themed-border flex flex-col w-full overflow-hidden rounded border-2 text-left transition-all"
+						class="themed-border relative flex w-full aspect-[3/1] overflow-hidden rounded border-2 text-left transition-all"
 						aria-label={alt.name}
 					>
-						<div
-							class="w-full aspect-[3/1] bg-white bg-opacity-10 flex items-center justify-center overflow-hidden"
-						>
-							{#if alt.coverUrl}
-								<img src={alt.coverUrl} alt={alt.name} class="w-full h-full object-cover" />
-							{:else}
+						{#if alt.coverUrl}
+							<img
+								src={alt.coverUrl}
+								alt={alt.name}
+								class="absolute inset-0 w-full h-full object-cover"
+							/>
+						{:else}
+							<div class="absolute inset-0 bg-white bg-opacity-10 flex items-center justify-center">
 								<span class="text-2xl font-semibold opacity-60">
 									{alt.name.slice(0, 2).toUpperCase()}
 								</span>
-							{/if}
-						</div>
-						<div class="flex items-center justify-between gap-2 px-3 py-2 min-w-0">
+							</div>
+						{/if}
+						<!-- Bottom scrim keeps the name legible over any cover photo. -->
+						<div
+							class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pt-8 pb-2 text-white"
+						>
 							<div class="flex flex-col min-w-0">
-								<b class="text-sm truncate">{alt.name}</b>
+								<b class="text-sm leading-tight truncate drop-shadow">{alt.name}</b>
 								{#if alt.city}
-									<span class="text-xs opacity-60 truncate">{alt.city}</span>
+									<span class="text-xs opacity-80 truncate drop-shadow">{alt.city}</span>
 								{/if}
 							</div>
-							<ArrowRight size={14} class="opacity-40 shrink-0" />
+							<ArrowRight size={16} class="shrink-0 drop-shadow" />
 						</div>
 					</button>
 				{/each}
@@ -785,35 +792,59 @@
 								});
 								openAccordion();
 							}}
-							class="themed-border flex flex-col w-full overflow-hidden rounded border-2 text-left transition-all"
+							class="themed-border relative flex w-full aspect-[3/1] overflow-hidden rounded border-2 text-left transition-all data-[active=true]:ring-2 data-[active=true]:ring-offset-1"
 							aria-label={getTranslation(experience.name)}
 						>
-							<div
-								class="w-full aspect-[3/1] bg-white bg-opacity-10 flex items-center justify-center overflow-hidden"
-							>
-								{#if experience.imageUrl}
-									<img
-										src={experience.imageUrl}
-										alt={getTranslation(experience.name)}
-										class="w-full h-full object-cover"
-									/>
-								{:else}
+							{#if experience.imageUrl}
+								<img
+									src={experience.imageUrl}
+									alt={getTranslation(experience.name)}
+									class="absolute inset-0 w-full h-full object-cover"
+								/>
+							{:else}
+								<div
+									class="absolute inset-0 bg-white bg-opacity-10 flex items-center justify-center"
+								>
 									<Sparkle size={24} class="opacity-40" />
-								{/if}
-							</div>
-							<div class="flex items-start justify-between gap-2 px-3 py-2 min-w-0">
+								</div>
+							{/if}
+							{#if active}
+								<!-- Selected badge: the data-active color-invert is hidden under
+								     the photo, so surface selection with a visible check. -->
+								<div
+									class="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-white text-black shadow"
+								>
+									<Check size={14} weight="bold" />
+								</div>
+							{/if}
+							<!-- Bottom scrim carries the name, note and per-guest price in-picture. -->
+							<div
+								class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pt-8 pb-2 text-white"
+							>
 								<div class="flex flex-col min-w-0">
-									<b class="text-sm truncate">{getTranslation(experience.name)}</b>
+									<b class="text-sm leading-tight truncate drop-shadow">
+										{getTranslation(experience.name)}
+									</b>
 									{#if experience.note?.length > 0}
-										<span class="text-xs opacity-60 line-clamp-2">
-											{getTranslation(experience.note)}
+										<span class="flex items-center gap-1 min-w-0 text-xs opacity-80 drop-shadow">
+											<span class="truncate">{getTranslation(experience.note)}</span>
+											<!-- Native title shows the full (possibly long) note on hover;
+											     wrap the SVG in a span so the tooltip is reliable. -->
+											<span
+												class="flex shrink-0 cursor-help opacity-90"
+												title={getTranslation(experience.note)}
+											>
+												<Info size={13} />
+											</span>
 										</span>
 									{/if}
 								</div>
-								<span class="text-sm font-semibold shrink-0 whitespace-nowrap">
-									{(experience.priceCents / 100).toLocaleString(undefined, {
-										style: 'currency',
-										currency: 'EUR'
+								<span class="text-sm font-semibold shrink-0 whitespace-nowrap drop-shadow">
+									{m.selection_experiencePricePerGuest({
+										price: (experience.priceCents / 100).toLocaleString(undefined, {
+											style: 'currency',
+											currency: 'EUR'
+										})
 									})}
 								</span>
 							</div>

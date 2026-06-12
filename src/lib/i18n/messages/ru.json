@@ -144,6 +144,7 @@
 	"selection_pickDate": "Выберите дату",
 	"selection_pickPax": "Выберите количество гостей",
 	"selection_pickService": "Выберите услугу",
+	"selection_experiencePricePerGuest": "{price} / гостя",
 	"selection_pickExperience": "Выберите впечатление",
 	"selection_pickTime": "Выберите время",
 	"selection_searchingAlternatives": "Поиск альтернатив...",

@@ -25,6 +25,7 @@
 	import { parseSlotDateAsCalendarDate, slotKey } from '$lib/utils/slotFormat';
 	import { isServiceEnded, isSlotPast } from '$lib/utils/pastFilter';
 	import { pushGtmEvent } from '../gtm.svelte';
+	import type { WidgetAlternativeRestaurantResponseDTO } from '$lib/api-types';
 	import * as m from '$lib/paraglide/messages';
 
 	let {
@@ -53,7 +54,7 @@
 	// Owner-curated alternative (sibling) restaurants, shown at the bottom of
 	// the slot step when no slot is available. The RPC returns the resolved
 	// list (already same-group + live, in stored order) or `[]`.
-	type WidgetAlternative = Awaited<ReturnType<typeof api.getWidgetAlternatives>>[0][number];
+	type WidgetAlternative = WidgetAlternativeRestaurantResponseDTO;
 	let alternatives = $state<WidgetAlternative[]>([]);
 
 	const getServices = async () => {
@@ -432,6 +433,16 @@
 								<b class="text-sm leading-tight truncate drop-shadow">{alt.name}</b>
 								{#if alt.city}
 									<span class="text-xs opacity-80 truncate drop-shadow">{alt.city}</span>
+								{/if}
+								{#if alt.description}
+									<span class="flex items-center gap-1 min-w-0 text-xs opacity-80 drop-shadow">
+										<span class="truncate">{alt.description}</span>
+										<!-- Native title shows the full (possibly long) description on hover;
+										     wrap the SVG in a span so the tooltip is reliable. -->
+										<span class="flex shrink-0 cursor-help opacity-90" title={alt.description}>
+											<Info size={13} />
+										</span>
+									</span>
 								{/if}
 							</div>
 							<ArrowRight size={16} class="shrink-0 drop-shadow" />

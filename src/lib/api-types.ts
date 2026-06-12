@@ -92,6 +92,7 @@ export interface WidgetAlternativeRestaurantResponseDTO {
 	id: number;
 	name: string;
 	city: string;
+	description?: string | null;
 	widgetLink: string;
 	coverUrl?: string | null;
 }

@@ -57,6 +57,25 @@
 	type WidgetAlternative = WidgetAlternativeRestaurantResponseDTO;
 	let alternatives = $state<WidgetAlternative[]>([]);
 
+	// Which card's full-description popover is open. Desktop has hover, but touch
+	// doesn't — tapping the ⓘ opens a small popover (bottom-right of the card)
+	// with the full text, identical on web and mobile. Keyed with a prefix so
+	// alternative + experience cards share one slot without collision; only one
+	// is open at a time. null = none open.
+	let openDesc = $state<string | null>(null);
+	const toggleDesc = (e: Event, key: string) => {
+		// The ⓘ lives inside the card's <button>; stop the tap from also firing
+		// the card's navigate/select handler.
+		e.stopPropagation();
+		e.preventDefault();
+		openDesc = openDesc === key ? null : key;
+	};
+	const toggleDescKey = (e: KeyboardEvent, key: string) => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			toggleDesc(e, key);
+		}
+	};
+
 	const getServices = async () => {
 		if (!selection.date || loadingServices) {
 			return;
@@ -407,51 +426,76 @@
 			<p class="text-xs opacity-70 mb-2">{m.selection_tryAlternativeRestaurants()}</p>
 			<div class="flex flex-col gap-2">
 				{#each alternatives as alt (alt.id)}
+					{@const altOpen = openDesc === `alt:${alt.id}`}
 					<button
 						onclick={() => goToAlternative(alt)}
-						class="themed-border relative flex w-full aspect-[3/1] overflow-hidden rounded border-2 text-left transition-all"
+						class="themed-border relative flex w-full aspect-[3/1] rounded border-2 text-left transition-all {altOpen
+							? 'z-20'
+							: ''}"
 						aria-label={alt.name}
 					>
-						{#if alt.coverUrl}
-							<img
-								src={alt.coverUrl}
-								alt={alt.name}
-								class="absolute inset-0 w-full h-full object-cover"
-							/>
-						{:else}
-							<div class="absolute inset-0 bg-white bg-opacity-10 flex items-center justify-center">
-								<span class="text-2xl font-semibold opacity-60">
-									{alt.name.slice(0, 2).toUpperCase()}
+						<!-- Photo + scrim clip to the rounded card; the description popover
+						     escapes this so a long description is never cut off. -->
+						<span class="absolute inset-0 overflow-hidden rounded">
+							{#if alt.coverUrl}
+								<img
+									src={alt.coverUrl}
+									alt={alt.name}
+									class="absolute inset-0 w-full h-full object-cover"
+								/>
+							{:else}
+								<span class="absolute inset-0 bg-white bg-opacity-10 flex items-center justify-center">
+									<span class="text-2xl font-semibold opacity-60">
+										{alt.name.slice(0, 2).toUpperCase()}
+									</span>
 								</span>
-							</div>
-						{/if}
-						<!-- Bottom scrim keeps the name legible over any cover photo. -->
-						<div
-							class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pt-8 pb-2 text-white"
-						>
-							<div class="flex flex-col min-w-0">
-								<span class="flex items-baseline gap-1.5 min-w-0">
-									<b class="text-sm leading-tight truncate drop-shadow">{alt.name}</b>
-									{#if alt.city}
-										<span class="text-xs opacity-80 shrink-0 drop-shadow">{alt.city}</span>
+							{/if}
+							<!-- Bottom scrim keeps the name legible over any cover photo. -->
+							<span
+								class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pt-8 pb-2 text-white"
+							>
+								<span class="flex flex-col min-w-0">
+									<span class="flex items-baseline gap-1.5 min-w-0">
+										<b class="text-sm leading-tight truncate drop-shadow">{alt.name}</b>
+										{#if alt.city}
+											<span class="text-xs opacity-80 shrink-0 drop-shadow">{alt.city}</span>
+										{/if}
+									</span>
+									{#if alt.description}
+										<span class="flex items-center gap-1 min-w-0 text-xs opacity-80 drop-shadow">
+											<span class="truncate">{alt.description}</span>
+										</span>
 									{/if}
 								</span>
-								{#if alt.description}
-									<!-- Native title on the whole line, not just the ⓘ: the full
-									     description must appear wherever the teaser is hovered. -->
-									<span
-										class="flex items-center gap-1 min-w-0 text-xs opacity-80 drop-shadow cursor-help"
-										title={alt.description}
-									>
-										<span class="truncate">{alt.description}</span>
-										<span class="flex shrink-0 opacity-90">
-											<Info size={13} />
+								<!-- Right cluster: info button then the navigate arrow flush in the
+								     corner. The info button reveals the full description in a popover
+								     (tap/click on web + mobile); the popover escapes the photo clip
+								     below so a long description is never cut off. -->
+								<span class="flex shrink-0 items-center gap-1.5">
+									{#if alt.description}
+										<span
+											role="button"
+											tabindex="0"
+											aria-label={alt.description}
+											onclick={(e) => toggleDesc(e, `alt:${alt.id}`)}
+											onkeydown={(e) => toggleDescKey(e, `alt:${alt.id}`)}
+											class="z-30 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white opacity-90 cursor-pointer hover:bg-black/75"
+										>
+											<Info size={14} />
 										</span>
-									</span>
-								{/if}
-							</div>
-							<ArrowRight size={16} class="shrink-0 drop-shadow" />
-						</div>
+									{/if}
+									<ArrowRight size={16} class="drop-shadow" />
+								</span>
+							</span>
+						</span>
+
+						{#if altOpen}
+							<span
+								class="absolute bottom-2 right-2 z-40 max-w-[85%] rounded-md bg-black/90 px-3 py-2 text-xs leading-snug text-white shadow-lg"
+							>
+								{alt.description}
+							</span>
+						{/if}
 					</button>
 				{/each}
 			</div>
@@ -460,6 +504,16 @@
 {/snippet}
 
 <div class="flex flex-col flex-grow min-h-0">
+	{#if openDesc !== null}
+		<!-- Backdrop: tapping anywhere outside an open description popover closes
+		     it. Sits below the open card (z-20) + popover (z-30/40) but above the
+		     rest of the widget so outside taps are caught. -->
+		<div
+			class="fixed inset-0 z-10"
+			role="presentation"
+			onclick={() => (openDesc = null)}
+		></div>
+	{/if}
 	<AccordionGroup
 		bind:openedAccordion={openedAccordion.index}
 		oneAtATime
@@ -798,6 +852,8 @@
 				<div class="flex flex-col gap-3 w-full px-4">
 					{#each experiences as experience (experience.id)}
 						{@const active = experience.id === selection.experience?.id}
+						{@const expOpen = openDesc === `exp:${experience.id}`}
+						{@const hasNote = !!experience.note?.length}
 						<button
 							data-active={active}
 							onclick={() => {
@@ -808,62 +864,83 @@
 								});
 								openAccordion();
 							}}
-							class="themed-border relative flex w-full aspect-[3/1] overflow-hidden rounded border-2 text-left transition-all data-[active=true]:ring-2 data-[active=true]:ring-offset-1"
+							class="themed-border relative flex w-full aspect-[3/1] rounded border-2 text-left transition-all data-[active=true]:ring-2 data-[active=true]:ring-offset-1 {expOpen
+								? 'z-20'
+								: ''}"
 							aria-label={getTranslation(experience.name)}
 						>
-							{#if experience.imageUrl}
-								<img
-									src={experience.imageUrl}
-									alt={getTranslation(experience.name)}
-									class="absolute inset-0 w-full h-full object-cover"
-								/>
-							{:else}
-								<div
-									class="absolute inset-0 bg-white bg-opacity-10 flex items-center justify-center"
+							<!-- Photo + scrim clip to the rounded card; the note popover escapes this
+							     so a long note is never cut off. -->
+							<span class="absolute inset-0 overflow-hidden rounded">
+								{#if experience.imageUrl}
+									<img
+										src={experience.imageUrl}
+										alt={getTranslation(experience.name)}
+										class="absolute inset-0 w-full h-full object-cover"
+									/>
+								{:else}
+									<span class="absolute inset-0 bg-white bg-opacity-10 flex items-center justify-center">
+										<Sparkle size={24} class="opacity-40" />
+									</span>
+								{/if}
+								<!-- Bottom scrim carries the name, note and per-guest price in-picture. -->
+								<span
+									class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pt-8 pb-2 text-white"
 								>
-									<Sparkle size={24} class="opacity-40" />
-								</div>
-							{/if}
-							{#if active}
-								<!-- Selected badge: the data-active color-invert is hidden under
-								     the photo, so surface selection with a visible check. -->
-								<div
-									class="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-white text-black shadow"
-								>
-									<Check size={14} weight="bold" />
-								</div>
-							{/if}
-							<!-- Bottom scrim carries the name, note and per-guest price in-picture. -->
-							<div
-								class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pt-8 pb-2 text-white"
-							>
-								<div class="flex flex-col min-w-0">
-									<b class="text-sm leading-tight truncate drop-shadow">
-										{getTranslation(experience.name)}
-									</b>
-									{#if experience.note?.length > 0}
-										<!-- Native title on the whole line, not just the ⓘ: the full
-										     note must appear wherever the teaser is hovered. -->
-										<span
-											class="flex items-center gap-1 min-w-0 text-xs opacity-80 drop-shadow cursor-help"
-											title={getTranslation(experience.note)}
-										>
-											<span class="truncate">{getTranslation(experience.note)}</span>
-											<span class="flex shrink-0 opacity-90">
-												<Info size={13} />
+									<span class="flex flex-col min-w-0">
+										<b class="text-sm leading-tight truncate drop-shadow">
+											{getTranslation(experience.name)}
+										</b>
+										{#if hasNote}
+											<span class="flex items-center gap-1 min-w-0 text-xs opacity-80 drop-shadow">
+												<span class="truncate">{getTranslation(experience.note)}</span>
 											</span>
+										{/if}
+									</span>
+									<!-- Right cluster: info button then the per-guest price flush in the
+									     corner — same arrangement as the alternative card (ⓘ left of the
+									     trailing element). The info button reveals the full note in a
+									     popover that escapes the photo clip below. -->
+									<span class="flex shrink-0 items-center gap-1.5">
+										{#if hasNote}
+											<span
+												role="button"
+												tabindex="0"
+												aria-label={getTranslation(experience.note)}
+												onclick={(e) => toggleDesc(e, `exp:${experience.id}`)}
+												onkeydown={(e) => toggleDescKey(e, `exp:${experience.id}`)}
+												class="z-30 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white opacity-90 cursor-pointer hover:bg-black/75"
+											>
+												<Info size={14} />
+											</span>
+										{/if}
+										<span class="text-sm font-semibold whitespace-nowrap drop-shadow">
+											{m.selection_experiencePricePerGuest({
+												price: (experience.priceCents / 100).toLocaleString(undefined, {
+													style: 'currency',
+													currency: 'EUR'
+												})
+											})}
 										</span>
-									{/if}
-								</div>
-								<span class="text-sm font-semibold shrink-0 whitespace-nowrap drop-shadow">
-									{m.selection_experiencePricePerGuest({
-										price: (experience.priceCents / 100).toLocaleString(undefined, {
-											style: 'currency',
-											currency: 'EUR'
-										})
-									})}
+									</span>
 								</span>
-							</div>
+							</span>
+
+							{#if active}
+								<!-- Selected badge: the data-active color-invert is hidden under the
+								     photo, so surface selection with a visible check. -->
+								<span class="absolute top-2 right-2 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-white text-black shadow">
+									<Check size={14} weight="bold" />
+								</span>
+							{/if}
+
+							{#if expOpen}
+								<span
+									class="absolute bottom-2 right-2 z-40 max-w-[85%] rounded-md bg-black/90 px-3 py-2 text-xs leading-snug text-white shadow-lg"
+								>
+									{getTranslation(experience.note)}
+								</span>
+							{/if}
 						</button>
 					{/each}
 				</div>

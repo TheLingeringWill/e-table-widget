@@ -435,11 +435,14 @@
 									<span class="text-xs opacity-80 truncate drop-shadow">{alt.city}</span>
 								{/if}
 								{#if alt.description}
-									<span class="flex items-center gap-1 min-w-0 text-xs opacity-80 drop-shadow">
+									<!-- Native title on the whole line, not just the ⓘ: the full
+									     description must appear wherever the teaser is hovered. -->
+									<span
+										class="flex items-center gap-1 min-w-0 text-xs opacity-80 drop-shadow cursor-help"
+										title={alt.description}
+									>
 										<span class="truncate">{alt.description}</span>
-										<!-- Native title shows the full (possibly long) description on hover;
-										     wrap the SVG in a span so the tooltip is reliable. -->
-										<span class="flex shrink-0 cursor-help opacity-90" title={alt.description}>
+										<span class="flex shrink-0 opacity-90">
 											<Info size={13} />
 										</span>
 									</span>
@@ -837,14 +840,14 @@
 										{getTranslation(experience.name)}
 									</b>
 									{#if experience.note?.length > 0}
-										<span class="flex items-center gap-1 min-w-0 text-xs opacity-80 drop-shadow">
+										<!-- Native title on the whole line, not just the ⓘ: the full
+										     note must appear wherever the teaser is hovered. -->
+										<span
+											class="flex items-center gap-1 min-w-0 text-xs opacity-80 drop-shadow cursor-help"
+											title={getTranslation(experience.note)}
+										>
 											<span class="truncate">{getTranslation(experience.note)}</span>
-											<!-- Native title shows the full (possibly long) note on hover;
-											     wrap the SVG in a span so the tooltip is reliable. -->
-											<span
-												class="flex shrink-0 cursor-help opacity-90"
-												title={getTranslation(experience.note)}
-											>
+											<span class="flex shrink-0 opacity-90">
 												<Info size={13} />
 											</span>
 										</span>

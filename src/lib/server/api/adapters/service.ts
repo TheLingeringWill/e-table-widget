@@ -14,6 +14,10 @@ import type { LegacyService } from '$lib/api-types';
 
 export type LiveShiftDTO = {
 	id: number;
+	// Always sent by the API (ShiftAvailabilityResponseDTO.is_standard):
+	// true = regular service, false = service-exception override. Optional
+	// here only to stay lenient at the wire boundary.
+	isStandard?: boolean;
 	name: string;
 	description?: string | null;
 	startTime: string;
@@ -81,6 +85,7 @@ function plainToTranslationArray(value: string | undefined | null) {
 export function shiftToLegacyService(shift: LiveShiftDTO): LegacyService {
 	return {
 		id: String(shift.id),
+		isStandard: shift.isStandard ?? true,
 		bookable: shift.bookable,
 		waitlistEnabled: shift.waitlistEnabled,
 		name: plainToTranslationArray(shift.name),

@@ -23,7 +23,9 @@ function translationsToArray(
 export function experienceToLegacyExperience(experience: ExperienceResponseDTO): LegacyExperience {
 	return {
 		id: String(experience.id),
-		serviceId: String(experience.serviceId),
+		targetServiceId:
+			experience.targetServiceId != null ? String(experience.targetServiceId) : undefined,
+		targetIsStandard: experience.targetIsStandard,
 		imageUrl: experience.imageUrl ?? undefined,
 		priceCents: experience.priceCents,
 		paymentOption: experience.paymentOption,

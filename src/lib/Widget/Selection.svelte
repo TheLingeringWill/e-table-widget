@@ -214,6 +214,10 @@
 			if (selection.service && selection.pax) {
 				await getServiceSlots();
 			}
+			// Modify flow: the restored service's experiences were never loaded
+			// (only onServiceChange fetched them) — load-bearing now that picking
+			// one is mandatory whenever any are offered.
+			await getExperiences();
 		}
 
 		if (accordionToOpen.index !== null) {
@@ -234,12 +238,17 @@
 				await getServiceSlots();
 			}
 		}
+		// Refetch for the new date (the offered list is date-bounded). Date
+		// cleared → service nulled above → this clears the list; service
+		// vanished on the new date → getServices nulled it → same.
+		await getExperiences();
 	};
 
-	// Load the optional experiences attached to the chosen service. Clears any
-	// previously-picked experience that no longer belongs to the new service.
+	// Load the experiences offered for the chosen shift on the chosen date
+	// (the BFF filters by target shift + date range). Clears any
+	// previously-picked experience that is no longer offered.
 	const getExperiences = async () => {
-		if (!selection.service) {
+		if (!selection.service || !selection.date) {
 			experiences = [];
 			selection.experience = null;
 			return;
@@ -247,7 +256,9 @@
 		loadingExperiences = true;
 		const [res, error] = await api.getExperiences({
 			restaurantId,
-			serviceId: selection.service.id
+			serviceId: selection.service.id,
+			isStandard: selection.service.isStandard ?? true,
+			date: zonedDateUtils.format('YYYY-MM-DD', selection.date)
 		});
 		if (error || !res) {
 			experiences = [];
@@ -808,7 +819,9 @@
 					!waitlist.isWaitlist) ||
 				loadingDates ||
 				loadingSlots ||
-				loadingServices}
+				loadingServices ||
+				loadingExperiences ||
+				(experiences.length > 0 && !selection.experience)}
 			>{reservation.id ? m.selection_modifyButton() : m.selection_bookButton()}</Button
 		>
 	</div>

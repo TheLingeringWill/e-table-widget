@@ -375,6 +375,10 @@ export type LegacyTranslationArray = {
 
 export interface LegacyService {
 	id: string;
+	// Whether the shift is a regular service (true) or a service-exception
+	// override (false). Service and exception ids come from separate
+	// sequences, so the discriminator must travel with the id.
+	isStandard?: boolean;
 	bookable?: boolean;
 	waitlistEnabled?: boolean;
 	name: LegacyTranslationArray;
@@ -386,24 +390,33 @@ export interface LegacyService {
 	[k: string]: unknown;
 }
 
-// REST `ExperienceResponseDTO` — an offer attached to one service. `name`/`note`
-// arrive per-language; the BFF resolves them to translation arrays before the UI
-// sees them (mirrors how shifts become LegacyService).
+// REST `ExperienceResponseDTO` — an offer that optionally targets one
+// availability shift: a service (targetIsStandard true) or a service
+// exception (false), with the field omitted entirely when the experience
+// applies to every shift. startDate/endDate (inclusive) bound when it is
+// offered. `name`/`note` arrive per-language; the BFF resolves them to
+// translation arrays before the UI sees them (mirrors how shifts become
+// LegacyService).
 export interface ExperienceResponseDTO {
 	id: number;
-	serviceId: number;
+	targetServiceId?: number;
+	targetIsStandard: boolean;
 	imageUrl?: string | null;
 	priceCents: number;
 	paymentOption: 'none' | 'save_card';
 	active: boolean;
+	startDate: string;
+	endDate: string;
 	translations: { language: string; name: string; note?: string | null }[];
 }
 
 // Widget-state shape for an experience tile (string id, translation-array
-// name/note), mirroring LegacyService.
+// name/note), mirroring LegacyService. The target fields are written by the
+// adapter but never read by the UI — the BFF already filtered by shift/date.
 export interface LegacyExperience {
 	id: string;
-	serviceId: string;
+	targetServiceId?: string;
+	targetIsStandard?: boolean;
 	imageUrl?: string;
 	priceCents: number;
 	paymentOption: 'none' | 'save_card';

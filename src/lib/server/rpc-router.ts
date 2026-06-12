@@ -90,10 +90,13 @@ export const router = {
 		return shifts.filter((s) => s.bookable === true).map(shiftToLegacyService);
 	}),
 	getExperiences: procedure(
-		object({ restaurantId: string(), serviceId: string() }),
+		object({ restaurantId: string(), serviceId: string(), isStandard: boolean(), date: string() }),
 		async ({ input }) => {
-			// Fetch all the restaurant's experiences and keep the active ones whose
-			// service matches the chosen tile, mapped to the legacy widget shape.
+			// Fetch all the restaurant's experiences and keep the active ones that
+			// are offered on the booking date (inclusive range) and target the
+			// chosen availability shift — or every shift (null target), mapped to
+			// the legacy widget shape. `isStandard` disambiguates the colliding
+			// service / service-exception id spaces (the shift tile carries it).
 			const rid = Number(input.restaurantId);
 			if (!Number.isFinite(rid)) {
 				throw new Error(`getExperiences: invalid restaurant id ${input.restaurantId}`);
@@ -103,7 +106,15 @@ export const router = {
 				throw new Error(`getExperiences: ${result.error.code} ${result.error.message}`);
 			}
 			return result.data
-				.filter((e) => e.active && String(e.serviceId) === input.serviceId)
+				.filter((e) => {
+					if (!e.active) return false;
+					// Lexicographic compare is safe on zero-padded ISO dates.
+					if (input.date < e.startDate || input.date > e.endDate) return false;
+					if (e.targetServiceId == null) return true; // targets every shift
+					return (
+						e.targetIsStandard === input.isStandard && String(e.targetServiceId) === input.serviceId
+					);
+				})
 				.map(experienceToLegacyExperience);
 		}
 	),

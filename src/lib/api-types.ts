@@ -40,7 +40,7 @@ export interface RestaurantResponseDTO {
 	email: string;
 	websiteUrl?: string | null;
 	description?: string | null;
-	logoUrl?: string | null;
+	coverUrl?: string | null;
 }
 
 export interface PaymentResponseDTO {
@@ -93,7 +93,7 @@ export interface WidgetAlternativeRestaurantResponseDTO {
 	name: string;
 	city: string;
 	widgetLink: string;
-	logoUrl?: string | null;
+	coverUrl?: string | null;
 }
 
 export interface RestaurantAggregateResponseDTO {

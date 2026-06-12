@@ -412,8 +412,8 @@
 						<div
 							class="w-20 h-20 rounded-xl overflow-hidden bg-white flex items-center justify-center transition-all group-hover:ring-2 group-hover:ring-white group-hover:ring-opacity-60"
 						>
-							{#if alt.logoUrl}
-								<img src={alt.logoUrl} alt={alt.name} class="w-full h-full object-cover" />
+							{#if alt.coverUrl}
+								<img src={alt.coverUrl} alt={alt.name} class="w-full h-full object-cover" />
 							{:else}
 								<span class="text-lg font-semibold text-black opacity-60">
 									{alt.name.slice(0, 2).toUpperCase()}

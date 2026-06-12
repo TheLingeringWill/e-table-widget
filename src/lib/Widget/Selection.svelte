@@ -402,25 +402,33 @@
 	{:else if alternatives.length > 0}
 		<div class="w-full px-4 pt-3 pb-4">
 			<p class="text-xs opacity-70 mb-2">{m.selection_tryAlternativeRestaurants()}</p>
-			<div class="flex gap-3 overflow-x-auto pb-1">
+			<div class="flex flex-col gap-2">
 				{#each alternatives as alt (alt.id)}
 					<button
 						onclick={() => goToAlternative(alt)}
-						class="flex flex-col items-center gap-1.5 shrink-0 w-20 group"
+						class="themed-border flex flex-col w-full overflow-hidden rounded border-2 text-left transition-all"
 						aria-label={alt.name}
 					>
 						<div
-							class="w-20 h-20 rounded-xl overflow-hidden bg-white flex items-center justify-center transition-all group-hover:ring-2 group-hover:ring-white group-hover:ring-opacity-60"
+							class="w-full aspect-[3/1] bg-white bg-opacity-10 flex items-center justify-center overflow-hidden"
 						>
 							{#if alt.coverUrl}
 								<img src={alt.coverUrl} alt={alt.name} class="w-full h-full object-cover" />
 							{:else}
-								<span class="text-lg font-semibold text-black opacity-60">
+								<span class="text-2xl font-semibold opacity-60">
 									{alt.name.slice(0, 2).toUpperCase()}
 								</span>
 							{/if}
 						</div>
-						<span class="text-xs text-center w-full truncate">{alt.name}</span>
+						<div class="flex items-center justify-between gap-2 px-3 py-2 min-w-0">
+							<div class="flex flex-col min-w-0">
+								<b class="text-sm truncate">{alt.name}</b>
+								{#if alt.city}
+									<span class="text-xs opacity-60 truncate">{alt.city}</span>
+								{/if}
+							</div>
+							<ArrowRight size={14} class="opacity-40 shrink-0" />
+						</div>
 					</button>
 				{/each}
 			</div>
@@ -764,7 +772,7 @@
 					{/if}
 				</div>
 			{:else if item.id === 'experiences'}
-				<div class="flex flex-wrap justify-center gap-3 w-full">
+				<div class="flex flex-col gap-3 w-full px-4">
 					{#each experiences as experience (experience.id)}
 						{@const active = experience.id === selection.experience?.id}
 						<button
@@ -777,11 +785,11 @@
 								});
 								openAccordion();
 							}}
-							class="flex flex-col w-32 rounded-lg overflow-hidden border-2 hover:bg-white hover:bg-opacity-15 transition-all"
+							class="themed-border flex flex-col w-full overflow-hidden rounded border-2 text-left transition-all"
 							aria-label={getTranslation(experience.name)}
 						>
 							<div
-								class="w-full aspect-[4/3] bg-white bg-opacity-10 flex items-center justify-center overflow-hidden"
+								class="w-full aspect-[3/1] bg-white bg-opacity-10 flex items-center justify-center overflow-hidden"
 							>
 								{#if experience.imageUrl}
 									<img
@@ -793,9 +801,16 @@
 									<Sparkle size={24} class="opacity-40" />
 								{/if}
 							</div>
-							<div class="flex flex-col gap-0.5 px-2 py-1.5 text-left">
-								<b class="text-sm truncate">{getTranslation(experience.name)}</b>
-								<span class="text-xs opacity-70">
+							<div class="flex items-start justify-between gap-2 px-3 py-2 min-w-0">
+								<div class="flex flex-col min-w-0">
+									<b class="text-sm truncate">{getTranslation(experience.name)}</b>
+									{#if experience.note?.length > 0}
+										<span class="text-xs opacity-60 line-clamp-2">
+											{getTranslation(experience.note)}
+										</span>
+									{/if}
+								</div>
+								<span class="text-sm font-semibold shrink-0 whitespace-nowrap">
 									{(experience.priceCents / 100).toLocaleString(undefined, {
 										style: 'currency',
 										currency: 'EUR'

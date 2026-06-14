@@ -52,7 +52,7 @@
 	"contact_heading": "연락처 정보",
 	"contact_lastNameLabel": "* 성:",
 	"contact_lastNameRequired": "성을 입력해주세요",
-	"contact_notesLabel": "메모:",
+	"contact_notesLabel": "요청 사항, 선호 또는 식이 제한:",
 	"contact_phoneInvalid": "전화번호가 올바르지 않습니다",
 	"contact_phoneLabel": "* 전화번호:",
 	"contact_phoneRequired": "전화번호를 입력해주세요",

@@ -341,7 +341,7 @@
 			<div class="flex items-center gap-8">
 				<button
 					type="button"
-					class="flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold transition-all hover:brightness-110 focus:brightness-95 focus:outline-none"
+					class="flex items-center justify-center gap-2 w-full py-3 text-base font-semibold uppercase transition-all hover:brightness-110 focus:brightness-95 focus:outline-none"
 					style="background: {theme?.backgroundColor};
 					       color: {theme?.fontColor};
 					       border: 1px solid {theme?.backgroundColor};

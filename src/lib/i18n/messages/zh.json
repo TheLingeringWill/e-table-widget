@@ -52,7 +52,7 @@
 	"contact_heading": "联系信息",
 	"contact_lastNameLabel": "* 姓：",
 	"contact_lastNameRequired": "请输入姓氏",
-	"contact_notesLabel": "备注：",
+	"contact_notesLabel": "备注、偏好或饮食限制：",
 	"contact_phoneInvalid": "电话号码无效",
 	"contact_phoneLabel": "* 电话号码：",
 	"contact_phoneRequired": "请输入电话号码",

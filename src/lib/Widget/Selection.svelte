@@ -51,6 +51,20 @@
 	let disabledDates = $state<Date[]>([]);
 	let maxCalendarDate = $state<Date | undefined>(undefined);
 
+	const reserveDisabled = $derived(
+		!selection.pax ||
+			!selection.date ||
+			!selection.service ||
+			!selection.slot ||
+			((selection.slot?.state === 'FULL' || selection.slot?.state === 'CLOSED') &&
+				!waitlist.isWaitlist) ||
+			loadingDates ||
+			loadingSlots ||
+			loadingServices ||
+			loadingExperiences ||
+			(experiences.length > 0 && !selection.experience)
+	);
+
 	// Owner-curated alternative (sibling) restaurants, shown at the bottom of
 	// the slot step when no slot is available. The RPC returns the resolved
 	// list (already same-group + live, in stored order) or `[]`.
@@ -943,20 +957,10 @@
 		{/snippet}
 	</AccordionGroup>
 	<div class="flex items-end p-3 mt-auto">
-		<Button
-			onclick={nextStep}
-			disabled={!selection.pax ||
-				!selection.date ||
-				!selection.service ||
-				!selection.slot ||
-				((selection.slot?.state === 'FULL' || selection.slot?.state === 'CLOSED') &&
-					!waitlist.isWaitlist) ||
-				loadingDates ||
-				loadingSlots ||
-				loadingServices ||
-				loadingExperiences ||
-				(experiences.length > 0 && !selection.experience)}
-			>{reservation.id ? m.selection_modifyButton() : m.selection_bookButton()}</Button
-		>
+		{#if !reserveDisabled}
+			<Button onclick={nextStep} className="uppercase"
+				>{reservation.id ? m.selection_modifyButton() : m.selection_bookButton()}</Button
+			>
+		{/if}
 	</div>
 </div>

@@ -52,7 +52,7 @@
 	"contact_heading": "Datos de contacto",
 	"contact_lastNameLabel": "* Apellidos:",
 	"contact_lastNameRequired": "Los apellidos son obligatorios",
-	"contact_notesLabel": "Notas para nuestro equipo:",
+	"contact_notesLabel": "Comentarios, preferencias o restricciones alimentarias:",
 	"contact_phoneInvalid": "El número de teléfono no es válido",
 	"contact_phoneLabel": "* Número de teléfono:",
 	"contact_phoneRequired": "El número de teléfono es obligatorio",

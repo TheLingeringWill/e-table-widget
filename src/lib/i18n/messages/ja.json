@@ -157,7 +157,6 @@
 	"standalonePayment_authorized": "支払いが承認されました",
 	"standalonePayment_bankImprint": "保存されたカード",
 	"standalonePayment_confirmed": "ご予約が確定しました。",
-	"standalonePayment_emailConfirmation": "確認メールを{email}に送信しました",
 	"standalonePayment_fallbackName": "ご予約",
 	"standalonePayment_finalizing": "予約を確定しています",
 	"standalonePayment_loadFailedFallback": "お支払い情報を読み込めませんでした。",

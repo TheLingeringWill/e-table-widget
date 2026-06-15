@@ -157,7 +157,6 @@
 	"standalonePayment_authorized": "Betaling geautoriseerd",
 	"standalonePayment_bankImprint": "Opgeslagen kaart",
 	"standalonePayment_confirmed": "Uw reservering is bevestigd.",
-	"standalonePayment_emailConfirmation": "Er is een bevestigingsmail verzonden naar {email}",
 	"standalonePayment_fallbackName": "Reservering",
 	"standalonePayment_finalizing": "Uw reservering wordt afgerond",
 	"standalonePayment_loadFailedFallback": "De betaling kan niet worden geladen.",

@@ -157,7 +157,6 @@
 	"standalonePayment_authorized": "Pago autorizado",
 	"standalonePayment_bankImprint": "Tarjeta guardada",
 	"standalonePayment_confirmed": "Su reserva está confirmada.",
-	"standalonePayment_emailConfirmation": "Se ha enviado un correo de confirmación a {email}",
 	"standalonePayment_fallbackName": "Reserva",
 	"standalonePayment_finalizing": "Finalizando su reserva",
 	"standalonePayment_loadFailedFallback": "No se puede cargar el pago.",

@@ -188,13 +188,6 @@
 						</div>
 					{/if}
 
-					{#if contact.email}
-						<div class="pt-4 border-t border-gray-200">
-							<p class="text-sm text-gray-600">
-								{m.standalonePayment_emailConfirmation({ email: contact.email })}
-							</p>
-						</div>
-					{/if}
 				</div>
 			</div>
 		{:else}

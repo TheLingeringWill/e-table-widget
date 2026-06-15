@@ -157,7 +157,6 @@
 	"standalonePayment_authorized": "Оплата авторизована",
 	"standalonePayment_bankImprint": "Сохранённая карта",
 	"standalonePayment_confirmed": "Ваше бронирование подтверждено.",
-	"standalonePayment_emailConfirmation": "Подтверждение отправлено на {email}",
 	"standalonePayment_fallbackName": "Бронирование",
 	"standalonePayment_finalizing": "Завершение бронирования",
 	"standalonePayment_loadFailedFallback": "Не удалось загрузить платёж.",

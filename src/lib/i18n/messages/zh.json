@@ -157,7 +157,6 @@
 	"standalonePayment_authorized": "支付已授权",
 	"standalonePayment_bankImprint": "已保存的卡片",
 	"standalonePayment_confirmed": "您的预订已确认。",
-	"standalonePayment_emailConfirmation": "确认邮件已发送至{email}",
 	"standalonePayment_fallbackName": "预订",
 	"standalonePayment_finalizing": "正在完成您的预订",
 	"standalonePayment_loadFailedFallback": "无法加载支付信息。",

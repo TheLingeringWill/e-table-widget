@@ -157,7 +157,6 @@
 	"standalonePayment_authorized": "Payment authorized",
 	"standalonePayment_bankImprint": "Card on file",
 	"standalonePayment_confirmed": "Your reservation is confirmed.",
-	"standalonePayment_emailConfirmation": "A confirmation email has been sent to {email}",
 	"standalonePayment_fallbackName": "Reservation",
 	"standalonePayment_finalizing": "Finalizing your reservation",
 	"standalonePayment_loadFailedFallback": "Unable to load the payment.",

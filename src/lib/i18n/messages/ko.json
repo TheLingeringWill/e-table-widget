@@ -157,7 +157,6 @@
 	"standalonePayment_authorized": "결제 승인 완료",
 	"standalonePayment_bankImprint": "저장된 카드",
 	"standalonePayment_confirmed": "예약이 확정되었습니다.",
-	"standalonePayment_emailConfirmation": "{email}로 확인 이메일이 발송되었습니다",
 	"standalonePayment_fallbackName": "예약",
 	"standalonePayment_finalizing": "예약을 완료하고 있습니다",
 	"standalonePayment_loadFailedFallback": "결제를 불러올 수 없습니다.",

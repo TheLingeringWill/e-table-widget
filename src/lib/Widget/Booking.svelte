@@ -54,7 +54,14 @@
 				}
 			},
 			experienceId: selection.experience?.id,
-			joiningWaitlist: waitlist.isWaitlist
+			joiningWaitlist: waitlist.isWaitlist,
+			// The customer's chosen locale drives confirmation-email localization
+			// on the API. Carry the authoritative client-side choice explicitly:
+			// the `?lang=`/cookie/Accept-Language fallback the server hook uses is
+			// unreliable in a third-party iframe (blocked cookie → wrong language).
+			// Stashed via setPendingReservation below, so it also flows through the
+			// deposit/saved-card path replayed by Payment.svelte.
+			language: currentLocale.value
 		};
 
 		// Waitlist: skip the deposit pre-check — a waitlist entry is not a

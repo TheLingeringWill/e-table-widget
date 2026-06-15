@@ -206,7 +206,11 @@ export const router = {
 			paymentIntentId: optional(string()),
 			setupIntentId: optional(string()),
 			experienceId: optional(string()),
-			joiningWaitlist: optional(boolean())
+			joiningWaitlist: optional(boolean()),
+			// Customer's chosen locale, sent explicitly by Booking.svelte. Drives
+			// confirmation-email localization on the API. Authoritative over the
+			// `event.locals.locale` fallback (unreliable in a third-party iframe).
+			language: optional(string())
 		}),
 		async ({ input, event }) => {
 			// REST replacement for `reservator.book`. Call shapes from the widget UI:
@@ -317,7 +321,7 @@ export const router = {
 						comment:
 							r.notes || (existingBooking?.ok ? (existingBooking.data.comment ?? null) : null),
 						civility: r.contact.civility,
-						language: event.locals.locale ?? null,
+						language: input.language ?? event.locals.locale ?? null,
 						countryCode: r.contact.countryCode,
 						firstName: r.contact.firstName ?? null,
 						lastName: r.contact.lastName,
@@ -333,7 +337,7 @@ export const router = {
 							source: 'web',
 							comment: r.notes ?? null,
 							civility: r.contact.civility,
-							language: event.locals.locale,
+							language: input.language ?? event.locals.locale,
 							countryCode: r.contact.countryCode,
 							firstName: r.contact.firstName,
 							lastName: r.contact.lastName,

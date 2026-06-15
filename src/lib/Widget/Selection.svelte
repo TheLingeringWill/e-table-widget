@@ -21,6 +21,7 @@
 	import { formatTime, hours, minutes } from '$lib/utils/time';
 	import { reservation, reservationTemp } from '$lib/states/reservation.svelte';
 	import { getTranslation, useWidget, useZonedDateUtils } from '$lib/context.svelte';
+	import { currentLocale } from '$lib/states/locale.svelte';
 	import ZonedCalendarInput from '$lib/utils/ZonedCalendarInput.svelte';
 	import { parseSlotDateAsCalendarDate, slotKey } from '$lib/utils/slotFormat';
 	import { isServiceEnded, isSlotPast } from '$lib/utils/pastFilter';
@@ -572,7 +573,7 @@
 							id: 'experiences',
 							icon: Sparkle,
 							title: selection.experience
-								? getTranslation(selection.experience.name)
+								? getTranslation(selection.experience.name, currentLocale.value)
 								: m.selection_pickExperience(),
 							loading: loadingExperiences,
 							contentClass: 'flex flex-wrap gap-3 justify-center px-5 py-3',
@@ -637,7 +638,7 @@
 										selection.service = service;
 										pushGtmEvent('service_selected', {
 											service_id: service.id,
-											service_name: getTranslation(service.name),
+											service_name: getTranslation(service.name, currentLocale.value),
 											service_type: service.type
 										});
 										onServiceChange().then(() => {
@@ -647,7 +648,7 @@
 									class="themed-border flex flex-row items-center gap-2 min-w-0 px-4 py-2 text-base w-full rounded border-2 disabled:opacity-50 disabled:pointer-events-none"
 								>
 									<div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
-										<b>{getTranslation(service.name)}</b>
+										<b>{getTranslation(service.name, currentLocale.value)}</b>
 										<div>•</div>
 										<div class="font-semibold">
 											{formatTime(service.startTime)} - {formatTime(service.endTime)}
@@ -657,7 +658,7 @@
 										<div
 											class="text-sm truncate min-w-0 flex-1 text-left opacity-70 hidden md:block"
 										>
-											•&nbsp;{getTranslation(service.description)}
+											•&nbsp;{getTranslation(service.description, currentLocale.value)}
 										</div>
 									{/if}
 								</button>
@@ -869,14 +870,14 @@
 								selection.experience = active ? null : experience;
 								pushGtmEvent('experience_selected', {
 									experience_id: experience.id,
-									experience_name: getTranslation(experience.name)
+									experience_name: getTranslation(experience.name, currentLocale.value)
 								});
 								openAccordion();
 							}}
 							class="themed-border relative flex w-full aspect-[2/1] rounded border-2 text-left transition-all data-[active=true]:ring-2 data-[active=true]:ring-offset-1 {expOpen
 								? 'z-20'
 								: ''}"
-							aria-label={getTranslation(experience.name)}
+							aria-label={getTranslation(experience.name, currentLocale.value)}
 						>
 							<!-- Photo + scrim clip to the rounded card; the note popover escapes this
 							     so a long note is never cut off. -->
@@ -884,7 +885,7 @@
 								{#if experience.imageUrl}
 									<img
 										src={experience.imageUrl}
-										alt={getTranslation(experience.name)}
+										alt={getTranslation(experience.name, currentLocale.value)}
 										class="absolute inset-0 w-full h-full object-cover"
 									/>
 								{:else}
@@ -898,11 +899,11 @@
 								>
 									<span class="flex flex-col min-w-0">
 										<b class="text-sm leading-tight truncate drop-shadow">
-											{getTranslation(experience.name)}
+											{getTranslation(experience.name, currentLocale.value)}
 										</b>
 										{#if hasNote}
 											<span class="flex items-center gap-1 min-w-0 text-xs opacity-80 drop-shadow">
-												<span class="truncate">{getTranslation(experience.note)}</span>
+												<span class="truncate">{getTranslation(experience.note, currentLocale.value)}</span>
 											</span>
 										{/if}
 									</span>
@@ -915,7 +916,7 @@
 											<span
 												role="button"
 												tabindex="0"
-												aria-label={getTranslation(experience.note)}
+												aria-label={getTranslation(experience.note, currentLocale.value)}
 												onclick={(e) => toggleDesc(e, `exp:${experience.id}`)}
 												onkeydown={(e) => toggleDescKey(e, `exp:${experience.id}`)}
 												class="z-30 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white opacity-90 cursor-pointer hover:bg-black/75"
@@ -947,7 +948,7 @@
 								<span
 									class="absolute bottom-2 right-2 z-40 max-w-[85%] rounded-md bg-black/90 px-3 py-2 text-xs leading-snug text-white shadow-lg"
 								>
-									{getTranslation(experience.note)}
+									{getTranslation(experience.note, currentLocale.value)}
 								</span>
 							{/if}
 						</button>

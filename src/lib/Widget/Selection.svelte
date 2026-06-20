@@ -750,13 +750,13 @@
 							{#if alternativeSlots.length > 0}
 								<div class="flex flex-col gap-2">
 									<p class="text-xs opacity-70 text-center">{m.selection_alternativeSlots()}</p>
-									<div class="flex flex-col gap-2 max-h-[200px] overflow-auto">
+									<div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
 										{#each alternativeSlots as altSlot}
 											<button
 												onclick={() => handleSelectAlternative(altSlot)}
-												class="themed-border flex items-center justify-between gap-3 px-4 py-2 text-base w-full rounded border-2 transition-all"
+												class="themed-border flex items-center justify-center px-2 py-1.5 text-base font-semibold rounded border-2 transition-all"
 											>
-												<span class="font-semibold">{altSlot.time}</span>
+												{altSlot.time}
 											</button>
 										{/each}
 									</div>
@@ -790,42 +790,37 @@
 							{/if}
 						</div>
 					{:else if groups.length > 0}
-						<!-- All of the day's slots, grouped by service (Zenchef-style): a
-						     service-name header per group, then that service's times. The
-						     user picks a time; onSlotSelect sets the owning service. -->
-						<div class="flex flex-col gap-4 px-5 py-2">
-							{#each groups as group (group.service.id)}
-								{@const vis = visibleSlotsOf(group)}
-								{#if vis.length > 0}
-									<div class="flex flex-col gap-2">
-										<b class="text-sm px-1">
-											{getTranslation(group.service.name, currentLocale.value)}
-										</b>
-										<div class="flex flex-col gap-2">
-											{#each vis as slot (slotKey(slot.date, slot.time))}
-												{@const isUnavailable = slot.state === 'FULL' || slot.state === 'CLOSED'}
-												<button
-													data-active={selection.slot
-														? slotKey(slot.date, slot.time) ===
-															slotKey(selection.slot.date, selection.slot.time)
-														: false}
-													onclick={() => {
-														if (isUnavailable) {
-															handleUnavailableSlotClick(slot);
-														} else {
-															onSlotSelect(slot, group.service);
-														}
-													}}
-													class="themed-border flex items-center justify-between gap-3 px-4 py-2 text-base w-full rounded border-2"
-												>
-													<div class="flex items-center gap-3 font-semibold">
-														{slot.time}
-													</div>
-												</button>
-											{/each}
-										</div>
-									</div>
+						<!-- All of the day's slots as a compact grid (TheFork-style): no
+						     service-name headers — each service's times are a grid, divided
+						     from the next by a thin separator. The user picks a time;
+						     onSlotSelect sets the owning service. -->
+						{@const visibleGroups = groups.filter((g) => visibleSlotsOf(g).length > 0)}
+						<div class="flex flex-col gap-3 px-5 py-3">
+							{#each visibleGroups as group, i (group.service.id)}
+								{#if i > 0}
+									<div class="separator-h my-1"></div>
 								{/if}
+								<div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+									{#each visibleSlotsOf(group) as slot (slotKey(slot.date, slot.time))}
+										{@const isUnavailable = slot.state === 'FULL' || slot.state === 'CLOSED'}
+										<button
+											data-active={selection.slot
+												? slotKey(slot.date, slot.time) ===
+													slotKey(selection.slot.date, selection.slot.time)
+												: false}
+											onclick={() => {
+												if (isUnavailable) {
+													handleUnavailableSlotClick(slot);
+												} else {
+													onSlotSelect(slot, group.service);
+												}
+											}}
+											class="themed-border flex items-center justify-center px-2 py-1.5 text-base font-semibold rounded border-2 transition-all"
+										>
+											{slot.time}
+										</button>
+									{/each}
+								</div>
 							{/each}
 						</div>
 

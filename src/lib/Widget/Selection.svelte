@@ -390,7 +390,15 @@
 			availability: slot.state
 		});
 		await getExperiences();
-		openAccordion();
+		// Picking a time is the final SELECTION decision unless the service offers
+		// experiences (a mandatory pick when present). With nothing left to choose,
+		// go straight to CONTACT — same jump the waitlist path makes — instead of
+		// waiting on the bottom "Book" button. Otherwise open the experiences step.
+		if (experiences.length === 0) {
+			nextStep();
+		} else {
+			openAccordion();
+		}
 	};
 
 	// Resolve the service group that owns a given slot (by date+time).
@@ -868,7 +876,14 @@
 									experience_id: experience.id,
 									experience_name: getTranslation(experience.name, currentLocale.value)
 								});
-								openAccordion();
+								// Picking an experience is the last SELECTION decision — advance to
+								// CONTACT like a slot pick does. Deselecting (toggling off) just
+								// re-opens the accordion and waits.
+								if (selection.experience) {
+									nextStep();
+								} else {
+									openAccordion();
+								}
 							}}
 							class="themed-border relative flex w-full aspect-[2/1] rounded border-2 text-left transition-all data-[active=true]:ring-2 data-[active=true]:ring-offset-1 {expOpen
 								? 'z-20'

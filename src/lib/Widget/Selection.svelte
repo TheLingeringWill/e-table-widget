@@ -430,17 +430,19 @@
 		window.location.href = url.toString();
 	};
 
-	// Get alternative slots from the same service group as the unavailable slot
-	// (available slots only).
+	// Get alternative slots from across ALL of the day's services (available slots
+	// only) — not just the unavailable slot's own service. handleSelectAlternative
+	// resolves the owning service from the picked slot's group, so a cross-service
+	// alternative still sets selection.service correctly.
 	const getAlternativeSlots = (unavailableSlot: Slot): Slot[] => {
-		const owner = groupForSlot(unavailableSlot);
-		const pool = owner ? owner.slots : groups.flatMap((g) => g.slots);
-		return pool.filter(
-			(slot) =>
-				slot.state !== 'FULL' &&
-				slot.state !== 'CLOSED' &&
-				slotKey(slot.date, slot.time) !== slotKey(unavailableSlot.date, unavailableSlot.time)
-		);
+		return groups
+			.flatMap((g) => g.slots)
+			.filter(
+				(slot) =>
+					slot.state !== 'FULL' &&
+					slot.state !== 'CLOSED' &&
+					slotKey(slot.date, slot.time) !== slotKey(unavailableSlot.date, unavailableSlot.time)
+			);
 	};
 
 	// Handle click on an unavailable slot

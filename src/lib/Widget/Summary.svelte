@@ -76,9 +76,14 @@
 			selection.slot ? formatSlotDate(selection.slot.date, 'D MMMM') : undefined,
 			Calendar
 		)}
-		{@render button(1, selection.service?.name[0].value, CallBell)}
-		{@render button(2, m.summary_paxCount({ pax: selection.pax ?? 0 }), ForkKnife)}
-		{@render button(3, selection.slot?.time ?? m.summary_pickTime(), Clock)}
+		{@render button(1, m.summary_paxCount({ pax: selection.pax ?? 0 }), ForkKnife)}
+		<!-- Service is no longer its own step; show it as a read-only label and route
+		     edits to the time step (index 2), since changing the time changes the
+		     service. Only rendered once a slot (hence a service) is picked. -->
+		{#if selection.service}
+			{@render button(2, selection.service.name[0].value, CallBell)}
+		{/if}
+		{@render button(2, selection.slot?.time ?? m.summary_pickTime(), Clock)}
 	</div>
 
 	{#if widget.summaryText?.length > 0}

@@ -26,6 +26,7 @@ import {
 	wouldRequireConfirmation
 } from '$lib/server/api/adapters/booking-status';
 import { ApiReturnStatus } from '$lib/api-types';
+import type { LegacyService, LegacySlot } from '$lib/api-types';
 import type {
 	BookingStatus,
 	CreateBookingRequestDTO,
@@ -61,34 +62,72 @@ const procedure = <S extends GenericSchema, R>(
 });
 
 export const router = {
-	getServices: procedure(object({ restaurantId: string(), date: string() }), async ({ input }) => {
-		// Source the per-date service tile list from /availabilities, not
-		// /services. The API resolves service exceptions (overrides /
-		// closures) at the shift level — see resolve_shifts_for_day in
-		// api/src/domain/service/availability.rs — and emits one shift per
-		// effective service for the date, with id = parent service id on
-		// regular days or id = exception id on overridden days. Sourcing
-		// the tile list from this same call keeps the BFF aligned with
-		// what the user will see in the slots panel: when /availabilities
-		// returns the override shift, the tile carries the override's id,
-		// name, hours, and pax bounds, and the subsequent getServiceSlots
-		// call (which filters by shift.id === selection.service.id) hits.
-		const rid = Number(input.restaurantId);
-		if (!Number.isFinite(rid)) {
-			throw new Error(`getServices: invalid restaurant id ${input.restaurantId}`);
+	// Zenchef-style "all slots of the day" feed. Returns every bookable shift for
+	// the date with its own slots, grouped by service, so the widget can render a
+	// service-name header per group and let the user pick a time without first
+	// picking a service — the chosen slot's owning service travels back in the
+	// group. Replaces the old getServices + getServiceSlots pair: it is their
+	// union minus the `shift.id === serviceId` filter, with per-shift grouping.
+	// The shift id is the parent service id on regular days or the exception id on
+	// overridden days (the API resolves overrides per-date in
+	// resolve_shifts_for_day, api/src/domain/service/availability.rs), so the
+	// group's service.id is exactly what `book` later filters on.
+	getDaySlots: procedure(
+		object({
+			restaurantId: string(),
+			pax: number(),
+			date: string(),
+			isModifying: optional(boolean())
+		}),
+		async ({ input }) => {
+			const rid = Number(input.restaurantId);
+			if (!Number.isFinite(rid)) {
+				throw new Error(`getDaySlots: invalid restaurant id ${input.restaurantId}`);
+			}
+			const day = input.date;
+			const result = await createWidgetApi(rid).getAvailabilities({
+				startDate: day,
+				endDate: day
+			});
+			if (!result.ok) {
+				throw new Error(`getDaySlots: ${result.error.code} ${result.error.message}`);
+			}
+			const days = result.data.data as LiveDay[];
+
+			const groups: Array<{ service: LegacyService; slots: LegacySlot[] }> = [];
+			for (const d of days) {
+				for (const shift of d.shifts) {
+					if (shift.bookable !== true) continue;
+					let raw = shift.slots.map((slot) => ({ ...slot, date: d.date }));
+					if (input.isModifying) {
+						raw = raw.filter(
+							(slot) =>
+								!wouldRequireConfirmation({
+									shiftAutoConfirm: shift.autoConfirm ?? false,
+									shiftAutoConfirmMaxPax: shift.autoConfirmMaxPax ?? null,
+									shiftCaptureEnabled: shift.captureEnabled ?? false,
+									shiftForeignCaptureEnabled: shift.foreignCaptureEnabled ?? false,
+									slot: {
+										captureEnabled: slot.captureEnabled ?? null,
+										foreignCaptureEnabled: slot.foreignCaptureEnabled ?? null
+									},
+									pax: input.pax
+								})
+						);
+					}
+					const slots = filterByPax(raw, input.pax).map((s) => slotToLegacySlot(s, input.pax));
+					// Omit a shift that yields no slots after pax filtering, so the UI
+					// never renders a service header with no times under it (Zenchef
+					// drops empty groups). Past-slot pruning stays client-side
+					// (timezone/now-dependent) in Selection.svelte.
+					if (slots.length > 0) {
+						groups.push({ service: shiftToLegacyService(shift), slots });
+					}
+				}
+			}
+			return groups;
 		}
-		const day = input.date;
-		const result = await createWidgetApi(rid).getAvailabilities({
-			startDate: day,
-			endDate: day
-		});
-		if (!result.ok) {
-			throw new Error(`getServices: ${result.error.code} ${result.error.message}`);
-		}
-		const days = result.data.data as LiveDay[];
-		const shifts = days.flatMap((d) => d.shifts);
-		return shifts.filter((s) => s.bookable === true).map(shiftToLegacyService);
-	}),
+	),
 	getExperiences: procedure(
 		object({ restaurantId: string(), serviceId: string(), isStandard: boolean(), date: string() }),
 		async ({ input }) => {
@@ -116,66 +155,6 @@ export const router = {
 					);
 				})
 				.map(experienceToLegacyExperience);
-		}
-	),
-	getServiceSlots: procedure(
-		object({
-			restaurantId: string(),
-			serviceId: string(),
-			pax: number(),
-			date: string(),
-			isModifying: optional(boolean())
-		}),
-		async ({ input }) => {
-			// REST replacement for `reservator.getServiceSlots`. The new endpoint
-			// takes a date range with no pax filter — we send a single-day
-			// range and filter client-side per PRD §6.2 ("the adapter filters
-			// slots client-side by `slot.possibleGuests.includes(pax)`").
-			const rid = Number(input.restaurantId);
-			if (!Number.isFinite(rid)) {
-				throw new Error(`getServiceSlots: invalid restaurant id ${input.restaurantId}`);
-			}
-			const day = input.date;
-			const result = await createWidgetApi(rid).getAvailabilities({
-				startDate: day,
-				endDate: day
-			});
-			if (!result.ok) {
-				throw new Error(`getServiceSlots: ${result.error.code} ${result.error.message}`);
-			}
-			// Filtering by `shift.id === selection.service.id` works because
-			// getServices now sources the tile id from the same /availabilities
-			// shifts — overrides flow through with their exception id intact.
-			const targetServiceId = Number(input.serviceId);
-			if (!Number.isFinite(targetServiceId)) {
-				throw new Error(`getServiceSlots: invalid service id ${input.serviceId}`);
-			}
-			const days = result.data.data as LiveDay[];
-			const flatSlots = days.flatMap((day) =>
-				day.shifts
-					.filter((shift) => shift.id === targetServiceId)
-					.flatMap((shift) => {
-						let slots = shift.slots.map((slot) => ({ ...slot, date: day.date }));
-						if (input.isModifying) {
-							slots = slots.filter(
-								(slot) =>
-									!wouldRequireConfirmation({
-										shiftAutoConfirm: shift.autoConfirm ?? false,
-										shiftAutoConfirmMaxPax: shift.autoConfirmMaxPax ?? null,
-										shiftCaptureEnabled: shift.captureEnabled ?? false,
-										shiftForeignCaptureEnabled: shift.foreignCaptureEnabled ?? false,
-										slot: {
-											captureEnabled: slot.captureEnabled ?? null,
-											foreignCaptureEnabled: slot.foreignCaptureEnabled ?? null
-										},
-										pax: input.pax
-									})
-							);
-						}
-						return slots;
-					})
-			);
-			return filterByPax(flatSlots, input.pax).map((s) => slotToLegacySlot(s, input.pax));
 		}
 	),
 	book: procedure(

@@ -3,7 +3,6 @@
 		ArrowLeft,
 		ArrowRight,
 		Calendar,
-		CallBell,
 		Check,
 		Clock,
 		ForkKnife,
@@ -18,7 +17,6 @@
 	import { accordionToOpen, openedAccordion, selection } from '$lib/states/selection.svelte';
 	import { nextStep } from '$lib/states/step.svelte';
 	import { waitlist, resetWaitlist, joinWaitlist, type Slot } from '$lib/states/waitlist.svelte';
-	import { formatTime, hours, minutes } from '$lib/utils/time';
 	import { reservation, reservationTemp } from '$lib/states/reservation.svelte';
 	import { getTranslation, useWidget, useZonedDateUtils } from '$lib/context.svelte';
 	import { currentLocale } from '$lib/states/locale.svelte';
@@ -40,31 +38,58 @@
 	const widgetCtx = useWidget();
 	const zonedDateUtils = useZonedDateUtils();
 
-	let loadingServices = $state(false);
 	let loadingDates = $state(false);
 	let loadingSlots = $state(false);
 	let loadingAlternative = $state(false);
 	let loadingExperiences = $state(false);
 
-	let services = $state<NonNullable<typeof selection.service>[]>([]);
-	let slots = $state<NonNullable<typeof selection.slot>[]>([]);
+	// The day's slots grouped by service (Zenchef-style). Each group carries the
+	// full owning service so picking a slot can set `selection.service` from the
+	// group — the booking pipeline still needs serviceId, we just stop asking the
+	// user for it. Replaces the old flat `services` + `slots` arrays.
+	type ServiceGroup = {
+		service: NonNullable<typeof selection.service>;
+		slots: NonNullable<typeof selection.slot>[];
+	};
+	let groups = $state<ServiceGroup[]>([]);
 	let experiences = $state<NonNullable<typeof selection.experience>[]>([]);
 	let disabledDates = $state<Date[]>([]);
 	let maxCalendarDate = $state<Date | undefined>(undefined);
 
+	const isModifying = $derived(!!reservation.id);
+
+	// PRD: max party size bookable from the widget. Above this is a group request
+	// routed to the restaurant (notice rendered under the pax step).
+	const MAX_WIDGET_PAX = 14;
+
 	const reserveDisabled = $derived(
 		!selection.pax ||
 			!selection.date ||
-			!selection.service ||
 			!selection.slot ||
+			// `selection.service` is set from the chosen slot's group, so it is always
+			// present once a slot is picked — kept as a safety net (Contact's deposit
+			// notice + Booking read it).
+			!selection.service ||
 			((selection.slot?.state === 'FULL' || selection.slot?.state === 'CLOSED') &&
 				!waitlist.isWaitlist) ||
 			loadingDates ||
 			loadingSlots ||
-			loadingServices ||
 			loadingExperiences ||
 			(experiences.length > 0 && !selection.experience)
 	);
+
+	// Slots shown for a group: hide CLOSED; show FULL only when waitlist is on and
+	// we're not modifying. Shared by the renderer and the empty-group filter so
+	// both agree on what "this group has nothing to show" means.
+	const visibleSlotsOf = (group: ServiceGroup) =>
+		group.slots.filter((s) => {
+			if (s.state === 'CLOSED') return false;
+			if (s.state === 'FULL') {
+				if (isModifying) return false;
+				return !!(group.service.waitlistEnabled || s.waitlistEnabled);
+			}
+			return true;
+		});
 
 	// Owner-curated alternative (sibling) restaurants, shown at the bottom of
 	// the slot step when no slot is available. The RPC returns the resolved
@@ -91,43 +116,118 @@
 		}
 	};
 
-	const getServices = async () => {
-		if (!selection.date || loadingServices) {
+	// Fetch the whole day's slots (all services at once) and group them by
+	// service. Replaces getServices + getServiceSlots. Requires a chosen pax (the
+	// API has no pax filter — it's applied client-side per service inside the
+	// RPC). Past slots and already-ended services are pruned here (timezone/now
+	// dependent), then groups with nothing visible are dropped.
+	const getDaySlots = async () => {
+		if (!selection.date || !selection.pax || loadingSlots) {
 			return;
 		}
-		loadingServices = true;
-		const [res, error] = await api.getServices({
-			restaurantId,
-			date: zonedDateUtils.format('YYYY-MM-DD', selection.date)
-		});
-		if (error) {
-			console.log(error);
-			services = [];
-			loadingServices = false;
-			return;
-		}
+		loadingSlots = true;
+		alternatives = []; // Reset alternatives when fetching new slots
 		const dateStr = zonedDateUtils.format('YYYY-MM-DD', selection.date);
-		services = res.filter(
-			(s: NonNullable<typeof selection.service>) =>
-				!isServiceEnded(s, dateStr, zonedDateUtils.timezone)
-		);
-		if (reservationTemp.serviceId) {
-			const foundService = services.find((s) => s.id === reservationTemp.serviceId);
-			if (foundService) {
-				selection.service = foundService;
-			}
-			reservationTemp.serviceId = null;
+		const [res, error] = await api.getDaySlots({
+			restaurantId,
+			date: dateStr,
+			pax: selection.pax,
+			isModifying
+		});
+		if (error || !res) {
+			console.log(error);
+			groups = [];
+			loadingSlots = false;
+			return;
 		}
-		if (reservationTemp.pax) {
-			selection.pax = reservationTemp.pax;
-			reservationTemp.pax = null;
+		// The RPC return is structurally a ServiceGroup[] (LegacyService/LegacySlot
+		// ⊇ the selection types via their index signatures); name it so the
+		// map/filter callbacks below are typed rather than implicit-any.
+		const dayGroups = res as ServiceGroup[];
+		groups = dayGroups
+			.map((g) => ({
+				service: g.service,
+				slots: g.slots.filter((s) => !isSlotPast(s, zonedDateUtils.timezone))
+			}))
+			.filter((g) => !isServiceEnded(g.service, dateStr, zonedDateUtils.timezone))
+			.filter((g) => visibleSlotsOf(g).length > 0);
+
+		// Restore an in-flight selection coming from a modify/preselect deep-link
+		// (replaces the old per-step serviceId/startDate restore in getServices/
+		// getServiceSlots), then re-bind any already-chosen slot after a refetch.
+		if (reservationTemp.serviceId || reservationTemp.startDate) {
+			resolveSelectionFromTemp();
 		}
-		if (selection.service !== null && !services.find((s) => s.id === selection.service?.id)) {
-			selection.service = null;
+		if (selection.slot) {
+			reResolveChosenSlot();
 		}
 
-		console.log('services', services);
-		loadingServices = false;
+		loadingSlots = false;
+
+		// When no slot is available across any service, surface the owner-curated
+		// sibling restaurants (if any) at the bottom of the slot step.
+		const hasAvailableSlot = groups.some((g) =>
+			g.slots.some((slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED')
+		);
+		if (!hasAvailableSlot) {
+			loadWidgetAlternatives();
+		}
+	};
+
+	// Find the group whose service matches `reservationTemp.serviceId` and the
+	// slot matching `reservationTemp.startDate`, and set BOTH selection.slot and
+	// selection.service. This is what keeps the modify + alternative-restaurant
+	// preselect flows working now that there is no explicit service step.
+	const resolveSelectionFromTemp = () => {
+		if (reservationTemp.pax && !selection.pax) {
+			selection.pax = reservationTemp.pax;
+		}
+		let targetGroup = reservationTemp.serviceId
+			? groups.find((g) => g.service.id === reservationTemp.serviceId)
+			: undefined;
+
+		if (reservationTemp.startDate) {
+			const td = reservationTemp.startDate;
+			// Prefer the slot inside the matching service group; fall back to any
+			// group so a stale serviceId never strands an otherwise-valid slot.
+			const searchGroups = targetGroup ? [targetGroup] : groups;
+			for (const g of searchGroups) {
+				const found = g.slots.find((s) => s.date === td.date && s.time === td.time);
+				if (found) {
+					selection.slot = found;
+					selection.service = g.service;
+					break;
+				}
+			}
+			reservationTemp.startDate = null;
+		} else if (targetGroup) {
+			selection.service = targetGroup.service;
+		}
+		reservationTemp.serviceId = null;
+	};
+
+	// After a refetch (pax/date change), the previously chosen slot object is
+	// stale. Re-bind it (and its owning service) from the fresh groups, or clear
+	// both if it vanished or became unavailable.
+	const reResolveChosenSlot = () => {
+		const cur = selection.slot;
+		if (!cur) return;
+		for (const g of groups) {
+			const found = g.slots.find((s) => s.date === cur.date && s.time === cur.time);
+			if (found) {
+				const unavailable = found.state === 'FULL' || found.state === 'CLOSED';
+				if (unavailable && !waitlist.isWaitlist) {
+					selection.slot = null;
+					selection.service = null;
+				} else {
+					selection.slot = found;
+					selection.service = g.service;
+				}
+				return;
+			}
+		}
+		selection.slot = null;
+		selection.service = null;
 	};
 
 	const fetchDisabledDates = async () => {
@@ -165,75 +265,18 @@
 		loadingDates = false;
 	};
 
-	const getServiceSlots = async () => {
-		if (!selection.date || !selection.service || !selection.pax || loadingSlots) {
-			return;
-		}
-		loadingSlots = true;
-		alternatives = []; // Reset alternatives when fetching new slots
-		const start = new Date();
-		const [res, error] = await api.getServiceSlots({
-			restaurantId,
-			serviceId: selection.service.id,
-			pax: selection.pax,
-			date: zonedDateUtils.format('YYYY-MM-DD', selection.date),
-			isModifying: !!reservation.id
-		});
-		if (error) {
-			console.log(error);
-			slots = [];
-			loadingSlots = false;
-			return;
-		}
-		slots = res.filter(
-			(s: NonNullable<typeof selection.slot>) => !isSlotPast(s, zonedDateUtils.timezone)
-		);
-		if (reservationTemp.startDate) {
-			const foundSlot = slots.find(
-				(slot) =>
-					slot.date === reservationTemp.startDate?.date &&
-					slot.time === reservationTemp.startDate?.time
-			);
-			if (foundSlot) {
-				selection.slot = foundSlot;
-			}
-			reservationTemp.startDate = null;
-		}
-		if (selection.slot !== null && slots.length > 0) {
-			const foundSlot = slots.find(
-				(slot) => slot.date === selection.slot?.date && slot.time === selection.slot?.time
-			);
-			const isUnavailable = foundSlot?.state === 'FULL' || foundSlot?.state === 'CLOSED';
-
-			if (!foundSlot || (isUnavailable && !waitlist.isWaitlist)) {
-				selection.slot = null;
-			} else {
-				selection.slot = foundSlot;
-			}
-		}
-		loadingSlots = false;
-
-		// When no slot is available, surface the owner-curated sibling
-		// restaurants (if any) at the bottom of the slot step.
-		const hasAvailableSlot = slots.some((slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED');
-		if (!hasAvailableSlot) {
-			loadWidgetAlternatives();
-		}
-	};
-
+	// New step order (no service step): date(0) → pax(1) → slots(2) → experiences(3).
 	const openAccordion = () => {
 		if (selection.date === null) {
 			openedAccordion.index = 0;
-		} else if (selection.service === null) {
-			openedAccordion.index = 1;
 		} else if (selection.pax === null) {
-			openedAccordion.index = 2;
+			openedAccordion.index = 1;
 		} else if (selection.slot === null) {
-			openedAccordion.index = 3;
+			openedAccordion.index = 2;
 		} else if (experiences.length > 0 && selection.experience === null) {
-			// Optional experiences step (index 4, only present when the chosen
-			// service has experiences) — surface it once a slot is picked.
-			openedAccordion.index = 4;
+			// Optional experiences step (index 3, only present when the chosen
+			// slot's service has experiences) — surface it once a slot is picked.
+			openedAccordion.index = 3;
 		} else {
 			openedAccordion.index = null;
 		}
@@ -245,15 +288,18 @@
 		if (reservationTemp.startDate) {
 			selection.date = parseSlotDateAsCalendarDate(reservationTemp.startDate.date);
 		}
+		// getDaySlots needs pax up front (the API has no pax filter); seed it from
+		// the modify/preselect temp before the first fetch.
+		if (reservationTemp.pax && !selection.pax) {
+			selection.pax = reservationTemp.pax;
+		}
 
-		if (selection.date) {
-			await getServices();
-			if (selection.service && selection.pax) {
-				await getServiceSlots();
-			}
-			// Modify flow: the restored service's experiences were never loaded
-			// (only onServiceChange fetched them) — load-bearing now that picking
-			// one is mandatory whenever any are offered.
+		if (selection.date && selection.pax) {
+			// Restores selection.slot + selection.service from temp via
+			// resolveSelectionFromTemp.
+			await getDaySlots();
+			// Modify flow: the restored service's experiences were never loaded —
+			// load-bearing now that picking one is mandatory whenever any are offered.
 			await getExperiences();
 		}
 
@@ -266,19 +312,19 @@
 	});
 
 	const onDateChange = async () => {
-		if (!selection.date) {
-			selection.service = null;
-			selection.slot = null;
+		// New date → the chosen service/slot/experience no longer apply. Clear them,
+		// then refetch the day's grouped slots (service + experiences are only known
+		// once a slot is picked again).
+		selection.slot = null;
+		selection.service = null;
+		selection.experience = null;
+		experiences = [];
+		resetWaitlist();
+		if (selection.date && selection.pax) {
+			await getDaySlots();
 		} else {
-			await getServices();
-			if (selection.service) {
-				await getServiceSlots();
-			}
+			groups = [];
 		}
-		// Refetch for the new date (the offered list is date-bounded). Date
-		// cleared → service nulled above → this clears the list; service
-		// vanished on the new date → getServices nulled it → same.
-		await getExperiences();
 	};
 
 	// Load the experiences offered for the chosen shift on the chosen date
@@ -313,40 +359,45 @@
 		loadingExperiences = false;
 	};
 
-	const onServiceChange = async () => {
-		if (
-			selection.service &&
-			selection.pax &&
-			(selection.service.minPaxPerReservation > selection.pax ||
-				selection.service.maxPaxPerReservation < selection.pax)
-		) {
-			selection.pax = null;
-		}
-
-		if (!selection.service) {
-			selection.slot = null;
-		}
-
-		// Reset waitlist state when service changes
-		resetWaitlist();
-
-		await getExperiences();
-
-		if (selection.date && selection.service && selection.pax) {
-			await getServiceSlots();
-		}
-	};
-
 	const onPaxChange = async () => {
+		// Pax affects availability — clear the chosen time and its service/experience
+		// and refetch the day's slots for the new pax.
 		selection.slot = null;
+		selection.service = null;
+		selection.experience = null;
+		experiences = [];
 		resetWaitlist();
 
-		if (selection.date && selection.service && selection.pax) {
-			await getServiceSlots();
+		if (selection.date && selection.pax) {
+			await getDaySlots();
+		} else {
+			groups = [];
 		}
 	};
 
-	const onSlotChange = async () => {};
+	// Pick a time. The owning service travels in from the slot's group, so we set
+	// both atomically — this is the mechanism that replaces the service step. The
+	// service is now known, so its experiences can be fetched.
+	const onSlotSelect = async (
+		slot: NonNullable<typeof selection.slot>,
+		service: NonNullable<typeof selection.service>
+	) => {
+		selection.slot = slot;
+		selection.service = service;
+		resetWaitlist();
+		pushGtmEvent('slot_selected', {
+			slot_time: slotKey(slot.date, slot.time),
+			availability: slot.state
+		});
+		await getExperiences();
+		openAccordion();
+	};
+
+	// Resolve the service group that owns a given slot (by date+time).
+	const groupForSlot = (slot: Slot): ServiceGroup | undefined =>
+		groups.find((g) =>
+			g.slots.some((s) => slotKey(s.date, s.time) === slotKey(slot.date, slot.time))
+		);
 
 	// Fetch the owner-curated sibling restaurants for the no-slot path. The RPC
 	// self-gates (returns [] when disabled or ungrouped) and never throws.
@@ -379,9 +430,12 @@
 		window.location.href = url.toString();
 	};
 
-	// Get alternative slots from the same service (available slots only)
+	// Get alternative slots from the same service group as the unavailable slot
+	// (available slots only).
 	const getAlternativeSlots = (unavailableSlot: Slot): Slot[] => {
-		return slots.filter(
+		const owner = groupForSlot(unavailableSlot);
+		const pool = owner ? owner.slots : groups.flatMap((g) => g.slots);
+		return pool.filter(
 			(slot) =>
 				slot.state !== 'FULL' &&
 				slot.state !== 'CLOSED' &&
@@ -400,28 +454,28 @@
 	// Handle joining the waitlist
 	const handleJoinWaitlist = () => {
 		if (waitlist.selectedUnavailableSlot) {
-			selection.slot = waitlist.selectedUnavailableSlot;
+			const slot = waitlist.selectedUnavailableSlot;
+			selection.slot = slot;
+			// The booking + Contact's deposit notice need the owning service.
+			const owner = groupForSlot(slot);
+			if (owner) selection.service = owner.service;
 			joinWaitlist();
 			waitlist.selectedUnavailableSlot = null;
 			pushGtmEvent('slot_selected', {
-				slot_time: slotKey(selection.slot.date, selection.slot.time),
+				slot_time: slotKey(slot.date, slot.time),
 				availability: 'WAITLIST'
 			});
 			nextStep();
 		}
 	};
 
-	// Handle selecting an alternative slot
+	// Handle selecting an alternative slot — reuse the unified picker so the
+	// owning service is set the same way as a normal pick.
 	const handleSelectAlternative = (slot: Slot) => {
-		selection.slot = slot;
-		resetWaitlist();
-		pushGtmEvent('slot_selected', {
-			slot_time: slotKey(slot.date, slot.time),
-			availability: slot.state
-		});
-		onSlotChange().then(() => {
-			openAccordion();
-		});
+		const owner = groupForSlot(slot);
+		if (owner) {
+			onSlotSelect(slot, owner.service);
+		}
 	};
 
 	// Handle going back from waitlist prompt
@@ -459,7 +513,9 @@
 									class="absolute inset-0 w-full h-full object-cover"
 								/>
 							{:else}
-								<span class="absolute inset-0 bg-white bg-opacity-10 flex items-center justify-center">
+								<span
+									class="absolute inset-0 bg-white bg-opacity-10 flex items-center justify-center"
+								>
 									<span class="text-2xl font-semibold opacity-60">
 										{alt.name.slice(0, 2).toUpperCase()}
 									</span>
@@ -523,11 +579,7 @@
 		<!-- Backdrop: tapping anywhere outside an open description popover closes
 		     it. Sits below the open card (z-20) + popover (z-30/40) but above the
 		     rest of the widget so outside taps are caught. -->
-		<div
-			class="fixed inset-0 z-10"
-			role="presentation"
-			onclick={() => (openDesc = null)}
-		></div>
+		<div class="fixed inset-0 z-10" role="presentation" onclick={() => (openDesc = null)}></div>
 	{/if}
 	<AccordionGroup
 		bind:openedAccordion={openedAccordion.index}
@@ -544,20 +596,12 @@
 				loading: loadingDates
 			},
 			{
-				id: 'service',
-				icon: CallBell,
-				title: selection.service?.name[0].value || m.selection_pickService(),
-				loading: loadingServices,
-				contentClass: 'flex flex-wrap gap-2 justify-center',
-				disabled: !selection.date
-			},
-			{
 				id: 'pax',
 				icon: ForkKnife,
 				title: selection.pax ? m.selection_paxCount({ pax: selection.pax }) : m.selection_pickPax(),
 				contentClass: 'flex flex-wrap gap-2 justify-center pt-2 pb-5 px-5',
-				loading: loadingServices,
-				disabled: !selection.date || !selection.service
+				loading: loadingSlots,
+				disabled: !selection.date
 			},
 			{
 				id: 'slots',
@@ -565,7 +609,7 @@
 				title: `${selection.slot ? selection.slot.time : m.selection_pickTime()}`,
 				loading: loadingSlots,
 				contentClass: 'flex flex-wrap gap-2 justify-center',
-				disabled: !selection.date || !selection.service || !selection.pax
+				disabled: !selection.date || !selection.pax
 			},
 			...(experiences.length > 0
 				? [
@@ -577,7 +621,7 @@
 								: m.selection_pickExperience(),
 							loading: loadingExperiences,
 							contentClass: 'flex flex-wrap gap-3 justify-center px-5 py-3',
-							disabled: !selection.date || !selection.service || !selection.pax || !selection.slot
+							disabled: !selection.date || !selection.pax || !selection.slot
 						}
 					]
 				: [])
@@ -627,58 +671,10 @@
 						/>
 					{/if}
 				</div>
-			{:else if item.id === 'service'}
-				<div class="w-full">
-					{#if services.length > 0}
-						<div class="flex flex-col gap-2 px-5 py-2">
-							{#each services as service (service.id)}
-								<button
-									data-active={service.id === selection.service?.id}
-									onclick={() => {
-										selection.service = service;
-										pushGtmEvent('service_selected', {
-											service_id: service.id,
-											service_name: getTranslation(service.name, currentLocale.value),
-											service_type: service.type
-										});
-										onServiceChange().then(() => {
-											openAccordion();
-										});
-									}}
-									class="themed-border flex flex-row items-center gap-2 min-w-0 px-4 py-2 text-base w-full rounded border-2 disabled:opacity-50 disabled:pointer-events-none"
-								>
-									<div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
-										<b>{getTranslation(service.name, currentLocale.value)}</b>
-										<div>•</div>
-										<div class="font-semibold">
-											{formatTime(service.startTime)} - {formatTime(service.endTime)}
-										</div>
-									</div>
-									{#if service.description?.length > 0}
-										<div
-											class="text-sm truncate min-w-0 flex-1 text-left opacity-70 hidden md:block"
-										>
-											•&nbsp;{getTranslation(service.description, currentLocale.value)}
-										</div>
-									{/if}
-								</button>
-							{/each}
-						</div>
-					{:else if !loadingServices}
-						<div class="flex flex-col items-center justify-center w-full gap-5 p-6">
-							<div>{m.selection_noServiceToday()}</div>
-							<Button
-								onclick={() => {
-									openedAccordion.index = 0;
-								}}>{m.selection_chooseAnotherDay()}</Button
-							>
-						</div>
-					{/if}
-				</div>
 			{:else if item.id === 'pax'}
 				{@const paxLocked =
 					reservation.paymentStatus === 'requires_capture' || !!reservation.stripeSetupIntentId}
-				{#each Array.from({ length: (selection.service?.maxPaxPerReservation || 20) - (selection.service?.minPaxPerReservation || 0) + 1 }, (_, i) => i + (selection.service?.minPaxPerReservation || 1)) as pax}
+				{#each Array.from({ length: MAX_WIDGET_PAX }, (_, i) => i + 1) as pax}
 					<button
 						data-active={pax === selection.pax}
 						disabled={paxLocked && pax !== selection.pax}
@@ -703,10 +699,12 @@
 							email: widgetCtx.restaurant.email ?? ''
 						})}
 					</p>
-				{:else if selection.service && (widgetCtx.restaurant.phone || widgetCtx.restaurant.email)}
+				{:else if widgetCtx.restaurant.phone || widgetCtx.restaurant.email}
+					<!-- Above MAX_WIDGET_PAX is a group request: persistent notice routing
+					     the guest to the restaurant. No longer gated on a chosen service
+					     (there is none at the pax step now). -->
 					{@const phone = widgetCtx.restaurant.phone}
 					{@const email = widgetCtx.restaurant.email}
-					{@const maxPax = selection.service.maxPaxPerReservation}
 					{@const phonePart = phone
 						? `<a href="tel:${phone}" style="text-decoration:underline;opacity:1;font-weight:bold">${phone}</a>`
 						: ''}
@@ -717,12 +715,12 @@
 						.filter(Boolean)
 						.join(` ${m.selection_or()} `)}
 					<p class="w-full text-xs opacity-70 mt-2 px-1">
-						{@html m.selection_groupContactNotice({ maxPax: String(maxPax), contactInfo })}
+						{@html m.selection_groupContactNotice({ maxPax: String(MAX_WIDGET_PAX), contactInfo })}
 					</p>
 				{/if}
 			{:else if item.id === 'slots'}
-				{@const hasAvailableSlots = slots.some(
-					(slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED'
+				{@const hasAvailableSlots = groups.some((g) =>
+					g.slots.some((slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED')
 				)}
 				<div class="w-full">
 					{#if waitlist.selectedUnavailableSlot}
@@ -781,47 +779,43 @@
 								{@render alternativesSection()}
 							{/if}
 						</div>
-					{:else if slots.length > 0}
-						<!-- Regular slot list (all clickable, no color dots) -->
-						{@const isModifying = !!reservation.id}
-						{@const visibleSlots = slots.filter((s) => {
-							if (s.state === 'CLOSED') return false;
-							if (s.state === 'FULL') {
-								if (isModifying) return false;
-								return !!(selection.service?.waitlistEnabled || s.waitlistEnabled);
-							}
-							return true;
-						})}
-						<div class="flex flex-col gap-2 px-5 py-2">
-							{#each visibleSlots as slot}
-								{@const isUnavailable = slot.state === 'FULL' || slot.state === 'CLOSED'}
-								{#key slotKey(slot.date, slot.time)}
-									<button
-										data-active={selection.slot
-											? slotKey(slot.date, slot.time) ===
-												slotKey(selection.slot.date, selection.slot.time)
-											: false}
-										onclick={() => {
-											if (isUnavailable) {
-												handleUnavailableSlotClick(slot);
-											} else {
-												selection.slot = slot;
-												pushGtmEvent('slot_selected', {
-													slot_time: slotKey(slot.date, slot.time),
-													availability: slot.state
-												});
-												onSlotChange().then(() => {
-													openAccordion();
-												});
-											}
-										}}
-										class="themed-border flex items-center justify-between gap-3 px-4 py-2 text-base w-full rounded border-2"
-									>
-										<div class="flex items-center gap-3 font-semibold">
-											{slot.time}
+					{:else if groups.length > 0}
+						<!-- All of the day's slots, grouped by service (Zenchef-style): a
+						     service-name header per group, then that service's times. The
+						     user picks a time; onSlotSelect sets the owning service. -->
+						<div class="flex flex-col gap-4 px-5 py-2">
+							{#each groups as group (group.service.id)}
+								{@const vis = visibleSlotsOf(group)}
+								{#if vis.length > 0}
+									<div class="flex flex-col gap-2">
+										<b class="text-sm px-1">
+											{getTranslation(group.service.name, currentLocale.value)}
+										</b>
+										<div class="flex flex-col gap-2">
+											{#each vis as slot (slotKey(slot.date, slot.time))}
+												{@const isUnavailable = slot.state === 'FULL' || slot.state === 'CLOSED'}
+												<button
+													data-active={selection.slot
+														? slotKey(slot.date, slot.time) ===
+															slotKey(selection.slot.date, selection.slot.time)
+														: false}
+													onclick={() => {
+														if (isUnavailable) {
+															handleUnavailableSlotClick(slot);
+														} else {
+															onSlotSelect(slot, group.service);
+														}
+													}}
+													class="themed-border flex items-center justify-between gap-3 px-4 py-2 text-base w-full rounded border-2"
+												>
+													<div class="flex items-center gap-3 font-semibold">
+														{slot.time}
+													</div>
+												</button>
+											{/each}
 										</div>
-									</button>
-								{/key}
+									</div>
+								{/if}
 							{/each}
 						</div>
 
@@ -889,7 +883,9 @@
 										class="absolute inset-0 w-full h-full object-cover"
 									/>
 								{:else}
-									<span class="absolute inset-0 bg-white bg-opacity-10 flex items-center justify-center">
+									<span
+										class="absolute inset-0 bg-white bg-opacity-10 flex items-center justify-center"
+									>
 										<Sparkle size={24} class="opacity-40" />
 									</span>
 								{/if}
@@ -903,7 +899,9 @@
 										</b>
 										{#if hasNote}
 											<span class="flex items-center gap-1 min-w-0 text-xs opacity-80 drop-shadow">
-												<span class="truncate">{getTranslation(experience.note, currentLocale.value)}</span>
+												<span class="truncate"
+													>{getTranslation(experience.note, currentLocale.value)}</span
+												>
 											</span>
 										{/if}
 									</span>
@@ -939,7 +937,9 @@
 							{#if active}
 								<!-- Selected badge: the data-active color-invert is hidden under the
 								     photo, so surface selection with a visible check. -->
-								<span class="absolute top-2 right-2 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-white text-black shadow">
+								<span
+									class="absolute top-2 right-2 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-white text-black shadow"
+								>
 									<Check size={14} weight="bold" />
 								</span>
 							{/if}

@@ -51,9 +51,11 @@ describe('router.book', () => {
 	// --- Scenario 1: Standard slot, no deposit, auto-confirm ---
 	it('creates booking with confirmed status when auto-confirm enabled', async () => {
 		const mockApi = buildMockWidgetApi({
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot({ autoConfirm: true, autoConfirmMaxPax: null }, {})
-			),
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(
+					availWithShiftAndSlot({ autoConfirm: true, autoConfirmMaxPax: null }, {})
+				),
 			createBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: { id: 10, status: 'confirmed' }
@@ -79,9 +81,9 @@ describe('router.book', () => {
 	// --- Scenario 2: Standard slot, no deposit, no auto-confirm ---
 	it('creates booking with to_confirm status when no auto-confirm', async () => {
 		const mockApi = buildMockWidgetApi({
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot({ autoConfirm: false }, {})
-			),
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(availWithShiftAndSlot({ autoConfirm: false }, {})),
 			createBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: { id: 11, status: 'to_confirm' }
@@ -107,12 +109,11 @@ describe('router.book', () => {
 	// --- Scenario 3: Deposit-required slot (book phase with PI) ---
 	it('creates booking with confirmed status when paymentIntentId + capture', async () => {
 		const mockApi = buildMockWidgetApi({
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot(
-					{ captureEnabled: true },
-					{ captureEnabled: true }
-				)
-			),
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(
+					availWithShiftAndSlot({ captureEnabled: true }, { captureEnabled: true })
+				),
 			createBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: { id: 12, status: 'confirmed' }
@@ -138,12 +139,14 @@ describe('router.book', () => {
 	// --- Scenario 4: Full slot, waitlist enabled ---
 	it('creates booking with waiting_list status and force=true when full + waitlist', async () => {
 		const mockApi = buildMockWidgetApi({
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot(
-					{ waitlistEnabled: true },
-					{ slotPax: 20, slotMaxPax: 20, waitlistEnabled: true }
-				)
-			),
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(
+					availWithShiftAndSlot(
+						{ waitlistEnabled: true },
+						{ slotPax: 20, slotMaxPax: 20, waitlistEnabled: true }
+					)
+				),
 			createBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: { id: 13, status: 'waiting_list' }
@@ -169,12 +172,14 @@ describe('router.book', () => {
 	// --- Scenario 5: Full slot, no waitlist (falls through to default) ---
 	it('creates booking with to_confirm when slot full but no waitlist', async () => {
 		const mockApi = buildMockWidgetApi({
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot(
-					{ waitlistEnabled: false, autoConfirm: false },
-					{ slotPax: 20, slotMaxPax: 20 }
-				)
-			),
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(
+					availWithShiftAndSlot(
+						{ waitlistEnabled: false, autoConfirm: false },
+						{ slotPax: 20, slotMaxPax: 20 }
+					)
+				),
 			createBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: { id: 14, status: 'to_confirm' }
@@ -199,9 +204,9 @@ describe('router.book', () => {
 				ok: true,
 				data: buildBookingDetailDTO({ id: 99, paymentStatus: null })
 			}),
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot({ autoConfirm: true }, {})
-			),
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(availWithShiftAndSlot({ autoConfirm: true }, {})),
 			updateBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: { id: 99, status: 'confirmed' }
@@ -233,12 +238,11 @@ describe('router.book', () => {
 				ok: true,
 				data: buildBookingDetailDTO({ id: 99, paymentStatus: null })
 			}),
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot(
-					{ captureEnabled: true },
-					{ captureEnabled: true }
-				)
-			),
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(
+					availWithShiftAndSlot({ captureEnabled: true }, { captureEnabled: true })
+				),
 			updateBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: { id: 99, status: 'confirmed' }
@@ -269,12 +273,14 @@ describe('router.book', () => {
 				ok: true,
 				data: buildBookingDetailDTO({ id: 99, paymentStatus: 'requires_capture' })
 			}),
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot(
-					{ captureEnabled: true, autoConfirm: false },
-					{ captureEnabled: true }
-				)
-			),
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(
+					availWithShiftAndSlot(
+						{ captureEnabled: true, autoConfirm: false },
+						{ captureEnabled: true }
+					)
+				),
 			updateBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: { id: 99, status: 'confirmed' }
@@ -299,12 +305,14 @@ describe('router.book', () => {
 				ok: true,
 				data: buildBookingDetailDTO({ id: 99, paymentStatus: 'requires_capture' })
 			}),
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot(
-					{ captureEnabled: false, foreignCaptureEnabled: false, autoConfirm: true },
-					{ captureEnabled: false, foreignCaptureEnabled: false }
-				)
-			),
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(
+					availWithShiftAndSlot(
+						{ captureEnabled: false, foreignCaptureEnabled: false, autoConfirm: true },
+						{ captureEnabled: false, foreignCaptureEnabled: false }
+					)
+				),
 			updateBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: { id: 99, status: 'confirmed' }
@@ -330,12 +338,14 @@ describe('router.book', () => {
 				ok: true,
 				data: buildBookingDetailDTO({ id: 99, paymentStatus: null })
 			}),
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot(
-					{ waitlistEnabled: true, autoConfirm: false },
-					{ slotPax: 20, slotMaxPax: 20, waitlistEnabled: true }
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(
+					availWithShiftAndSlot(
+						{ waitlistEnabled: true, autoConfirm: false },
+						{ slotPax: 20, slotMaxPax: 20, waitlistEnabled: true }
+					)
 				)
-			)
 		});
 		mockedCreateWidgetApi.mockReturnValue(mockApi);
 
@@ -356,12 +366,14 @@ describe('router.book', () => {
 				ok: true,
 				data: buildBookingDetailDTO({ id: 99, paymentStatus: null })
 			}),
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot(
-					{ autoConfirm: false, waitlistEnabled: false, captureEnabled: false },
-					{ captureEnabled: false }
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(
+					availWithShiftAndSlot(
+						{ autoConfirm: false, waitlistEnabled: false, captureEnabled: false },
+						{ captureEnabled: false }
+					)
 				)
-			)
 		});
 		mockedCreateWidgetApi.mockReturnValue(mockApi);
 
@@ -379,9 +391,9 @@ describe('router.book', () => {
 				ok: true,
 				data: buildBookingDetailDTO({ id: 99, paymentStatus: null })
 			}),
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot({ autoConfirm: true }, {})
-			),
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(availWithShiftAndSlot({ autoConfirm: true }, {})),
 			updateBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: { id: 99, status: 'confirmed' }
@@ -400,12 +412,14 @@ describe('router.book', () => {
 	// --- Scenario 13: New booking to waitlist still works (guard is modification-only) ---
 	it('allows new booking to waitlist (guard only applies to modifications)', async () => {
 		const mockApi = buildMockWidgetApi({
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot(
-					{ waitlistEnabled: true },
-					{ slotPax: 20, slotMaxPax: 20, waitlistEnabled: true }
-				)
-			),
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(
+					availWithShiftAndSlot(
+						{ waitlistEnabled: true },
+						{ slotPax: 20, slotMaxPax: 20, waitlistEnabled: true }
+					)
+				),
 			createBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: { id: 20, status: 'waiting_list' }
@@ -428,12 +442,14 @@ describe('router.book', () => {
 				ok: true,
 				data: buildBookingDetailDTO({ id: 99, paymentStatus: 'requires_capture' })
 			}),
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot(
-					{ autoConfirm: true, captureEnabled: false },
-					{ captureEnabled: false }
-				)
-			),
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(
+					availWithShiftAndSlot(
+						{ autoConfirm: true, captureEnabled: false },
+						{ captureEnabled: false }
+					)
+				),
 			updateBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: { id: 99, status: 'confirmed' }
@@ -456,12 +472,14 @@ describe('router.book', () => {
 				ok: true,
 				data: buildBookingDetailDTO({ id: 99, paymentStatus: null })
 			}),
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot(
-					{ autoConfirm: false, waitlistEnabled: false, captureEnabled: true },
-					{ captureEnabled: true }
-				)
-			),
+			getAvailabilities: vi
+				.fn()
+				.mockResolvedValue(
+					availWithShiftAndSlot(
+						{ autoConfirm: false, waitlistEnabled: false, captureEnabled: true },
+						{ captureEnabled: true }
+					)
+				),
 			updateBooking: vi.fn().mockResolvedValue({
 				ok: true,
 				data: { id: 99, status: 'to_confirm' }
@@ -480,9 +498,7 @@ describe('router.book', () => {
 	// --- Error handling ---
 	it('returns CUSTOMER_ALREADY_BOOKED_SERVICE on duplicate booking', async () => {
 		const mockApi = buildMockWidgetApi({
-			getAvailabilities: vi.fn().mockResolvedValue(
-				availWithShiftAndSlot({}, {})
-			),
+			getAvailabilities: vi.fn().mockResolvedValue(availWithShiftAndSlot({}, {})),
 			createBooking: vi.fn().mockResolvedValue({
 				ok: false,
 				error: { code: 'customer_already_booked_service', message: 'Already booked' }
@@ -494,6 +510,195 @@ describe('router.book', () => {
 		const result = await router.book.call(event, input);
 
 		expect(result).toEqual({ status: ApiReturnStatus.CUSTOMER_ALREADY_BOOKED_SERVICE });
+	});
+});
+
+describe('router.getDaySlots', () => {
+	const event = buildMockRequestEvent();
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	const input = (overrides?: Record<string, unknown>) => ({
+		restaurantId: '42',
+		pax: 2,
+		date: '2026-06-01',
+		...overrides
+	});
+
+	// --- Multi-shift grouping: one group per bookable shift, slots mapped ---
+	it('returns one group per bookable shift with its slots', async () => {
+		const mockApi = buildMockWidgetApi({
+			getAvailabilities: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildAvailabilitiesResponse([
+					buildLiveDay({
+						shifts: [
+							buildLiveShift({
+								id: 100,
+								name: 'Lunch',
+								slots: [buildLiveSlot({ time: '12:00' }), buildLiveSlot({ time: '12:30' })]
+							}),
+							buildLiveShift({
+								id: 101,
+								name: 'Dinner',
+								slots: [buildLiveSlot({ time: '19:00' })]
+							})
+						]
+					})
+				])
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const result = await router.getDaySlots.call(event, input());
+
+		expect(result).toHaveLength(2);
+		expect(result[0].service.id).toBe('100');
+		expect(result[0].service.name[0].value).toBe('Lunch');
+		expect(result[0].slots.map((s) => s.time)).toEqual(['12:00', '12:30']);
+		expect(result[1].service.id).toBe('101');
+		expect(result[1].slots.map((s) => s.time)).toEqual(['19:00']);
+		// Each slot carries the requested pax + derived state + date.
+		expect(result[0].slots[0]).toMatchObject({ date: '2026-06-01', pax: 2, state: 'AVAILABLE' });
+	});
+
+	// --- Pax filtering: pax-FULL slot kept (as FULL), closed slot dropped ---
+	it('keeps a pax-unavailable slot as FULL and drops closed slots', async () => {
+		const mockApi = buildMockWidgetApi({
+			getAvailabilities: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildAvailabilitiesResponse([
+					buildLiveDay({
+						shifts: [
+							buildLiveShift({
+								id: 100,
+								slots: [
+									buildLiveSlot({ time: '19:00', possibleGuests: [1] }), // pax 2 not allowed → FULL
+									buildLiveSlot({ time: '19:30', closed: true }) // dropped
+								]
+							})
+						]
+					})
+				])
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const result = await router.getDaySlots.call(event, input({ pax: 2 }));
+
+		expect(result).toHaveLength(1);
+		expect(result[0].slots.map((s) => s.time)).toEqual(['19:00']);
+		expect(result[0].slots[0].state).toBe('FULL');
+	});
+
+	// --- isModifying: confirmation-requiring slots filtered per shift ---
+	it('drops confirmation-requiring slots when isModifying, per shift', async () => {
+		const mockApi = buildMockWidgetApi({
+			getAvailabilities: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildAvailabilitiesResponse([
+					buildLiveDay({
+						shifts: [
+							// to_confirm shift (no auto-confirm, no capture) → its slots require
+							// confirmation → filtered out when modifying → group omitted.
+							buildLiveShift({
+								id: 100,
+								name: 'ToConfirm',
+								autoConfirm: false,
+								captureEnabled: false,
+								slots: [buildLiveSlot({ time: '12:00', captureEnabled: null })]
+							}),
+							// capture-enabled shift → its slot is guaranteed → survives.
+							buildLiveShift({
+								id: 101,
+								name: 'Capture',
+								autoConfirm: false,
+								captureEnabled: true,
+								slots: [buildLiveSlot({ time: '19:00', captureEnabled: true })]
+							})
+						]
+					})
+				])
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const result = await router.getDaySlots.call(event, input({ isModifying: true }));
+
+		expect(result).toHaveLength(1);
+		expect(result[0].service.id).toBe('101');
+		expect(result[0].slots.map((s) => s.time)).toEqual(['19:00']);
+	});
+
+	// --- Empty group omitted: a bookable shift with no surviving slots ---
+	it('omits a bookable shift whose every slot is closed', async () => {
+		const mockApi = buildMockWidgetApi({
+			getAvailabilities: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildAvailabilitiesResponse([
+					buildLiveDay({
+						shifts: [
+							buildLiveShift({
+								id: 100,
+								name: 'AllClosed',
+								slots: [buildLiveSlot({ time: '12:00', closed: true })]
+							}),
+							buildLiveShift({
+								id: 101,
+								name: 'Open',
+								slots: [buildLiveSlot({ time: '19:00' })]
+							})
+						]
+					})
+				])
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const result = await router.getDaySlots.call(event, input());
+
+		expect(result).toHaveLength(1);
+		expect(result[0].service.id).toBe('101');
+	});
+
+	// --- bookable:false shift excluded entirely ---
+	it('excludes non-bookable shifts', async () => {
+		const mockApi = buildMockWidgetApi({
+			getAvailabilities: vi.fn().mockResolvedValue({
+				ok: true,
+				data: buildAvailabilitiesResponse([
+					buildLiveDay({
+						shifts: [
+							buildLiveShift({
+								id: 100,
+								bookable: false,
+								slots: [buildLiveSlot({ time: '12:00' })]
+							}),
+							buildLiveShift({
+								id: 101,
+								bookable: true,
+								slots: [buildLiveSlot({ time: '19:00' })]
+							})
+						]
+					})
+				])
+			})
+		});
+		mockedCreateWidgetApi.mockReturnValue(mockApi);
+
+		const result = await router.getDaySlots.call(event, input());
+
+		expect(result).toHaveLength(1);
+		expect(result[0].service.id).toBe('101');
+	});
+
+	it('throws on invalid restaurant id', async () => {
+		mockedCreateWidgetApi.mockReturnValue(buildMockWidgetApi({}));
+		await expect(router.getDaySlots.call(event, input({ restaurantId: 'nope' }))).rejects.toThrow(
+			'invalid restaurant id'
+		);
 	});
 });
 

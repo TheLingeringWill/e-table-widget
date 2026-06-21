@@ -29,10 +29,17 @@
 
 	let {
 		restaurantId,
-		theme
+		theme,
+		// SSR-preloaded bookable dates (streamed from +layout.server.ts). When it
+		// resolves with data, the calendar is seeded synchronously on mount and the
+		// client getAvailableDates RPC is skipped — removing the startup gap where
+		// the calendar sat empty until the post-hydration fetch returned. Null (or
+		// absent, e.g. client-side nav) falls back to fetchDisabledDates().
+		availableDates
 	}: {
 		restaurantId: string;
 		theme: any;
+		availableDates?: Promise<{ dates: string[]; endDate: string } | null>;
 	} = $props();
 
 	const widgetCtx = useWidget();
@@ -43,7 +50,10 @@
 	// flips on language switch without touching LTR rendering.
 	const isRtl = $derived(currentLocale.value === 'ar');
 
-	let loadingDates = $state(false);
+	// Starts true so the date step shows its calendar skeleton from the first
+	// render until initDisabledDates() resolves (SSR-preloaded or client-fetched),
+	// instead of briefly flashing an empty/all-disabled grid.
+	let loadingDates = $state(true);
 	let loadingSlots = $state(false);
 	let loadingAlternative = $state(false);
 	let loadingExperiences = $state(false);
@@ -235,6 +245,29 @@
 		selection.service = null;
 	};
 
+	// Build the calendar's `disabledDates` (every day in the window NOT bookable)
+	// from the list of available date strings. Pure + synchronous — used by both
+	// the SSR-preload path and the client fetch so they produce identical state.
+	const applyAvailableDates = (available: string[], end: Date) => {
+		const availableSet = new Set(available);
+		const today = new Date();
+		const disabled: Date[] = [];
+		const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+		const endTime = end.getTime();
+		while (cursor.getTime() <= endTime) {
+			const y = cursor.getFullYear();
+			const m = String(cursor.getMonth() + 1).padStart(2, '0');
+			const d = String(cursor.getDate()).padStart(2, '0');
+			const dateStr = `${y}-${m}-${d}`;
+			if (!availableSet.has(dateStr)) {
+				disabled.push(new Date(cursor.getTime()));
+			}
+			cursor.setDate(cursor.getDate() + 1);
+		}
+		disabledDates = disabled;
+		maxCalendarDate = end;
+	};
+
 	const fetchDisabledDates = async () => {
 		loadingDates = true;
 		const today = new Date();
@@ -251,23 +284,27 @@
 			loadingDates = false;
 			return;
 		}
-		const availableSet = new Set(res);
-		const disabled: Date[] = [];
-		const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-		const endTime = end.getTime();
-		while (cursor.getTime() <= endTime) {
-			const y = cursor.getFullYear();
-			const m = String(cursor.getMonth() + 1).padStart(2, '0');
-			const d = String(cursor.getDate()).padStart(2, '0');
-			const dateStr = `${y}-${m}-${d}`;
-			if (!availableSet.has(dateStr)) {
-				disabled.push(new Date(cursor.getTime()));
-			}
-			cursor.setDate(cursor.getDate() + 1);
-		}
-		disabledDates = disabled;
-		maxCalendarDate = end;
+		applyAvailableDates(res, end);
 		loadingDates = false;
+	};
+
+	// Seed the calendar from the SSR-preloaded dates if present, else fall back to
+	// the client RPC. Returns true when the preload satisfied it (so onMount can
+	// skip the fetch). Keeps loadingDates true until one path resolves so the
+	// calendar shows its skeleton rather than an empty grid in the meantime.
+	const initDisabledDates = async () => {
+		loadingDates = true;
+		if (availableDates) {
+			const preloaded = await availableDates;
+			if (preloaded) {
+				// endDate is a 'YYYY-MM-DD' in the restaurant TZ; parse as a local
+				// calendar date so the cursor window matches the client path.
+				applyAvailableDates(preloaded.dates, parseSlotDateAsCalendarDate(preloaded.endDate));
+				loadingDates = false;
+				return;
+			}
+		}
+		await fetchDisabledDates();
 	};
 
 	// Segments for the horizontal step bar (replaces the vertical accordion). Same
@@ -337,7 +374,7 @@
 	};
 
 	onMount(async () => {
-		await fetchDisabledDates();
+		await initDisabledDates();
 
 		if (reservationTemp.startDate) {
 			selection.date = parseSlotDateAsCalendarDate(reservationTemp.startDate.date);
@@ -702,6 +739,30 @@
 								});
 							}}
 						/>
+					{:else}
+						<!-- Calendar skeleton: a month-header row + a 6×7 grid of pulsing
+						     placeholder cells, shown while the bookable dates resolve so the
+						     date step never flashes an empty grid. Mirrors the real calendar's
+						     layout (weekday row, square cells) to avoid a reflow jump. -->
+						<div class="flex w-full flex-col gap-3 animate-pulse" aria-hidden="true">
+							<div class="flex items-center justify-between pb-1">
+								<div class="h-4 w-4 rounded-sm bg-current opacity-10"></div>
+								<div class="h-4 w-24 rounded-sm bg-current opacity-10"></div>
+								<div class="h-4 w-4 rounded-sm bg-current opacity-10"></div>
+							</div>
+							<div class="grid grid-cols-7 gap-2">
+								{#each Array.from({ length: 7 }) as _, i (`wd-${i}`)}
+									<div class="mx-auto h-3 w-5 rounded-sm bg-current opacity-10"></div>
+								{/each}
+							</div>
+							{#each Array.from({ length: 6 }) as _, r (`wk-${r}`)}
+								<div class="grid grid-cols-7 gap-2">
+									{#each Array.from({ length: 7 }) as _, c (`d-${r}-${c}`)}
+										<div class="aspect-square rounded-sm bg-current opacity-[0.07]"></div>
+									{/each}
+								</div>
+							{/each}
+						</div>
 					{/if}
 				</div>
 			</div>

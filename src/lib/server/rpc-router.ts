@@ -17,6 +17,7 @@ dayjs.extend(timezoned);
 import type { CountryCode } from 'libphonenumber-js';
 import { convertToE164 } from '$lib/utils/phone';
 import { createWidgetApi } from '$lib/server/api/widget-api';
+import { computeAvailableDates } from '$lib/server/api/availableDates';
 import { bookingToLegacyReservation } from '$lib/server/api/adapters/booking';
 import { shiftToLegacyService, type LiveDay } from '$lib/server/api/adapters/service';
 import { experienceToLegacyExperience } from '$lib/server/api/adapters/experience';
@@ -647,21 +648,9 @@ export const router = {
 			if (!result.ok) {
 				throw new Error(`getAvailableDates: ${result.error.code} ${result.error.message}`);
 			}
-			const days = result.data.data as LiveDay[];
-			const todayStr = dayjs().tz(input.timezone).format('YYYY-MM-DD');
-			const now = dayjs().tz(input.timezone);
-
-			return days
-				.filter((d) => {
-					const bookable = d.shifts.filter((s) => s.bookable);
-					if (bookable.length === 0) return false;
-					if (d.date !== todayStr) return true;
-					return bookable.some((s) => {
-						if (s.endTime <= s.startTime) return true;
-						return dayjs.tz(`${todayStr}T${s.endTime}`, input.timezone).isAfter(now);
-					});
-				})
-				.map((d) => d.date);
+			// Same reduction the SSR preload uses (computeAvailableDates) so the
+			// client fallback and the preloaded dates can never disagree.
+			return computeAvailableDates(result.data.data as LiveDay[], input.timezone);
 		}
 	)
 };

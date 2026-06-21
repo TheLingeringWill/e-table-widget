@@ -4,7 +4,7 @@
 	import { tz } from '$lib/utils/tz';
 	import { ZonedDateUtils } from '$lib/utils/zonedDateUtils';
 
-	const { data, builder } = $props();
+	const { data, builder }: { data: any; builder?: boolean } = $props();
 
 	useWidget(data.widget);
 	useZonedDateUtils(
@@ -20,5 +20,10 @@
 		: 'min-h-full'} overflow-visible min-h-full"
 	id="page"
 >
-	<Widget {builder} data={data.widget} isEmbedded={data.isEmbedded} />
+	<Widget
+		{builder}
+		data={data.widget}
+		isEmbedded={data.isEmbedded}
+		availableDates={data.availableDates}
+	/>
 </div>

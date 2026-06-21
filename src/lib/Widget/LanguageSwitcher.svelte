@@ -25,20 +25,28 @@
 		ja: '日本語',
 		zh: '中文',
 		ko: '한국어',
-		ru: 'Русский'
+		ru: 'Русский',
+		ar: 'العربية'
 	};
 
 	let open = $state(false);
 	let triggerEl: HTMLButtonElement | undefined = $state();
 	let menuEl: HTMLDivElement | undefined = $state();
-	let pos = $state({ top: 0, right: 0 });
+	// Anchor by `right` in LTR and by `left` in RTL so the menu always opens
+	// on-screen (the trigger sits in the opposite corner under RTL). `rtl` is
+	// read from the live document direction set server-side on <html dir>.
+	let pos = $state({ top: 0, left: 0, right: 0, rtl: false });
 
 	const computePos = () => {
 		if (!triggerEl) return;
 		const r = triggerEl.getBoundingClientRect();
+		const rtl =
+			typeof document !== 'undefined' && document.documentElement.getAttribute('dir') === 'rtl';
 		pos = {
 			top: r.bottom + 4,
-			right: window.innerWidth - r.right
+			left: r.left,
+			right: window.innerWidth - r.right,
+			rtl
 		};
 	};
 
@@ -117,7 +125,8 @@
 		role="menu"
 		aria-label="Language"
 		style:top="{pos.top}px"
-		style:right="{pos.right}px"
+		style:left={pos.rtl ? `${pos.left}px` : null}
+		style:right={pos.rtl ? null : `${pos.right}px`}
 		style:z-index="9999"
 		class="fixed w-60 overflow-hidden rounded-lg border border-[#e0e0e1] bg-white p-1 shadow-[0_1px_12px_rgba(29,31,32,0.08),0_1px_2px_rgba(232,232,232,0.12)]"
 	>

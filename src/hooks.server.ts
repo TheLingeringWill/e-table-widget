@@ -3,7 +3,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { stringify as devalueStringify, parse as devalueParse } from 'devalue';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { router } from '$lib/server/rpc-router';
-import { pickLocale } from '$lib/i18n/detect';
+import { pickLocale, isRtlLocale } from '$lib/i18n/detect';
 import * as paraglideRuntime from '$lib/paraglide/runtime';
 
 // Initialize Paraglide's per-request locale store ONCE. Without this, the
@@ -160,9 +160,15 @@ const localeHandle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
+	// Inject both the resolved locale and its writing direction into the SSR
+	// shell so `<html lang dir>` is correct in the very first byte — no
+	// LTR→RTL flash on hydration for Arabic. `dir` is `ltr` for every other
+	// locale, leaving their markup unchanged.
+	const dir = isRtlLocale(locale) ? 'rtl' : 'ltr';
 	const render = () =>
 		resolve(event, {
-			transformPageChunk: ({ html }) => html.replace('%paraglide.lang%', locale)
+			transformPageChunk: ({ html }) =>
+				html.replace('%paraglide.lang%', locale).replace('%paraglide.dir%', dir)
 		});
 
 	const store = paraglideRuntime.serverAsyncLocalStorage;

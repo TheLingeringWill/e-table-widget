@@ -12,6 +12,7 @@
 // below so dayjs can switch synchronously.
 
 import dayjs from 'dayjs';
+import 'dayjs/locale/ar';
 import 'dayjs/locale/de';
 import 'dayjs/locale/en';
 import 'dayjs/locale/es';

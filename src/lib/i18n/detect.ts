@@ -11,10 +11,19 @@
  * markup matches our detected locale.
  */
 
-export const SUPPORTED_LOCALES = ['fr', 'en', 'de', 'es', 'pt', 'it', 'nl', 'ja', 'zh', 'ko', 'ru'] as const;
+export const SUPPORTED_LOCALES = ['fr', 'en', 'de', 'es', 'pt', 'it', 'nl', 'ja', 'zh', 'ko', 'ru', 'ar'] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
 export const DEFAULT_LOCALE: Locale = 'en';
+
+/**
+ * Locales rendered right-to-left. The document `dir` is derived from this set
+ * (server-side in `hooks.server.ts`, client-side wherever components branch on
+ * direction), so adding an RTL language is a one-line change here.
+ */
+export const RTL_LOCALES = new Set<Locale>(['ar']);
+
+export const isRtlLocale = (locale: Locale): boolean => RTL_LOCALES.has(locale);
 
 export const isSupportedLocale = (value: unknown): value is Locale =>
 	typeof value === 'string' && (SUPPORTED_LOCALES as readonly string[]).includes(value);

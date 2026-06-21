@@ -65,25 +65,25 @@
 		<div class="rounded-xl border border-gray-200 divide-y divide-gray-200 overflow-hidden">
 			<div class="flex justify-between items-center px-4 py-2.5 md:py-3 text-sm">
 				<span class="text-gray-700">{m.details_firstName()}</span>
-				<span class="text-gray-900 font-medium text-right">
+				<span class="text-gray-900 font-medium text-right rtl:text-left">
 					{reservation.firstName || '—'}
 				</span>
 			</div>
 			<div class="flex justify-between items-center px-4 py-2.5 md:py-3 text-sm">
 				<span class="text-gray-700">{m.details_lastName()}</span>
-				<span class="text-gray-900 font-medium text-right">
+				<span class="text-gray-900 font-medium text-right rtl:text-left">
 					{reservation.lastName || '—'}
 				</span>
 			</div>
 			<div class="flex justify-between items-center px-4 py-2.5 md:py-3 text-sm">
 				<span class="text-gray-700">{m.details_email()}</span>
-				<span class="text-gray-900 font-medium text-right break-all ml-3">
+				<span class="text-gray-900 font-medium text-right rtl:text-left break-all ml-3 rtl:ml-0 rtl:mr-3">
 					{reservation.email || '—'}
 				</span>
 			</div>
 			<div class="flex justify-between items-center px-4 py-2.5 md:py-3 text-sm">
 				<span class="text-gray-700">{m.details_phone()}</span>
-				<span class="text-gray-900 font-medium text-right">
+				<span class="text-gray-900 font-medium text-right rtl:text-left">
 					{reservation.phone || '—'}
 				</span>
 			</div>

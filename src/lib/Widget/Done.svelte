@@ -102,6 +102,7 @@
 	{#if summary}
 		<div
 			class="w-full border rounded-[var(--base-radius)] py-3 px-4 text-base font-semibold leading-snug"
+			dir="auto"
 		>
 			{summary}
 		</div>

@@ -89,7 +89,7 @@
 		</div>
 
 		{#if data.reservation}
-			<div class="text-xs text-gray-500 text-center mt-4 max-w-md">
+			<div class="text-xs text-gray-500 text-center mt-4 max-w-md" dir="auto">
 				{m.leaveReview_reservationLine({
 					date: formatSlotDate(data.reservation.startDate.date, 'DD/MM/YYYY'),
 					time: data.reservation.startDate.time,

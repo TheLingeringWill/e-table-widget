@@ -39,7 +39,9 @@
 <div class="py-3 px-4 bg-primary flex flex-col space-y-3">
 	<div class="flex items-center justify-between gap-3 min-h-[40px]">
 		<div class="w-10 shrink-0" aria-hidden="true"></div>
-		<h1 class="text-base font-semibold font-serif text-center flex-1" id="title">{title}</h1>
+		<h1 class="text-base font-semibold font-serif text-center flex-1" id="title" dir="auto">
+			{title}
+		</h1>
 		{#if showLanguageSwitcher}
 			<LanguageSwitcher />
 		{:else}
@@ -54,6 +56,7 @@
 	{#if reservation.id && reservation.startDate && step.step !== 'PAYMENT'}
 		<div
 			class="bg-yellow-100 border rounded-lg px-3 py-2 border-yellow-800 text-sm font-normal text-yellow-900"
+			dir="auto"
 			transition:slide
 		>
 			{m.common_modificationBanner({

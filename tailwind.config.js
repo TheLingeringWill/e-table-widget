@@ -10,6 +10,7 @@
 
 import { uy } from 'maket/uy';
 import { maket } from 'maket/tailwind';
+import plugin from 'tailwindcss/plugin';
 
 const card = {
 	base: uy`bg-surface-light raised rounded p-2 h-fit grid gap-4 text-contrast`,
@@ -606,7 +607,12 @@ const config = {
 					}
 				}
 			}
-		})
+		}),
+		// `rtl:` variant for the few genuinely direction-dependent utilities
+		// (Tailwind v3 has no built-in logical/RTL variant). It only matches
+		// under `<html dir="rtl">` — i.e. Arabic — so every LTR locale renders
+		// byte-for-byte unchanged.
+		plugin(({ addVariant }) => addVariant('rtl', '&:where([dir="rtl"], [dir="rtl"] *)'))
 	]
 };
 

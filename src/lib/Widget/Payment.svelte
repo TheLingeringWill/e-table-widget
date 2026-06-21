@@ -335,14 +335,14 @@
 <div class="flex flex-col gap-8 w-full h-full">
 	<div class="flex items-center gap-5 pt-3">
 		<button onclick={() => previousStep()}>
-			<CaretLeft size={28} />
+			<CaretLeft size={28} class="rtl:-scale-x-100" />
 		</button>
 		<h2 class="text-xl font-bold">{m.payment_heading()}</h2>
 	</div>
 	<div class="flex flex-col gap-2">
 		<div>
 			{@html m.payment_preAuthIntro({
-				amount: `<b>${setupIntent.amount / 100}€</b>`
+				amount: `<b dir="ltr" style="unicode-bidi:isolate">${setupIntent.amount / 100}€</b>`
 			})}
 		</div>
 	</div>

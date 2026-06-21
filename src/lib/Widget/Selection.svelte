@@ -9,7 +9,7 @@
 		Info,
 		Sparkle
 	} from 'phosphor-svelte';
-	import AccordionGroup from '../AccordionGroup.svelte';
+	import StepBar from './StepBar.svelte';
 	import Button from './Button.svelte';
 	import Spinner from '../Spinner.svelte';
 	import { onMount } from 'svelte';
@@ -269,6 +269,53 @@
 		maxCalendarDate = end;
 		loadingDates = false;
 	};
+
+	// Segments for the horizontal step bar (replaces the vertical accordion). Same
+	// step order, icons, labels, gating and loading flags the accordion used —
+	// plus a `value` derived from `selection` so a completed step shows its chosen
+	// value (and a caret to re-open it) instead of the prompt. The experiences
+	// segment is appended only when the chosen slot's service offers any, so the
+	// bar shows 3 or 4 segments. Index parity with openedAccordion.index is kept:
+	// date(0) → pax(1) → slots(2) → experiences(3).
+	const steps = $derived([
+		{
+			id: 'date',
+			icon: Calendar,
+			label: m.selection_pickDate(),
+			value: selection.date ? zonedDateUtils.format('ddd DD MMM', selection.date) : null,
+			loading: loadingDates
+		},
+		{
+			id: 'pax',
+			icon: ForkKnife,
+			label: m.selection_pickPax(),
+			value: selection.pax ? m.selection_paxCount({ pax: selection.pax }) : null,
+			loading: loadingSlots,
+			disabled: !selection.date
+		},
+		{
+			id: 'slots',
+			icon: Clock,
+			label: m.selection_pickTime(),
+			value: selection.slot ? selection.slot.time : null,
+			loading: loadingSlots,
+			disabled: !selection.date || !selection.pax
+		},
+		...(experiences.length > 0
+			? [
+					{
+						id: 'experiences',
+						icon: Sparkle,
+						label: m.selection_pickExperience(),
+						value: selection.experience
+							? getTranslation(selection.experience.name, currentLocale.value)
+							: null,
+						loading: loadingExperiences,
+						disabled: !selection.date || !selection.pax || !selection.slot
+					}
+				]
+			: [])
+	]);
 
 	// New step order (no service step): date(0) → pax(1) → slots(2) → experiences(3).
 	const openAccordion = () => {
@@ -596,57 +643,26 @@
 		     rest of the widget so outside taps are caught. -->
 		<div class="fixed inset-0 z-10" role="presentation" onclick={() => (openDesc = null)}></div>
 	{/if}
-	<AccordionGroup
-		bind:openedAccordion={openedAccordion.index}
-		oneAtATime
-		className="flex-grow min-h-0 overflow-y-auto"
-		items={[
-			{
-				id: 'date',
-				icon: Calendar,
-				title: selection.date
-					? zonedDateUtils.format('dddd DD MMMM', selection.date)
-					: m.selection_pickDate(),
-				contentClass: 'flex flex-wrap gap-2 justify-center px-5 py-2',
-				loading: loadingDates
-			},
-			{
-				id: 'pax',
-				icon: ForkKnife,
-				title: selection.pax ? m.selection_paxCount({ pax: selection.pax }) : m.selection_pickPax(),
-				contentClass: 'flex flex-wrap gap-2 justify-center pt-2 pb-5 px-5',
-				loading: loadingSlots,
-				disabled: !selection.date
-			},
-			{
-				id: 'slots',
-				icon: Clock,
-				title: `${selection.slot ? selection.slot.time : m.selection_pickTime()}`,
-				loading: loadingSlots,
-				contentClass: 'flex flex-wrap gap-2 justify-center',
-				disabled: !selection.date || !selection.pax
-			},
-			...(experiences.length > 0
-				? [
-						{
-							id: 'experiences',
-							icon: Sparkle,
-							title: selection.experience
-								? getTranslation(selection.experience.name, currentLocale.value)
-								: m.selection_pickExperience(),
-							loading: loadingExperiences,
-							contentClass: 'flex flex-wrap gap-3 justify-center px-5 py-3',
-							disabled: !selection.date || !selection.pax || !selection.slot
-						}
-					]
-				: [])
-		]}
-	>
-		{#snippet separator()}
-			<div class="separator-h"></div>
-		{/snippet}
-		{#snippet content(item, next, previous, close)}
-			{#if item.id === 'date'}
+	<!-- Horizontal step bar (replaces the vertical accordion): the three (or four)
+	     steps read across one row, freeing the full width below for the active
+	     step's content. Selecting a value-bearing segment just moves the active
+	     index — the same thing the accordion's oneAtATime toggle did. -->
+	<div class="px-3 pt-3">
+		<StepBar
+			{steps}
+			activeIndex={openedAccordion.index}
+			onSelect={(i) => (openedAccordion.index = i)}
+			{theme}
+		/>
+	</div>
+
+	<!-- Active step's content. Branches on openedAccordion.index (same indices the
+	     bar uses); each branch carries the padding/layout the accordion item's
+	     contentClass used to apply. Scrolls within the widget like the accordion
+	     body did. While the active step is loading, show the same centered spinner. -->
+	<div class="flex-grow min-h-0 overflow-y-auto">
+		{#if openedAccordion.index === 0}
+			<div class="flex flex-wrap gap-2 justify-center px-5 py-2">
 				<div class="flex flex-col w-full gap-2">
 					{#if !loadingDates}
 						<ZonedCalendarInput
@@ -686,9 +702,11 @@
 						/>
 					{/if}
 				</div>
-			{:else if item.id === 'pax'}
-				{@const paxLocked =
-					reservation.paymentStatus === 'requires_capture' || !!reservation.stripeSetupIntentId}
+			</div>
+		{:else if openedAccordion.index === 1}
+			{@const paxLocked =
+				reservation.paymentStatus === 'requires_capture' || !!reservation.stripeSetupIntentId}
+			<div class="flex flex-wrap gap-2 justify-center pt-2 pb-5 px-5">
 				{#each Array.from({ length: MAX_WIDGET_PAX }, (_, i) => i + 1) as pax}
 					<button
 						data-active={pax === selection.pax}
@@ -733,10 +751,12 @@
 						{@html m.selection_groupContactNotice({ maxPax: String(MAX_WIDGET_PAX), contactInfo })}
 					</p>
 				{/if}
-			{:else if item.id === 'slots'}
-				{@const hasAvailableSlots = groups.some((g) =>
-					g.slots.some((slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED')
-				)}
+			</div>
+		{:else if openedAccordion.index === 2}
+			{@const hasAvailableSlots = groups.some((g) =>
+				g.slots.some((slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED')
+			)}
+			<div class="flex flex-wrap gap-2 justify-center">
 				<div class="w-full">
 					{#if waitlist.selectedUnavailableSlot}
 						<!-- Waitlist prompt for unavailable slot -->
@@ -862,7 +882,9 @@
 						</div>
 					{/if}
 				</div>
-			{:else if item.id === 'experiences'}
+			</div>
+		{:else if openedAccordion.index === 3}
+			<div class="flex flex-wrap gap-3 justify-center px-5 py-3">
 				<div class="flex flex-col gap-3 w-full px-4">
 					{#each experiences as experience (experience.id)}
 						{@const active = experience.id === selection.experience?.id}
@@ -971,9 +993,9 @@
 						</button>
 					{/each}
 				</div>
-			{/if}
-		{/snippet}
-	</AccordionGroup>
+			</div>
+		{/if}
+	</div>
 	<div class="flex items-end p-3 mt-auto">
 		{#if !reserveDisabled}
 			<Button onclick={nextStep} className="uppercase"

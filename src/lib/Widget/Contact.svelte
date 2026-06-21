@@ -294,9 +294,12 @@
 				</div>
 				<div class="flex flex-col gap-2">
 					<label for="phone" class="text-sm font-semibold">{m.contact_phoneLabel()}</label>
-					<!-- Phone numbers are LTR by spec; intl-tel-input's flag, dial code
-					     and digits must not be reordered inside an RTL page, so force the
-					     field (and the wrapper intl-tel-input injects around it) to ltr. -->
+					<!-- Phone numbers read left-to-right by spec, so the typed value itself
+					     must never be reordered inside an RTL page — `dir="ltr"` on the input
+					     pins the digits/dial-code. The surrounding field, however, follows the
+					     page direction (see the scoped style below) so it mirrors the sibling
+					     contact fields: in RTL the flag picker sits on the right and the
+					     number aligns to the right edge. -->
 					<input id="phone" type="tel" dir="ltr" autocomplete="tel" data-1p-ignore />
 					{#if phoneErrors.length}
 						<span class="text-sm text-red-600">{phoneErrors[0]}</span>
@@ -359,12 +362,15 @@
 </div>
 
 <style>
-	/* intl-tel-input is LTR-oriented by design (flag → dial code → digits).
-	   Inside an RTL page the surrounding `dir="rtl"` would otherwise reorder
-	   the flag/dial-code/number, so we pin the whole injected container to LTR.
-	   No effect under LTR locales — `direction: ltr` is already the default. */
-	:global(.widget-iti) {
-		direction: ltr;
-		text-align: left;
+	/* The phone field mirrors its sibling contact inputs (email / name), which
+	   right-align automatically under `dir="rtl"`. So the intl-tel-input
+	   container follows the page direction: in RTL the flex order flips the flag
+	   picker to the right and the input to its left, matching the rest of the
+	   column. The number itself stays LTR via `dir="ltr"` on the <input>; we only
+	   nudge its text to the right edge so it lines up with the siblings. Under
+	   LTR the container is already ltr and the input already left-aligned, so
+	   these rules are no-ops there — byte-for-byte unchanged. */
+	:global([dir='rtl'] .widget-iti #phone) {
+		text-align: right;
 	}
 </style>

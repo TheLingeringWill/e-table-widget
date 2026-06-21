@@ -58,6 +58,8 @@
 			aria-selected={isActive}
 			aria-disabled={step.disabled}
 			data-active={isActive}
+			data-first={i === 0}
+			data-last={i === steps.length - 1}
 			disabled={step.disabled}
 			onclick={() => {
 				if (!step.disabled) onSelect(i);
@@ -85,12 +87,21 @@
 	/* The global `button { border-radius: var(--base-radius) }` rounds every
 	   segment on all four corners, so the active fill rendered as its own little
 	   pill inset from the container — leaving a sliver of the dark surface between
-	   the fill and the rounded edge. Square the segments off (override the global
-	   !important) so they tile edge-to-edge; the container's `overflow-hidden
-	   rounded-full` then clips the end segments to the pill shape, and the active
-	   fill reaches flush to the rounded ends with no gap (TheFork-style). */
+	   the fill and the rounded edge. Square the inner corners so segments tile
+	   edge-to-edge, then round the OUTER corners of the first/last segment to the
+	   pill radius so the active fill *is* the pill end and reaches flush — no dark
+	   crescent (TheFork-style). Logical (inline-start/end) radii auto-flip under
+	   RTL, so the DOM-first segment rounds on whichever side it visually leads. */
 	.step-seg {
 		border-radius: 0 !important;
+	}
+	.step-seg[data-first='true'] {
+		border-start-start-radius: 9999px !important;
+		border-end-start-radius: 9999px !important;
+	}
+	.step-seg[data-last='true'] {
+		border-start-end-radius: 9999px !important;
+		border-end-end-radius: 9999px !important;
 	}
 	/* A pending (no value yet) step is lightly dimmed — same convention as the old
 	   accordion header — but the active and value-bearing steps stay full strength.

@@ -281,14 +281,16 @@
 		{
 			id: 'date',
 			icon: Calendar,
-			label: m.selection_pickDate(),
+			// Short noun for the segment (the long "Pick a date" prompt overflows a
+			// segment); the full prompt is still used elsewhere.
+			label: m.stepbar_date(),
 			value: selection.date ? zonedDateUtils.format('ddd DD MMM', selection.date) : null,
 			loading: loadingDates
 		},
 		{
 			id: 'pax',
 			icon: ForkKnife,
-			label: m.selection_pickPax(),
+			label: m.stepbar_pax(),
 			value: selection.pax ? m.selection_paxCount({ pax: selection.pax }) : null,
 			loading: loadingSlots,
 			disabled: !selection.date
@@ -296,7 +298,7 @@
 		{
 			id: 'slots',
 			icon: Clock,
-			label: m.selection_pickTime(),
+			label: m.stepbar_time(),
 			value: selection.slot ? selection.slot.time : null,
 			loading: loadingSlots,
 			disabled: !selection.date || !selection.pax
@@ -306,7 +308,7 @@
 					{
 						id: 'experiences',
 						icon: Sparkle,
-						label: m.selection_pickExperience(),
+						label: m.stepbar_experience(),
 						value: selection.experience
 							? getTranslation(selection.experience.name, currentLocale.value)
 							: null,

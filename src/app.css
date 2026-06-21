@@ -123,6 +123,14 @@ body::-webkit-scrollbar {
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 	overflow: hidden;
 }
+/* Under RTL (Arabic) the dropdown spans the same full width (left:0;right:0
+   above), but its contents — country names, dial codes, the search box — read
+   right-to-left like the rest of the page. Inline desktop dropdown only; the
+   mobile fullscreen popup is portaled to <body> and intentionally left alone. */
+[dir='rtl'] .widget-iti .iti__dropdown-content {
+	direction: rtl;
+	text-align: right;
+}
 /* Larger, rounded flags to match the reference. Scale the sprite + per-country
    offset together (offsets are multiples of 16 → ×1.5 stays integer-aligned).
    Set on .widget-iti.iti so they beat the library's :root defaults regardless
@@ -171,6 +179,12 @@ body::-webkit-scrollbar {
 }
 .widget-iti .iti__country-list .iti__flag {
 	margin-right: 12px;
+}
+/* In RTL the flag leads on the right, so the gap between flag and name moves to
+   the flag's left side. */
+[dir='rtl'] .widget-iti .iti__country-list .iti__flag {
+	margin-right: 0;
+	margin-left: 12px;
 }
 .widget-iti .iti__country-name {
 	font-weight: 600;

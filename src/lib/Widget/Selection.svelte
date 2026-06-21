@@ -708,7 +708,10 @@
 		{:else if openedAccordion.index === 1}
 			{@const paxLocked =
 				reservation.paymentStatus === 'requires_capture' || !!reservation.stripeSetupIntentId}
-			<div class="flex flex-wrap gap-2 justify-center pt-2 pb-5 px-5">
+			<!-- pt-6 gives the pax grid breathing room below the step bar (it has no
+			     header of its own, unlike the calendar/slots), so it doesn't read as
+			     stuck to the bar. -->
+			<div class="flex flex-wrap gap-2 justify-center px-5 pb-5 pt-6">
 				{#each Array.from({ length: MAX_WIDGET_PAX }, (_, i) => i + 1) as pax}
 					<button
 						data-active={pax === selection.pax}

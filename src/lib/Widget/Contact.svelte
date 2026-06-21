@@ -240,7 +240,7 @@
 		<div class="flex flex-col md:gap-5 gap-4">
 			<div class="flex items-center gap-5 pt-3">
 				<button onclick={() => previousStep()}>
-					<CaretLeft size={28} />
+					<CaretLeft size={28} class="rtl:-scale-x-100" />
 				</button>
 				<h2 class="text-xl font-bold">{m.contact_heading()}</h2>
 			</div>
@@ -294,7 +294,10 @@
 				</div>
 				<div class="flex flex-col gap-2">
 					<label for="phone" class="text-sm font-semibold">{m.contact_phoneLabel()}</label>
-					<input id="phone" type="tel" autocomplete="tel" data-1p-ignore />
+					<!-- Phone numbers are LTR by spec; intl-tel-input's flag, dial code
+					     and digits must not be reordered inside an RTL page, so force the
+					     field (and the wrapper intl-tel-input injects around it) to ltr. -->
+					<input id="phone" type="tel" dir="ltr" autocomplete="tel" data-1p-ignore />
 					{#if phoneErrors.length}
 						<span class="text-sm text-red-600">{phoneErrors[0]}</span>
 					{/if}
@@ -333,7 +336,7 @@
 						</div>
 						<span class="text-sm font-semibold">{m.contact_rememberMe()}</span>
 					</button>
-					<p class="text-sm text-gray-500 ml-7">
+					<p class="text-sm text-gray-500 ml-7 rtl:ml-0 rtl:mr-7">
 						{m.contact_rememberMeHelper()}
 					</p>
 				</div>
@@ -354,3 +357,14 @@
 		</div>
 	</form>
 </div>
+
+<style>
+	/* intl-tel-input is LTR-oriented by design (flag → dial code → digits).
+	   Inside an RTL page the surrounding `dir="rtl"` would otherwise reorder
+	   the flag/dial-code/number, so we pin the whole injected container to LTR.
+	   No effect under LTR locales — `direction: ltr` is already the default. */
+	:global(.widget-iti) {
+		direction: ltr;
+		text-align: left;
+	}
+</style>

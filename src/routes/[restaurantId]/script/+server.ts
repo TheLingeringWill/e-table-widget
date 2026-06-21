@@ -68,7 +68,7 @@ export const GET = async (event: RequestEvent): Promise<Response> => {
 	// inline list here just avoids appending `?lang=` for unknown values. If
 	// the parent omits `data-lang`, the iframe self-detects (URL > cookie >
 	// Accept-Language > 'fr') — see src/lib/i18n/detect.ts.
-	const supportedLocales = JSON.stringify(['en', 'fr', 'de', 'es', 'pt', 'it', 'nl', 'ja', 'zh', 'ko', 'ru']);
+	const supportedLocales = JSON.stringify(['en', 'fr', 'de', 'es', 'pt', 'it', 'nl', 'ja', 'zh', 'ko', 'ru', 'ar']);
 
 	const script = /*javascript*/ `
   (function() {

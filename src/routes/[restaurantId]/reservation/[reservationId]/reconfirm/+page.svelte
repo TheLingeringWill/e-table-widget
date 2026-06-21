@@ -51,7 +51,7 @@
 			<h1 class="hero-title">{m.reconfirm_thanksForReconfirming()}</h1>
 
 			<section class="card card--info">
-				<p class="resto-name">{restaurant.name}</p>
+				<p class="resto-name" dir="auto">{restaurant.name}</p>
 				{#if restaurant.address}
 					<p class="resto-address">{restaurant.address}</p>
 				{/if}
@@ -100,7 +100,7 @@
 			<h1 class="hero-title">{m.reconfirm_confirmedHeading()}</h1>
 
 			<section class="card card--info">
-				<p class="resto-name">{restaurant.name}</p>
+				<p class="resto-name" dir="auto">{restaurant.name}</p>
 				{#if restaurant.address}
 					<p class="resto-address">{restaurant.address}</p>
 				{/if}
@@ -150,7 +150,7 @@
 
 			<section class="card">
 				<div class="card-section">
-					<p class="resto-name">{restaurant.name}</p>
+					<p class="resto-name" dir="auto">{restaurant.name}</p>
 					{#if restaurant.address}
 						<p class="resto-address">{restaurant.address}</p>
 					{/if}
@@ -181,7 +181,7 @@
 
 			<section class="card">
 				<div class="card-section">
-					<p class="resto-name">{restaurant.name}</p>
+					<p class="resto-name" dir="auto">{restaurant.name}</p>
 					{#if restaurant.address}
 						<p class="resto-address">{restaurant.address}</p>
 					{/if}

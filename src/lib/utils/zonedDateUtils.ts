@@ -7,6 +7,7 @@
 import dayjs from 'dayjs';
 import timezoned from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
+import 'dayjs/locale/ar';
 import 'dayjs/locale/de';
 import 'dayjs/locale/en';
 import 'dayjs/locale/es';

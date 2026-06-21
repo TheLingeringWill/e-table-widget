@@ -38,6 +38,11 @@
 	const widgetCtx = useWidget();
 	const zonedDateUtils = useZonedDateUtils();
 
+	// Direction-implying icons (calendar prev/next, slot/card "navigate" arrows)
+	// must point the other way under RTL. Driven by the active locale so it
+	// flips on language switch without touching LTR rendering.
+	const isRtl = $derived(currentLocale.value === 'ar');
+
 	let loadingDates = $state(false);
 	let loadingSlots = $state(false);
 	let loadingAlternative = $state(false);
@@ -508,7 +513,7 @@
 					{@const altOpen = openDesc === `alt:${alt.id}`}
 					<button
 						onclick={() => goToAlternative(alt)}
-						class="themed-border relative flex w-full aspect-[2/1] rounded border-2 text-left transition-all {altOpen
+						class="themed-border relative flex w-full aspect-[2/1] rounded border-2 text-left rtl:text-right transition-all {altOpen
 							? 'z-20'
 							: ''}"
 						aria-label={alt.name}
@@ -565,14 +570,14 @@
 											<Info size={14} />
 										</span>
 									{/if}
-									<ArrowRight size={16} class="drop-shadow" />
+									<ArrowRight size={16} class="drop-shadow rtl:-scale-x-100" />
 								</span>
 							</span>
 						</span>
 
 						{#if altOpen}
 							<span
-								class="absolute bottom-2 right-2 z-40 max-w-[85%] rounded-md bg-black/90 px-3 py-2 text-xs leading-snug text-white shadow-lg"
+								class="absolute bottom-2 right-2 rtl:right-auto rtl:left-2 z-40 max-w-[85%] rounded-md bg-black/90 px-3 py-2 text-xs leading-snug text-white shadow-lg"
 							>
 								{alt.description}
 							</span>
@@ -655,11 +660,11 @@
 							class="w-full"
 							buttons={{
 								prev: {
-									icon: ArrowLeft,
+									icon: isRtl ? ArrowRight : ArrowLeft,
 									color: theme.fontColor
 								},
 								next: {
-									icon: ArrowRight,
+									icon: isRtl ? ArrowLeft : ArrowRight,
 									color: theme.fontColor
 								}
 							}}
@@ -849,7 +854,7 @@
 											<Calendar size={16} class="opacity-60" />
 											<span class="text-xs">{m.selection_chooseAnotherDate()}</span>
 										</div>
-										<ArrowRight size={14} class="opacity-40" />
+										<ArrowRight size={14} class="opacity-40 rtl:-scale-x-100" />
 									</button>
 								</div>
 								{@render alternativesSection()}
@@ -880,7 +885,7 @@
 									openAccordion();
 								}
 							}}
-							class="themed-border relative flex w-full aspect-[2/1] rounded border-2 text-left transition-all data-[active=true]:ring-2 data-[active=true]:ring-offset-1 {expOpen
+							class="themed-border relative flex w-full aspect-[2/1] rounded border-2 text-left rtl:text-right transition-all data-[active=true]:ring-2 data-[active=true]:ring-offset-1 {expOpen
 								? 'z-20'
 								: ''}"
 							aria-label={getTranslation(experience.name, currentLocale.value)}
@@ -906,7 +911,7 @@
 									class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pt-8 pb-2 text-white"
 								>
 									<span class="flex flex-col min-w-0">
-										<b class="text-sm leading-tight truncate drop-shadow">
+										<b class="text-sm leading-tight truncate drop-shadow" dir="auto">
 											{getTranslation(experience.name, currentLocale.value)}
 										</b>
 										{#if hasNote}
@@ -934,7 +939,7 @@
 												<Info size={14} />
 											</span>
 										{/if}
-										<span class="text-sm font-semibold whitespace-nowrap drop-shadow">
+										<span class="text-sm font-semibold whitespace-nowrap drop-shadow" dir="auto">
 											{m.selection_experiencePricePerGuest({
 												price: (experience.priceCents / 100).toLocaleString(undefined, {
 													style: 'currency',
@@ -950,7 +955,7 @@
 								<!-- Selected badge: the data-active color-invert is hidden under the
 								     photo, so surface selection with a visible check. -->
 								<span
-									class="absolute top-2 right-2 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-white text-black shadow"
+									class="absolute top-2 right-2 rtl:right-auto rtl:left-2 z-30 flex h-6 w-6 items-center justify-center rounded-full bg-white text-black shadow"
 								>
 									<Check size={14} weight="bold" />
 								</span>
@@ -958,7 +963,7 @@
 
 							{#if expOpen}
 								<span
-									class="absolute bottom-2 right-2 z-40 max-w-[85%] rounded-md bg-black/90 px-3 py-2 text-xs leading-snug text-white shadow-lg"
+									class="absolute bottom-2 right-2 rtl:right-auto rtl:left-2 z-40 max-w-[85%] rounded-md bg-black/90 px-3 py-2 text-xs leading-snug text-white shadow-lg"
 								>
 									{getTranslation(experience.note, currentLocale.value)}
 								</span>

@@ -159,7 +159,7 @@
 							<p class="text-sm text-gray-500 uppercase tracking-wider mb-1">
 								{m.common_restaurant()}
 							</p>
-							<p class="text-lg font-semibold text-gray-900">{data.restaurant.name}</p>
+							<p class="text-lg font-semibold text-gray-900" dir="auto">{data.restaurant.name}</p>
 						</div>
 					{/if}
 
@@ -195,7 +195,7 @@
 			<div class="bg-white rounded-2xl shadow-lg overflow-hidden">
 				<!-- Header with gradient -->
 				<div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white px-8 py-6">
-					<h1 class="text-2xl font-serif font-normal text-center mb-1">
+					<h1 class="text-2xl font-serif font-normal text-center mb-1" dir="auto">
 						{data.restaurant?.name || m.standalonePayment_fallbackName()}
 					</h1>
 					<p class="text-gray-300 text-sm text-center">{m.standalonePayment_finalizing()}</p>
@@ -252,8 +252,8 @@
 								<p class="text-sm text-gray-600 mb-1">{m.standalonePayment_bankImprint()}</p>
 								<p class="text-xs text-gray-500">{m.standalonePayment_noCharge()}</p>
 							</div>
-							<div class="text-right">
-								<p class="text-3xl font-bold text-gray-900">
+							<div class="text-right rtl:text-left">
+								<p class="text-3xl font-bold text-gray-900" dir="ltr">
 									{formatAmount(setupIntent.amount)} €
 								</p>
 							</div>

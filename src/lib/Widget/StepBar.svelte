@@ -82,6 +82,16 @@
 </div>
 
 <style>
+	/* The global `button { border-radius: var(--base-radius) }` rounds every
+	   segment on all four corners, so the active fill rendered as its own little
+	   pill inset from the container — leaving a sliver of the dark surface between
+	   the fill and the rounded edge. Square the segments off (override the global
+	   !important) so they tile edge-to-edge; the container's `overflow-hidden
+	   rounded-full` then clips the end segments to the pill shape, and the active
+	   fill reaches flush to the rounded ends with no gap (TheFork-style). */
+	.step-seg {
+		border-radius: 0 !important;
+	}
 	/* A pending (no value yet) step is lightly dimmed — same convention as the old
 	   accordion header — but the active and value-bearing steps stay full strength.
 	   Kept light so black text on a light brand doesn't wash out to grey. */

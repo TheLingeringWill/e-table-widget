@@ -529,19 +529,20 @@
 		window.location.href = url.toString();
 	};
 
-	// Get alternative slots from across ALL of the day's services (available slots
-	// only) — not just the unavailable slot's own service. handleSelectAlternative
-	// resolves the owning service from the picked slot's group, so a cross-service
-	// alternative still sets selection.service correctly.
+	// Get alternative slots from the unavailable slot's OWN service only (available
+	// slots only) — clicking a full lunch time offers other lunch times, never
+	// dinner. When that service has nothing else open the list is empty and the
+	// alternatives section is hidden (the guest keeps Join waitlist + the
+	// owner-curated sibling restaurants as fallbacks).
 	const getAlternativeSlots = (unavailableSlot: Slot): Slot[] => {
-		return groups
-			.flatMap((g) => g.slots)
-			.filter(
-				(slot) =>
-					slot.state !== 'FULL' &&
-					slot.state !== 'CLOSED' &&
-					slotKey(slot.date, slot.time) !== slotKey(unavailableSlot.date, unavailableSlot.time)
-			);
+		const owner = groupForSlot(unavailableSlot);
+		if (!owner) return [];
+		return owner.slots.filter(
+			(slot) =>
+				slot.state !== 'FULL' &&
+				slot.state !== 'CLOSED' &&
+				slotKey(slot.date, slot.time) !== slotKey(unavailableSlot.date, unavailableSlot.time)
+		);
 	};
 
 	// Handle click on an unavailable slot

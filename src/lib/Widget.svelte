@@ -45,7 +45,17 @@
 	import { gotoError, error as errorState } from './states/error.svelte';
 	import { pushEcommerceEvent, trackStep, trackError, setGtmRestaurantId } from './gtm.svelte';
 
-	let { data: widget, builder, isEmbedded } = $props();
+	let {
+		data: widget,
+		builder,
+		isEmbedded,
+		availableDates
+	}: {
+		data: any;
+		builder?: boolean;
+		isEmbedded?: boolean;
+		availableDates?: Promise<{ dates: string[]; endDate: string } | null>;
+	} = $props();
 
 	let theme = $state(defaultTheme);
 
@@ -473,7 +483,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 		</div>
 	{:else if step.step === 'SELECTION'}
 		<div transition:slide class="flex flex-col flex-grow min-h-0">
-			<Selection restaurantId={widget.restaurantId} {theme} />
+			<Selection restaurantId={widget.restaurantId} {theme} {availableDates} />
 		</div>
 	{:else if step.step === 'CONTACT' || step.step === 'BOOKING' || step.step === 'PAYMENT'}
 		<div

@@ -1,6 +1,7 @@
 import { defaultTheme } from '$lib/Widget.svelte';
 import { error } from '@sveltejs/kit';
 import { createWidgetApi } from '$lib/server/api/widget-api';
+import { loadAvailableDates } from '$lib/server/api/availableDates';
 import { getContrastColor, brandTextOnLight, brandTextOnDark } from '$lib/utils/contrastColor';
 
 export const load = async ({ params, url, setHeaders }) => {
@@ -85,10 +86,21 @@ export const load = async ({ params, url, setHeaders }) => {
 		gtmId: widgetDto.gtmId ?? null
 	};
 
+	// Preload the calendar's bookable dates. Returned as a NON-awaited promise so
+	// it streams: the page (and the rest of the widget) paints immediately off the
+	// aggregate above, and the calendar fills the moment this resolves — instead
+	// of the old path where the client fired this fetch only after hydration
+	// (~370ms in), leaving an empty/all-disabled calendar until ~670ms. Selection
+	// awaits it and falls back to the client RPC if it resolves null (upstream
+	// failure) or on later client-side navigation.
+	const tz = restaurant.timezone || 'Europe/Paris';
+	const availableDates = loadAvailableDates(rid, tz);
+
 	return {
 		builder,
 		isEmbedded,
 		widget,
+		availableDates,
 		// +layout.svelte sets the zonedDateUtils context off `data.restaurant.timezone`
 		// — expose it at the top level so the layout doesn't have to reach into widget.
 		restaurant: {

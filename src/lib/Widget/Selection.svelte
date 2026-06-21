@@ -9,7 +9,7 @@
 		Info,
 		Sparkle
 	} from 'phosphor-svelte';
-	import AccordionGroup from '../AccordionGroup.svelte';
+	import StepBar from './StepBar.svelte';
 	import Button from './Button.svelte';
 	import Spinner from '../Spinner.svelte';
 	import { onMount } from 'svelte';
@@ -29,10 +29,17 @@
 
 	let {
 		restaurantId,
-		theme
+		theme,
+		// SSR-preloaded bookable dates (streamed from +layout.server.ts). When it
+		// resolves with data, the calendar is seeded synchronously on mount and the
+		// client getAvailableDates RPC is skipped — removing the startup gap where
+		// the calendar sat empty until the post-hydration fetch returned. Null (or
+		// absent, e.g. client-side nav) falls back to fetchDisabledDates().
+		availableDates
 	}: {
 		restaurantId: string;
 		theme: any;
+		availableDates?: Promise<{ dates: string[]; endDate: string } | null>;
 	} = $props();
 
 	const widgetCtx = useWidget();
@@ -43,7 +50,10 @@
 	// flips on language switch without touching LTR rendering.
 	const isRtl = $derived(currentLocale.value === 'ar');
 
-	let loadingDates = $state(false);
+	// Starts true so the date step shows its calendar skeleton from the first
+	// render until initDisabledDates() resolves (SSR-preloaded or client-fetched),
+	// instead of briefly flashing an empty/all-disabled grid.
+	let loadingDates = $state(true);
 	let loadingSlots = $state(false);
 	let loadingAlternative = $state(false);
 	let loadingExperiences = $state(false);
@@ -235,6 +245,29 @@
 		selection.service = null;
 	};
 
+	// Build the calendar's `disabledDates` (every day in the window NOT bookable)
+	// from the list of available date strings. Pure + synchronous — used by both
+	// the SSR-preload path and the client fetch so they produce identical state.
+	const applyAvailableDates = (available: string[], end: Date) => {
+		const availableSet = new Set(available);
+		const today = new Date();
+		const disabled: Date[] = [];
+		const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+		const endTime = end.getTime();
+		while (cursor.getTime() <= endTime) {
+			const y = cursor.getFullYear();
+			const m = String(cursor.getMonth() + 1).padStart(2, '0');
+			const d = String(cursor.getDate()).padStart(2, '0');
+			const dateStr = `${y}-${m}-${d}`;
+			if (!availableSet.has(dateStr)) {
+				disabled.push(new Date(cursor.getTime()));
+			}
+			cursor.setDate(cursor.getDate() + 1);
+		}
+		disabledDates = disabled;
+		maxCalendarDate = end;
+	};
+
 	const fetchDisabledDates = async () => {
 		loadingDates = true;
 		const today = new Date();
@@ -251,24 +284,77 @@
 			loadingDates = false;
 			return;
 		}
-		const availableSet = new Set(res);
-		const disabled: Date[] = [];
-		const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-		const endTime = end.getTime();
-		while (cursor.getTime() <= endTime) {
-			const y = cursor.getFullYear();
-			const m = String(cursor.getMonth() + 1).padStart(2, '0');
-			const d = String(cursor.getDate()).padStart(2, '0');
-			const dateStr = `${y}-${m}-${d}`;
-			if (!availableSet.has(dateStr)) {
-				disabled.push(new Date(cursor.getTime()));
-			}
-			cursor.setDate(cursor.getDate() + 1);
-		}
-		disabledDates = disabled;
-		maxCalendarDate = end;
+		applyAvailableDates(res, end);
 		loadingDates = false;
 	};
+
+	// Seed the calendar from the SSR-preloaded dates if present, else fall back to
+	// the client RPC. Returns true when the preload satisfied it (so onMount can
+	// skip the fetch). Keeps loadingDates true until one path resolves so the
+	// calendar shows its skeleton rather than an empty grid in the meantime.
+	const initDisabledDates = async () => {
+		loadingDates = true;
+		if (availableDates) {
+			const preloaded = await availableDates;
+			if (preloaded) {
+				// endDate is a 'YYYY-MM-DD' in the restaurant TZ; parse as a local
+				// calendar date so the cursor window matches the client path.
+				applyAvailableDates(preloaded.dates, parseSlotDateAsCalendarDate(preloaded.endDate));
+				loadingDates = false;
+				return;
+			}
+		}
+		await fetchDisabledDates();
+	};
+
+	// Segments for the horizontal step bar (replaces the vertical accordion). Same
+	// step order, icons, labels, gating and loading flags the accordion used —
+	// plus a `value` derived from `selection` so a completed step shows its chosen
+	// value (and a caret to re-open it) instead of the prompt. The experiences
+	// segment is appended only when the chosen slot's service offers any, so the
+	// bar shows 3 or 4 segments. Index parity with openedAccordion.index is kept:
+	// date(0) → pax(1) → slots(2) → experiences(3).
+	const steps = $derived([
+		{
+			id: 'date',
+			icon: Calendar,
+			// Short noun for the segment (the long "Pick a date" prompt overflows a
+			// segment); the full prompt is still used elsewhere.
+			label: m.stepbar_date(),
+			value: selection.date ? zonedDateUtils.format('ddd DD MMM', selection.date) : null,
+			loading: loadingDates
+		},
+		{
+			id: 'pax',
+			icon: ForkKnife,
+			label: m.stepbar_pax(),
+			value: selection.pax ? m.selection_paxCount({ pax: selection.pax }) : null,
+			loading: loadingSlots,
+			disabled: !selection.date
+		},
+		{
+			id: 'slots',
+			icon: Clock,
+			label: m.stepbar_time(),
+			value: selection.slot ? selection.slot.time : null,
+			loading: loadingSlots,
+			disabled: !selection.date || !selection.pax
+		},
+		...(experiences.length > 0
+			? [
+					{
+						id: 'experiences',
+						icon: Sparkle,
+						label: m.stepbar_experience(),
+						value: selection.experience
+							? getTranslation(selection.experience.name, currentLocale.value)
+							: null,
+						loading: loadingExperiences,
+						disabled: !selection.date || !selection.pax || !selection.slot
+					}
+				]
+			: [])
+	]);
 
 	// New step order (no service step): date(0) → pax(1) → slots(2) → experiences(3).
 	const openAccordion = () => {
@@ -288,7 +374,7 @@
 	};
 
 	onMount(async () => {
-		await fetchDisabledDates();
+		await initDisabledDates();
 
 		if (reservationTemp.startDate) {
 			selection.date = parseSlotDateAsCalendarDate(reservationTemp.startDate.date);
@@ -596,57 +682,26 @@
 		     rest of the widget so outside taps are caught. -->
 		<div class="fixed inset-0 z-10" role="presentation" onclick={() => (openDesc = null)}></div>
 	{/if}
-	<AccordionGroup
-		bind:openedAccordion={openedAccordion.index}
-		oneAtATime
-		className="flex-grow min-h-0 overflow-y-auto"
-		items={[
-			{
-				id: 'date',
-				icon: Calendar,
-				title: selection.date
-					? zonedDateUtils.format('dddd DD MMMM', selection.date)
-					: m.selection_pickDate(),
-				contentClass: 'flex flex-wrap gap-2 justify-center px-5 py-2',
-				loading: loadingDates
-			},
-			{
-				id: 'pax',
-				icon: ForkKnife,
-				title: selection.pax ? m.selection_paxCount({ pax: selection.pax }) : m.selection_pickPax(),
-				contentClass: 'flex flex-wrap gap-2 justify-center pt-2 pb-5 px-5',
-				loading: loadingSlots,
-				disabled: !selection.date
-			},
-			{
-				id: 'slots',
-				icon: Clock,
-				title: `${selection.slot ? selection.slot.time : m.selection_pickTime()}`,
-				loading: loadingSlots,
-				contentClass: 'flex flex-wrap gap-2 justify-center',
-				disabled: !selection.date || !selection.pax
-			},
-			...(experiences.length > 0
-				? [
-						{
-							id: 'experiences',
-							icon: Sparkle,
-							title: selection.experience
-								? getTranslation(selection.experience.name, currentLocale.value)
-								: m.selection_pickExperience(),
-							loading: loadingExperiences,
-							contentClass: 'flex flex-wrap gap-3 justify-center px-5 py-3',
-							disabled: !selection.date || !selection.pax || !selection.slot
-						}
-					]
-				: [])
-		]}
-	>
-		{#snippet separator()}
-			<div class="separator-h"></div>
-		{/snippet}
-		{#snippet content(item, next, previous, close)}
-			{#if item.id === 'date'}
+	<!-- Horizontal step bar (replaces the vertical accordion): the three (or four)
+	     steps read across one row, freeing the full width below for the active
+	     step's content. Selecting a value-bearing segment just moves the active
+	     index — the same thing the accordion's oneAtATime toggle did. -->
+	<div class="px-3 pt-3">
+		<StepBar
+			{steps}
+			activeIndex={openedAccordion.index}
+			onSelect={(i) => (openedAccordion.index = i)}
+			{theme}
+		/>
+	</div>
+
+	<!-- Active step's content. Branches on openedAccordion.index (same indices the
+	     bar uses); each branch carries the padding/layout the accordion item's
+	     contentClass used to apply. Scrolls within the widget like the accordion
+	     body did. While the active step is loading, show the same centered spinner. -->
+	<div class="flex-grow min-h-0 overflow-y-auto">
+		{#if openedAccordion.index === 0}
+			<div class="flex flex-wrap gap-2 justify-center px-5 py-2">
 				<div class="flex flex-col w-full gap-2">
 					{#if !loadingDates}
 						<ZonedCalendarInput
@@ -684,11 +739,40 @@
 								});
 							}}
 						/>
+					{:else}
+						<!-- Calendar skeleton: a month-header row + a 6×7 grid of pulsing
+						     placeholder cells, shown while the bookable dates resolve so the
+						     date step never flashes an empty grid. Mirrors the real calendar's
+						     layout (weekday row, square cells) to avoid a reflow jump. -->
+						<div class="flex w-full flex-col gap-3 animate-pulse" aria-hidden="true">
+							<div class="flex items-center justify-between pb-1">
+								<div class="h-4 w-4 rounded-sm bg-current opacity-10"></div>
+								<div class="h-4 w-24 rounded-sm bg-current opacity-10"></div>
+								<div class="h-4 w-4 rounded-sm bg-current opacity-10"></div>
+							</div>
+							<div class="grid grid-cols-7 gap-2">
+								{#each Array.from({ length: 7 }) as _, i (`wd-${i}`)}
+									<div class="mx-auto h-3 w-5 rounded-sm bg-current opacity-10"></div>
+								{/each}
+							</div>
+							{#each Array.from({ length: 6 }) as _, r (`wk-${r}`)}
+								<div class="grid grid-cols-7 gap-2">
+									{#each Array.from({ length: 7 }) as _, c (`d-${r}-${c}`)}
+										<div class="aspect-square rounded-sm bg-current opacity-[0.07]"></div>
+									{/each}
+								</div>
+							{/each}
+						</div>
 					{/if}
 				</div>
-			{:else if item.id === 'pax'}
-				{@const paxLocked =
-					reservation.paymentStatus === 'requires_capture' || !!reservation.stripeSetupIntentId}
+			</div>
+		{:else if openedAccordion.index === 1}
+			{@const paxLocked =
+				reservation.paymentStatus === 'requires_capture' || !!reservation.stripeSetupIntentId}
+			<!-- pt-6 gives the pax grid breathing room below the step bar (it has no
+			     header of its own, unlike the calendar/slots), so it doesn't read as
+			     stuck to the bar. -->
+			<div class="flex flex-wrap gap-2 justify-center px-5 pb-5 pt-6">
 				{#each Array.from({ length: MAX_WIDGET_PAX }, (_, i) => i + 1) as pax}
 					<button
 						data-active={pax === selection.pax}
@@ -733,10 +817,12 @@
 						{@html m.selection_groupContactNotice({ maxPax: String(MAX_WIDGET_PAX), contactInfo })}
 					</p>
 				{/if}
-			{:else if item.id === 'slots'}
-				{@const hasAvailableSlots = groups.some((g) =>
-					g.slots.some((slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED')
-				)}
+			</div>
+		{:else if openedAccordion.index === 2}
+			{@const hasAvailableSlots = groups.some((g) =>
+				g.slots.some((slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED')
+			)}
+			<div class="flex flex-wrap gap-2 justify-center">
 				<div class="w-full">
 					{#if waitlist.selectedUnavailableSlot}
 						<!-- Waitlist prompt for unavailable slot -->
@@ -862,7 +948,9 @@
 						</div>
 					{/if}
 				</div>
-			{:else if item.id === 'experiences'}
+			</div>
+		{:else if openedAccordion.index === 3}
+			<div class="flex flex-wrap gap-3 justify-center px-5 py-3">
 				<div class="flex flex-col gap-3 w-full px-4">
 					{#each experiences as experience (experience.id)}
 						{@const active = experience.id === selection.experience?.id}
@@ -971,9 +1059,9 @@
 						</button>
 					{/each}
 				</div>
-			{/if}
-		{/snippet}
-	</AccordionGroup>
+			</div>
+		{/if}
+	</div>
 	<div class="flex items-end p-3 mt-auto">
 		{#if !reserveDisabled}
 			<Button onclick={nextStep} className="uppercase"

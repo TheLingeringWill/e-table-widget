@@ -70,7 +70,7 @@
 		<div class="flex items-center justify-between gap-1 flex-wrap" transition:slide>
 			<button
 				onclick={() => {
-					previousStep('SELECTION');
+					previousStep('SELECTION', 1);
 				}}
 				class="flex-grow flex items-center gap-3 px-3 py-1 text-sm rounded-lg hover:bg-white hover:bg-opacity-5 border data-[active=true]:bg-white data-[active=true]:bg-opacity-30"
 			>
@@ -81,7 +81,7 @@
 			</button>
 			<button
 				class="flex-grow flex items-center gap-3 px-3 py-1 text-sm rounded-lg hover:bg-white hover:bg-opacity-5 border data-[active=true]:bg-white data-[active=true]:bg-opacity-30"
-				onclick={() => previousStep('SELECTION', 1)}
+				onclick={() => previousStep('SELECTION', 0)}
 			>
 				<div class="flex items-center gap-1">
 					<Calendar size={24} />

@@ -4,7 +4,7 @@
 	import { step } from '$lib/states/step.svelte';
 	import { formatSlotDate } from '$lib/utils/slotFormat';
 	import * as m from '$lib/paraglide/messages';
-	import { Calendar, CallBell, Clock, ForkKnife, PencilSimple } from 'phosphor-svelte';
+	import { Calendar, Clock, ForkKnife, PencilSimple } from 'phosphor-svelte';
 	import { onDestroy, onMount } from 'svelte';
 
 	const widget = useWidget();
@@ -77,12 +77,6 @@
 			Calendar
 		)}
 		{@render button(1, m.summary_paxCount({ pax: selection.pax ?? 0 }), ForkKnife)}
-		<!-- Service is no longer its own step; show it as a read-only label and route
-		     edits to the time step (index 2), since changing the time changes the
-		     service. Only rendered once a slot (hence a service) is picked. -->
-		{#if selection.service}
-			{@render button(2, selection.service.name[0].value, CallBell)}
-		{/if}
 		{@render button(2, selection.slot?.time ?? m.summary_pickTime(), Clock)}
 	</div>
 

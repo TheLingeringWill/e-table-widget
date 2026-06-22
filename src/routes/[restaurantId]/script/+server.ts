@@ -121,6 +121,13 @@ export const GET = async (event: RequestEvent): Promise<Response> => {
         if (type === 'gtm_event' && window.dataLayer) {
           window.dataLayer.push(event.data.event);
         }
+
+        // Handle a full top-level redirect (e.g. "book at an alternative
+        // restaurant"). The widget can only move its own iframe location, so
+        // it asks the parent to navigate the whole page to the target link.
+        if (type === 'redirect' && typeof data === 'string') {
+          window.location.href = data;
+        }
       });
 
       iframe.src = iframeSrc;

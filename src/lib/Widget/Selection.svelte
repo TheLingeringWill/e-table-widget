@@ -507,19 +507,36 @@
 		loadingAlternative = false;
 	};
 
-	// Navigate to a sibling restaurant's own booking widget, carrying the
-	// current date/pax selection like the old buildAlternativeWidgetUrl did.
+	// Navigate to a sibling restaurant's own booking widget. The guest restarts
+	// the flow there from scratch — we intentionally do NOT carry the current
+	// date/pax selection over.
+	//
+	// Embedded mode: `window.location` is the iframe's location, so assigning
+	// it would load the alternative widget *inside* the embed iframe on the
+	// original restaurant's page. We want a real top-level navigation, so we
+	// ask the parent (via postMessage, the only cross-origin-safe path) to
+	// redirect itself — the embed script handles `{ type: 'redirect' }`.
+	// Standalone mode keeps the direct assignment.
 	const goToAlternative = (alt: WidgetAlternative) => {
 		pushGtmEvent('alternative_restaurant_clicked', {
 			original_restaurant_id: restaurantId,
 			alternative_restaurant_id: alt.id,
 			alternative_restaurant_name: alt.name
 		});
-		const url = new URL(alt.widgetLink);
-		if (selection.date)
-			url.searchParams.set('date', zonedDateUtils.format('YYYY-MM-DD', selection.date));
-		if (selection.pax) url.searchParams.set('pax', String(selection.pax));
-		window.location.href = url.toString();
+
+		const isEmbedded = (() => {
+			try {
+				return window.self !== window.top;
+			} catch {
+				return true; // cross-origin parent = embedded
+			}
+		})();
+
+		if (isEmbedded) {
+			window.parent.postMessage({ type: 'redirect', data: alt.widgetLink }, '*');
+		} else {
+			window.location.href = alt.widgetLink;
+		}
 	};
 
 	// Get alternative slots from the unavailable slot's OWN service only (available

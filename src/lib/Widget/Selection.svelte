@@ -178,15 +178,6 @@
 		}
 
 		loadingSlots = false;
-
-		// When no slot is available across any service, surface the owner-curated
-		// sibling restaurants (if any) at the bottom of the slot step.
-		const hasAvailableSlot = groups.some((g) =>
-			g.slots.some((slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED')
-		);
-		if (!hasAvailableSlot) {
-			loadWidgetAlternatives();
-		}
 	};
 
 	// Find the group whose service matches `reservationTemp.serviceId` and the
@@ -498,8 +489,10 @@
 			g.slots.some((s) => slotKey(s.date, s.time) === slotKey(slot.date, slot.time))
 		);
 
-	// Fetch the owner-curated sibling restaurants for the no-slot path. The RPC
-	// self-gates (returns [] when disabled or ungrouped) and never throws.
+	// Fetch the owner-curated sibling restaurants. Only called when the guest
+	// taps an unavailable slot and lands on the waitlist prompt — never on the
+	// plain empty-slots views. The RPC self-gates (returns [] when disabled or
+	// ungrouped) and never throws.
 	const loadWidgetAlternatives = async () => {
 		loadingAlternative = true;
 		alternatives = [];
@@ -548,8 +541,8 @@
 	// Handle click on an unavailable slot
 	const handleUnavailableSlotClick = (slot: Slot) => {
 		waitlist.selectedUnavailableSlot = slot;
-		// Surface owner-curated sibling restaurants on the waitlist prompt too,
-		// not only on the empty-slots path. Self-gates and never throws.
+		// Surface owner-curated sibling restaurants only on the waitlist prompt
+		// that this click opens. Self-gates and never throws.
 		loadWidgetAlternatives();
 	};
 
@@ -820,9 +813,6 @@
 				{/if}
 			</div>
 		{:else if openedAccordion.index === 2}
-			{@const hasAvailableSlots = groups.some((g) =>
-				g.slots.some((slot) => slot.state !== 'FULL' && slot.state !== 'CLOSED')
-			)}
 			<div class="flex flex-wrap gap-2 justify-center">
 				<div class="w-full">
 					{#if waitlist.selectedUnavailableSlot}
@@ -915,11 +905,6 @@
 								</div>
 							{/each}
 						</div>
-
-						<!-- Owner-curated sibling restaurants when all slots are unavailable -->
-						{#if !hasAvailableSlots}
-							{@render alternativesSection()}
-						{/if}
 					{:else}
 						<!-- No slots at all -->
 						<div class="flex flex-col items-center w-full">
@@ -944,7 +929,6 @@
 										<ArrowRight size={14} class="opacity-40 rtl:-scale-x-100" />
 									</button>
 								</div>
-								{@render alternativesSection()}
 							{/if}
 						</div>
 					{/if}

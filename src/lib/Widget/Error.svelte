@@ -1,8 +1,15 @@
 <script lang="ts">
-	import { X } from 'phosphor-svelte';
+	import { getContext } from 'svelte';
+	import { X, ArrowClockwise } from 'phosphor-svelte';
 	import { error } from '$lib/states/error.svelte';
 	import { ApiReturnStatus } from '$lib/api-types';
 	import * as m from '$lib/paraglide/messages';
+
+	const theme = getContext('theme') as {
+		backgroundColor?: string;
+		fontColor?: string;
+		buttonBorderRadius?: number;
+	};
 
 	const localizedByCode = (code: string | null): string | null => {
 		switch (code) {
@@ -42,4 +49,18 @@
 	{#if error.code}
 		<p class="text-sm opacity-50">{error.code}</p>
 	{/if}
+	<button
+		type="button"
+		class="mt-2 w-full py-3 px-4 text-base font-semibold text-center transition-all hover:brightness-110 focus:brightness-95 focus:outline-none"
+		style="background: {theme?.backgroundColor};
+		       color: {theme?.fontColor};
+		       border: 1px solid {theme?.backgroundColor};
+		       border-radius: {theme?.buttonBorderRadius ?? 8}px;"
+		onclick={() => location.reload()}
+	>
+		<span class="inline-flex items-center gap-2 align-middle">
+			<ArrowClockwise size={18} weight="regular" />
+			<span>{m.error_retry()}</span>
+		</span>
+	</button>
 </div>

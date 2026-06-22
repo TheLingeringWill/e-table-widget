@@ -85,6 +85,7 @@
 	"error_modificationNotAllowed": "Dieser Zeitslot ist für Änderungen nicht verfügbar. Bitte wählen Sie einen anderen Zeitslot.",
 	"error_reservationNotFound": "Diese Reservierung konnte nicht gefunden werden.",
 	"error_restaurantNotFound": "Restaurant nicht gefunden",
+	"error_retry": "Erneut versuchen",
 	"header_paxCount": "{pax} Gast/Gäste",
 	"header_pickTime": "Wählen Sie eine Uhrzeit",
 	"leaveReview_apology": "Es tut uns leid, dass Ihre Erfahrung nicht Ihren Erwartungen entsprochen hat.",

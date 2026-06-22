@@ -85,6 +85,7 @@
 	"error_modificationNotAllowed": "Ce créneau n'est pas disponible pour la modification. Veuillez choisir un autre créneau.",
 	"error_reservationNotFound": "Cette réservation ne peut pas être trouvée.",
 	"error_restaurantNotFound": "Restaurant introuvable",
+	"error_retry": "Réessayer",
 	"header_paxCount": "{pax} personne(s)",
 	"header_pickTime": "Sélectionnez un horaire",
 	"leaveReview_apology": "Nous regrettons que votre expérience n'ait pas été à la hauteur de vos attentes.",

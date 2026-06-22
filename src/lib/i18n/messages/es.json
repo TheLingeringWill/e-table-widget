@@ -85,6 +85,7 @@
 	"error_modificationNotAllowed": "Este horario no está disponible para la modificación. Elija otro horario.",
 	"error_reservationNotFound": "No se ha podido encontrar esta reserva.",
 	"error_restaurantNotFound": "Restaurante no encontrado",
+	"error_retry": "Reintentar",
 	"header_paxCount": "{pax} comensal(es)",
 	"header_pickTime": "Elija una hora",
 	"leaveReview_apology": "Lamentamos que su experiencia no haya cumplido sus expectativas.",

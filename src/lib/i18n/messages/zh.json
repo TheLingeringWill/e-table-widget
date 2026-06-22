@@ -85,6 +85,7 @@
 	"error_modificationNotAllowed": "此时段不可用于修改，请选择其他时段。",
 	"error_reservationNotFound": "找不到此预订。",
 	"error_restaurantNotFound": "未找到餐厅",
+	"error_retry": "重试",
 	"header_paxCount": "{pax}位客人",
 	"header_pickTime": "选择时间",
 	"leaveReview_apology": "很抱歉未能达到您的期望。",

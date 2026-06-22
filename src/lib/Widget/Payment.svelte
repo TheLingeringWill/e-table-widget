@@ -199,12 +199,17 @@
 				payment_method: { card }
 			});
 			if (result.error) {
-				gotoError(null, result.error.message);
+				// Card decline / 3DS failure: stay on the card form so the customer
+				// can correct the card and press Validate again, rather than being
+				// thrown to the terminal error screen.
+				error = { message: result.error.message ?? m.error_generic() };
+				loading = false;
 				return;
 			}
 			const pi = result.paymentIntent;
 			if (!pi || pi.status !== 'requires_capture') {
-				gotoError(null, 'PAYMENT_NOT_AUTHORIZED');
+				error = { message: m.error_generic() };
+				loading = false;
 				return;
 			}
 			confirmedIntentId = pi.id;
@@ -213,12 +218,15 @@
 				payment_method: { card }
 			});
 			if (result.error) {
-				gotoError(null, result.error.message);
+				// Card decline / 3DS failure: stay on the card form (see above).
+				error = { message: result.error.message ?? m.error_generic() };
+				loading = false;
 				return;
 			}
 			const si = result.setupIntent;
 			if (!si || si.status !== 'succeeded') {
-				gotoError(null, 'PAYMENT_NOT_AUTHORIZED');
+				error = { message: m.error_generic() };
+				loading = false;
 				return;
 			}
 			confirmedIntentId = si.id;
@@ -356,6 +364,14 @@
 			</div>
 		{/if}
 		<div class="flex flex-col gap-5">
+			{#if error}
+				<div
+					class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm"
+					transition:slide
+				>
+					<span>{error.message}</span>
+				</div>
+			{/if}
 			<div class="grid gap-4" use:mountElements={stripeState}>
 				<div
 					id="cardNumber"

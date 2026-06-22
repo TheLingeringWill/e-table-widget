@@ -85,6 +85,7 @@
 	"error_modificationNotAllowed": "This slot is not available for modification. Please choose a different slot.",
 	"error_reservationNotFound": "This reservation could not be found.",
 	"error_restaurantNotFound": "Restaurant not found",
+	"error_retry": "Retry",
 	"header_paxCount": "{pax} guest(s)",
 	"header_pickTime": "Pick a time",
 	"leaveReview_apology": "We're sorry your experience didn't meet your expectations.",

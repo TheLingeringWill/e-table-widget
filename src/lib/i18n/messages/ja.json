@@ -85,6 +85,7 @@
 	"error_modificationNotAllowed": "この時間帯は変更対象として選択できません。別の時間帯をお選びください。",
 	"error_reservationNotFound": "この予約が見つかりませんでした。",
 	"error_restaurantNotFound": "レストランが見つかりません",
+	"error_retry": "再試行",
 	"header_paxCount": "{pax}名様",
 	"header_pickTime": "時間を選択",
 	"leaveReview_apology": "ご期待に添えず申し訳ございません。",

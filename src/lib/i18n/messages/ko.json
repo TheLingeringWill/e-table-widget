@@ -85,6 +85,7 @@
 	"error_modificationNotAllowed": "이 시간대는 변경할 수 없습니다. 다른 시간대를 선택해주세요.",
 	"error_reservationNotFound": "예약을 찾을 수 없습니다.",
 	"error_restaurantNotFound": "레스토랑을 찾을 수 없습니다",
+	"error_retry": "다시 시도",
 	"header_paxCount": "{pax}명",
 	"header_pickTime": "시간 선택",
 	"leaveReview_apology": "기대에 미치지 못해 죄송합니다.",

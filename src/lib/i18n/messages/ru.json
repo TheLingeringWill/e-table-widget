@@ -85,6 +85,7 @@
 	"error_modificationNotAllowed": "Этот слот недоступен для изменения. Пожалуйста, выберите другой.",
 	"error_reservationNotFound": "Бронирование не найдено.",
 	"error_restaurantNotFound": "Ресторан не найден",
+	"error_retry": "Повторить",
 	"header_paxCount": "{pax} чел.",
 	"header_pickTime": "Выберите время",
 	"leaveReview_apology": "Нам жаль, что ваш опыт не оправдал ожиданий.",

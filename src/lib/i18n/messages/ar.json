@@ -85,6 +85,7 @@
 	"error_modificationNotAllowed": "هذا الموعد غير متاح للتعديل. يُرجى اختيار موعد آخر.",
 	"error_reservationNotFound": "تعذّر العثور على هذا الحجز.",
 	"error_restaurantNotFound": "تعذّر العثور على المطعم",
+	"error_retry": "إعادة المحاولة",
 	"header_paxCount": "{pax} شخص",
 	"header_pickTime": "اختر وقتًا",
 	"leaveReview_apology": "نأسف لأن تجربتك لم تكن على مستوى توقعاتك.",

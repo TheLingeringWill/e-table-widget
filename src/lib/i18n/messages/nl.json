@@ -85,6 +85,7 @@
 	"error_modificationNotAllowed": "Dit tijdslot is niet beschikbaar voor wijziging. Kies een ander tijdslot.",
 	"error_reservationNotFound": "Deze reservering kon niet worden gevonden.",
 	"error_restaurantNotFound": "Restaurant niet gevonden",
+	"error_retry": "Opnieuw proberen",
 	"header_paxCount": "{pax} gast(en)",
 	"header_pickTime": "Kies een tijd",
 	"leaveReview_apology": "Het spijt ons dat uw ervaring niet aan uw verwachtingen heeft voldaan.",

@@ -507,17 +507,21 @@
 		loadingAlternative = false;
 	};
 
-	// Navigate to a sibling restaurant's own booking widget. The guest restarts
-	// the flow there from scratch — we intentionally do NOT carry the current
-	// date/pax selection over.
+	// Navigate to a sibling restaurant's own website (falling back to its booking
+	// widget when no website is set). The guest leaves this flow entirely — we
+	// intentionally do NOT carry the current date/pax selection over.
 	//
 	// Embedded mode: `window.location` is the iframe's location, so assigning
-	// it would load the alternative widget *inside* the embed iframe on the
-	// original restaurant's page. We want a real top-level navigation, so we
-	// ask the parent (via postMessage, the only cross-origin-safe path) to
-	// redirect itself — the embed script handles `{ type: 'redirect' }`.
+	// it would load the target *inside* the embed iframe on the original
+	// restaurant's page. We want a real top-level navigation, so we ask the
+	// parent (via postMessage, the only cross-origin-safe path) to redirect
+	// itself — the embed script handles `{ type: 'redirect' }`.
 	// Standalone mode keeps the direct assignment.
 	const goToAlternative = (alt: WidgetAlternative) => {
+		// Prefer the sibling's own website; fall back to its booking widget when
+		// the restaurant has no website set (the column is nullable API-side).
+		const target = alt.websiteUrl?.trim() || alt.widgetLink;
+
 		pushGtmEvent('alternative_restaurant_clicked', {
 			original_restaurant_id: restaurantId,
 			alternative_restaurant_id: alt.id,
@@ -533,9 +537,9 @@
 		})();
 
 		if (isEmbedded) {
-			window.parent.postMessage({ type: 'redirect', data: alt.widgetLink }, '*');
+			window.parent.postMessage({ type: 'redirect', data: target }, '*');
 		} else {
-			window.location.href = alt.widgetLink;
+			window.location.href = target;
 		}
 	};
 

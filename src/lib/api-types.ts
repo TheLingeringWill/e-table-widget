@@ -86,13 +86,15 @@ export interface WidgetResponseDTO {
 	gtmId?: string | null;
 }
 
-// Owner-curated sibling restaurant rendered on the no-slot path. `widgetLink`
-// is the absolute URL of the sibling's own booking widget.
+// Owner-curated sibling restaurant rendered on the no-slot path. The guest is
+// redirected to `websiteUrl` (the sibling's own website) when set, falling back
+// to `widgetLink` (the absolute URL of the sibling's own booking widget).
 export interface WidgetAlternativeRestaurantResponseDTO {
 	id: number;
 	name: string;
 	city: string;
 	description?: string | null;
+	websiteUrl?: string | null;
 	widgetLink: string;
 	coverUrl?: string | null;
 }

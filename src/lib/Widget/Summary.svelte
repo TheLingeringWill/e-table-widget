@@ -73,7 +73,7 @@
 	<div class="flex flex-col gap-1" id="summary">
 		{@render button(
 			0,
-			selection.slot ? formatSlotDate(selection.slot.date, 'D MMMM') : undefined,
+			selection.slot ? formatSlotDate(selection.slot.date, 'dddd D MMMM') : undefined,
 			Calendar
 		)}
 		{@render button(1, m.summary_paxCount({ pax: selection.pax ?? 0 }), ForkKnife)}

@@ -45,11 +45,6 @@
 	const widgetCtx = useWidget();
 	const zonedDateUtils = useZonedDateUtils();
 
-	// Direction-implying icons (calendar prev/next, slot/card "navigate" arrows)
-	// must point the other way under RTL. Driven by the active locale so it
-	// flips on language switch without touching LTR rendering.
-	const isRtl = $derived(currentLocale.value === 'ar');
-
 	// Starts true so the date step shows its calendar skeleton from the first
 	// render until initDisabledDates() resolves (SSR-preloaded or client-fetched),
 	// instead of briefly flashing an empty/all-disabled grid.
@@ -723,18 +718,18 @@
 							{zonedDateUtils}
 							type="calendar"
 							view="single"
-							headerClass="flex justify-between items-center font-light"
+							headerClass="flex justify-between items-center font-light [direction:ltr]"
 							weekdayClass="flex items-center justify-center pb-2 font-normal"
 							gridClass="gap-2"
 							dayClass="font-semibold data-[in-month=false]:pointer-events-none data-[disabled=true]:opacity-30 data-[disabled=true]:pointer-events-none data-[in-month=false]:opacity-25  rounded-sm data-[in-month=true]:border-2 hover:bg-white hover:bg-opacity-15"
 							class="w-full"
 							buttons={{
 								prev: {
-									icon: isRtl ? ArrowRight : ArrowLeft,
+									icon: ArrowLeft,
 									color: theme.fontColor
 								},
 								next: {
-									icon: isRtl ? ArrowLeft : ArrowRight,
+									icon: ArrowRight,
 									color: theme.fontColor
 								}
 							}}

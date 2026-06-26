@@ -76,6 +76,52 @@
 		observer.observe(container, { childList: true, subtree: true });
 		return () => observer.disconnect();
 	});
+
+	// Year*12+month ordinal so December→January comparisons stay monotonic.
+	const monthOrdinal = (iso: string) => {
+		const d = new Date(iso);
+		return d.getFullYear() * 12 + d.getMonth();
+	};
+
+	// maket renders the first days of the next month (and trailing days of the
+	// previous one) as overflow cells in the single-month grid. They carry a
+	// valid `data-date` and aren't disabled, but selecting one leaves the grid on
+	// the current month with the chosen day showing only as a faint overflow cell.
+	// maket's CalendarState is private — its only public hook to move the displayed
+	// month is the header's prev/next arrow buttons (prev = `.rotate-180`). So when
+	// an enabled overflow day is clicked we let maket register the selection, then
+	// drive the matching arrow on the next frame to bring the grid to that month,
+	// where the just-selected day renders in-month and highlighted.
+	$effect(() => {
+		if (!container) return;
+		const onClick = (e: MouseEvent) => {
+			const target = e.target as HTMLElement | null;
+			const cell = target?.closest<HTMLElement>('.ui-calendar-day');
+			// Only intercept enabled overflow (out-of-month) cells; in-month and
+			// disabled cells are handled by maket / its disabled guard unchanged.
+			if (!cell || cell.getAttribute('data-in-month') !== 'false') return;
+			if (cell.getAttribute('data-disabled')) return;
+
+			const cellDate = cell.getAttribute('data-date');
+			const anchor = container.querySelector('[data-in-month="true"]')?.getAttribute('data-date');
+			if (!cellDate || !anchor) return;
+
+			const diff = monthOrdinal(cellDate) - monthOrdinal(anchor);
+			if (diff === 0) return;
+			const arrowSelector =
+				diff > 0
+					? '.ui-calendar-header button:not(.rotate-180)'
+					: '.ui-calendar-header button.rotate-180';
+			const arrow = container.querySelector<HTMLButtonElement>(arrowSelector);
+			if (!arrow) return;
+			// Defer so maket's own click handler sets the selection first, then move
+			// the displayed month onto it.
+			requestAnimationFrame(() => arrow.click());
+		};
+		// Capture phase so we observe the click regardless of maket's own listener.
+		container.addEventListener('click', onClick, true);
+		return () => container.removeEventListener('click', onClick, true);
+	});
 </script>
 
 <div bind:this={container}>

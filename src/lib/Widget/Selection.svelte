@@ -721,7 +721,7 @@
 							headerClass="flex justify-between items-center font-light [direction:ltr]"
 							weekdayClass="flex items-center justify-center pb-2 font-normal"
 							gridClass="gap-2"
-							dayClass="font-semibold data-[in-month=false]:pointer-events-none data-[disabled=true]:opacity-30 data-[disabled=true]:pointer-events-none data-[in-month=false]:opacity-25  rounded-sm data-[in-month=true]:border-2 hover:bg-white hover:bg-opacity-15"
+							dayClass="font-semibold data-[disabled=true]:opacity-30 data-[disabled=true]:pointer-events-none rounded-sm border-2 hover:bg-white hover:bg-opacity-15"
 							class="w-full"
 							buttons={{
 								prev: {

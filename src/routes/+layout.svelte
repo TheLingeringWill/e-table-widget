@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Theme from 'maket/Theme';
+	import Theme from '$lib/vendor/maket/Components/Theme.svelte';
 	import '../app.css';
 	import { initLocale } from '$lib/states/locale.svelte';
 

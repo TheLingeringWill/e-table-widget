@@ -1,5 +1,5 @@
 <script lang="ts">
-	import TextInput from 'maket/TextInput';
+	import TextInput from '$lib/vendor/maket/Components/Form/TextInput/TextInput.svelte';
 	import { CaretLeft, Check, ClockCounterClockwise, Info } from 'phosphor-svelte';
 	import { onMount } from 'svelte';
 	import intlTelInput from 'intl-tel-input';

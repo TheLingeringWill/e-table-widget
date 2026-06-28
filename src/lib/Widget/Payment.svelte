@@ -51,7 +51,7 @@
 	import { CaretLeft } from 'phosphor-svelte';
 	import { slide } from 'svelte/transition';
 	import Button from './Button.svelte';
-	import Separator from 'maket/Separator';
+	import Separator from '$lib/vendor/maket/Components/Separator/Separator.svelte';
 	import { browser } from '$app/environment';
 	import { selection } from '$lib/states/selection.svelte';
 	import { contact } from '$lib/states/contact.svelte';

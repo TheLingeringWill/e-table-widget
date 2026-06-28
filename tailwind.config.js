@@ -8,8 +8,8 @@
 // 	plugins: []
 // };
 
-import { uy } from 'maket/uy';
-import { maket } from 'maket/tailwind';
+import { uy } from './src/lib/vendor/maket/plugin/uy.js';
+import { maket } from './src/lib/vendor/maket/plugin/tailwind.plugin.js';
 import plugin from 'tailwindcss/plugin';
 
 const card = {
@@ -84,7 +84,7 @@ const card = {
 /** @type {import('tailwindcss').Config} */
 const config = {
 	darkMode: ['class'],
-	content: ['./src/**/*.{html,js,svelte,ts}', './node_modules/maket/**/*.{js,svelte,ts}'],
+	content: ['./src/**/*.{html,js,svelte,ts}', './src/lib/vendor/maket/**/*.{js,svelte,ts}'],
 	safelist: ['dark'],
 	plugins: [
 		maket({

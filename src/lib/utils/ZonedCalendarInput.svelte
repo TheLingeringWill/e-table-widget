@@ -1,5 +1,5 @@
 <script lang="ts" generics="T extends 'calendar' | 'calendar-range'">
-	import CalendarInput from 'maket/CalendarInput';
+	import CalendarInput from '$lib/vendor/maket/Components/Form/Calendar/CalendarInput.svelte';
 	import type { ZonedDateUtils } from '$lib/utils/zonedDateUtils';
 	import { currentLocale } from '$lib/states/locale.svelte';
 

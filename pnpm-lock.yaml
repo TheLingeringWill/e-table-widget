@@ -38,9 +38,6 @@ importers:
       libphonenumber-js:
         specifier: ^1.11.10
         version: 1.12.42
-      maket:
-        specifier: ^0.0.203
-        version: 0.0.203(cobe@0.6.5)(color2k@2.0.3)(file-selector@0.6.0)(highlight.js@11.11.1)(svelte@5.33.1)(tailwind-merge@2.6.1)(tailwind-scrollbar@3.1.0(tailwindcss@3.4.19))(typescript@5.9.3)
       tailwind-merge:
         specifier: ^2.3.0
         version: 2.6.1
@@ -96,6 +93,9 @@ importers:
       postcss:
         specifier: ^8.5.1
         version: 8.5.12
+      postcss-js:
+        specifier: ^4.0.1
+        version: 4.1.0(postcss@8.5.12)
       prettier:
         specifier: ^3.4.2
         version: 3.8.3
@@ -133,19 +133,6 @@ packages:
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
-
-  '@atlaskit/pragmatic-drag-and-drop-auto-scroll@1.4.0':
-    resolution: {integrity: sha512-5GoikoTSW13UX76F9TDeWB8x3jbbGlp/Y+3aRkHe1MOBMkrWkwNpJ42MIVhhX/6NSeaZiPumP0KbGJVs2tOWSQ==}
-
-  '@atlaskit/pragmatic-drag-and-drop-hitbox@1.1.0':
-    resolution: {integrity: sha512-JWt6eVp6Br2FPHRM8s0dUIHQk/jFInGP1f3ti5CdtM1Ji5/pt8Akm44wDC063Gv2i5RGseixtbW0z/t6RYtbdg==}
-
-  '@atlaskit/pragmatic-drag-and-drop@1.8.1':
-    resolution: {integrity: sha512-uXWNPpL8n4OmTVbduH7nq8pk8htqGo/prR5cYEE8sVCPJGAUMWn6lzvWTfI+4VCeQvHiDRODVz4YzH06OVAxhw==}
-
-  '@babel/runtime@7.29.2':
-    resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
-    engines: {node: '>=6.9.0'}
 
   '@esbuild/aix-ppc64@0.21.5':
     resolution: {integrity: sha512-1SDgH6ZSPTlggy1yI6+Dbkiz8xzpHJEVAlF/AM1tHPLsf5STom9rwtjE4hKAF20FfXXNTFqEYXyJNWh1GiZedQ==}
@@ -527,21 +514,6 @@ packages:
 
   '@lix-js/server-protocol-schema@0.1.1':
     resolution: {integrity: sha512-jBeALB6prAbtr5q4vTuxnRZZv1M2rKe8iNqRQhFJ4Tv7150unEa0vKyz0hs8Gl3fUGsWaNJBh3J8++fpbrpRBQ==}
-
-  '@maskito/core@3.11.1':
-    resolution: {integrity: sha512-zN5k/BiZXblo8mEFhsGnnXBCqKMkjEGArorOOcpB1/ymZyqF12Dk6IipEsSE6abMnWw4YF2tukzfq73BFZKz8A==}
-
-  '@maskito/kit@3.11.1':
-    resolution: {integrity: sha512-KOBUqxRz383xJWCoe+Emwxv2oAzUrZobIN+Gntmi5Py2S10XbqYnGX/6W7QHN8CUK2Nx11d3HsxbEQaq5Hinjg==}
-    peerDependencies:
-      '@maskito/core': ^3.11.1
-
-  '@maskito/phone@3.11.1':
-    resolution: {integrity: sha512-ptNDPIZQs/v598qydBa9cnvoCE8+k2Sv07kKKVx3vG0V40DQnIlEL+LYKrJJbMIiPOB6CH90hB9eaA9KKReZ6w==}
-    peerDependencies:
-      '@maskito/core': ^3.11.1
-      '@maskito/kit': ^3.11.1
-      libphonenumber-js: '>=1.0.0'
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -955,9 +927,6 @@ packages:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
     engines: {node: '>=8'}
 
-  bind-event-listener@3.0.0:
-    resolution: {integrity: sha512-PJvH288AWQhKs2v9zyfYdPzlPqf5bXbGMmhmUIY9x4dAUGIWgomO771oBQNwJnMQSnUIXhKu6sgzpBRXTlvb8Q==}
-
   brace-expansion@1.1.14:
     resolution: {integrity: sha512-MWPGfDxnyzKU7rNOW9SP/c50vi3xrmrua/+6hfPbCS2ABNWfx24vPidzvC7krjU/RTo235sV776ymlsMtGKj8g==}
 
@@ -1021,15 +990,8 @@ packages:
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
 
-  color-string@1.9.1:
-    resolution: {integrity: sha512-shrVawQFojnZv6xM40anx4CkoDP+fZsw/ZerEMsW/pyzsRbElpsL/DBVW7q3ExxwusdNXI3lXpuhEZkzs8p5Eg==}
-
   color2k@2.0.3:
     resolution: {integrity: sha512-zW190nQTIoXcGCaU08DvVNFTmQhUpnJfVuAKfWqUQkflXKpaDdpaYoM0iluLS9lgJNHyBF58KKA2FBEwkD7wog==}
-
-  color@4.2.3:
-    resolution: {integrity: sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==}
-    engines: {node: '>=12.5.0'}
 
   commander@11.1.0:
     resolution: {integrity: sha512-yPVavfyCcRhmorC7rWlkHn15b4wDVgVmBA7kV4QVBsF7kv/9TKJAbAXVTxvTnwP8HHKjRCJDClKbciiYS7p0DQ==}
@@ -1069,9 +1031,6 @@ packages:
     engines: {node: '>=4'}
     hasBin: true
 
-  date-fns@3.6.0:
-    resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
-
   dayjs@1.11.20:
     resolution: {integrity: sha512-YbwwqR/uYpeoP4pu043q+LTDLFBLApUP6VxRihdfNTqu4ubqMlGDLd6ErXhEgsyvY0K6nCs7nggYumAN+9uEuQ==}
 
@@ -1083,9 +1042,6 @@ packages:
     peerDependenciesMeta:
       supports-color:
         optional: true
-
-  dedent-js@1.0.1:
-    resolution: {integrity: sha512-OUepMozQULMLUmhxS95Vudo0jb0UchLimi3+pQ2plj61Fcy8axbP9hbiD4Sz6DPqn6XG3kfmziVfQ1rSys5AJQ==}
 
   dedent@1.5.1:
     resolution: {integrity: sha512-+LxW+KLWxu3HW3M2w2ympwtqPrqYRzU8fqi6Fhd18fBALe15blJPI/I4+UHveMVG6lJqB4JNd4UG0S5cnVHwIg==}
@@ -1378,9 +1334,6 @@ packages:
   intl-tel-input@24.8.2:
     resolution: {integrity: sha512-ZPmkgUopI94c6H0uBEK8L1bQITMWFf5eFD9SuWZ3cV9NkctDwrtsdjMZOuZdI3giOZfVfvIGaZGbq7UrVpPykA==}
 
-  is-arrayish@0.3.4:
-    resolution: {integrity: sha512-m6UrgzFVUYawGBh1dUsWR5M2Clqic9RVXC/9f8ceNlv2IcO9j9J/z8UoCLPqtsPBFNzEpfR3xftohbfqDx8EQA==}
-
   is-binary-path@2.1.0:
     resolution: {integrity: sha512-ZMERYes6pDydyuGidse7OsHxtbI7WVeUEozgR/g7rd0xUimYNlvZRE/K2MgZTjWy725IfelLeVcEM97mmtRGXw==}
     engines: {node: '>=8'}
@@ -1500,17 +1453,6 @@ packages:
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
-
-  maket@0.0.203:
-    resolution: {integrity: sha512-rJSXXj6uTerarGeZDBpaHB2CJEXSxX53RPjexWZCn/Q3+Yn/1htbDw5C9V6RMygdbGUYW3rSiYAhZzcNZ4Bduw==}
-    peerDependencies:
-      cobe: ^0.6.3
-      color2k: ^2.0.3
-      file-selector: ^0.6.0
-      highlight.js: ^11.9.0
-      svelte: 5.10.1
-      tailwind-merge: ^2.3.0
-      tailwind-scrollbar: ^3.1.0
 
   merge-stream@2.0.0:
     resolution: {integrity: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==}
@@ -1785,9 +1727,6 @@ packages:
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
 
-  raf-schd@4.0.3:
-    resolution: {integrity: sha512-tQkJl2GRWh83ui2DiPTJz9wEiMN20syf+5oKfB03yYP7ioZcJwsIK8FjrtLwH1m7C7e+Tt2yYBlrOpdT+dyeIQ==}
-
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
 
@@ -1836,9 +1775,6 @@ packages:
   sander@0.5.1:
     resolution: {integrity: sha512-3lVqBir7WuKDHGrKRDn/1Ye3kwpXaDOMsiRP1wd6wpZW56gJhsbp5RqQpA6JG/P+pkXizygnr1dKR8vzWaVsfA==}
 
-  scule@1.3.0:
-    resolution: {integrity: sha512-6FtHJEvt+pVMIB9IBY+IcCJ6Z5f1iQnytgyfKMhDKgmzYG+TeH/wx1y3l27rshSbLiSanrR9ffZDrEsmjlQF2g==}
-
   semver@7.7.4:
     resolution: {integrity: sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA==}
     engines: {node: '>=10'}
@@ -1861,9 +1797,6 @@ packages:
   signal-exit@4.1.0:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
-
-  simple-swizzle@0.2.4:
-    resolution: {integrity: sha512-nAu1WFPQSMNr2Zn9PGSZK9AGn4t/y97lEm+MXTtUDwfP0ksAIX4nO+6ruD9Jwut4C49SB1Ws+fbXsm/yScWOHw==}
 
   sirv@3.0.2:
     resolution: {integrity: sha512-2wcC/oGxHis/BoHkkPwldgiPSYcpZK3JU28WoMVv55yHJgcZ8rlXvuG9iZggz+sU1d4bRgIGASwyWqjxu3FM0g==}
@@ -1939,11 +1872,6 @@ packages:
       svelte:
         optional: true
 
-  svelte-pragmatic-list@0.0.1:
-    resolution: {integrity: sha512-ZY4qxtOvKvt01i028vc2m+USqwtaeSZ2rM8CU+Sfcow/EAjMqQT9niOY0SZpfqXsJwZMB+MpzLG+zPcCeGupqw==}
-    peerDependencies:
-      svelte: ^4.0.0
-
   svelte-preprocess@5.1.4:
     resolution: {integrity: sha512-IvnbQ6D6Ao3Gg6ftiM5tdbR6aAETwjhHV+UKGf5bHGYR69RQvF1ho0JKPcbUON4vy4R7zom13jPjgdOWCQ5hDA==}
     engines: {node: '>= 16.0.0'}
@@ -1980,12 +1908,6 @@ packages:
         optional: true
       typescript:
         optional: true
-
-  svelte2tsx@0.7.53:
-    resolution: {integrity: sha512-ljVSwmnYRDHRm8+7ICP6QoAN7U7vgOFfPBLN6T745YWNYqRRSzHxlrzUVqMjYls2Un8MzJissfziy/38e6Deeg==}
-    peerDependencies:
-      svelte: ^3.55 || ^4.0.0-next.0 || ^4.0 || ^5.0.0-next.0
-      typescript: ^4.9.4 || ^5.0.0
 
   svelte@5.33.1:
     resolution: {integrity: sha512-7znzaaQALL62NBzkdKV04tmYIVla8qjrW+k6GdgFZcKcj8XOb8iEjmfRPo40iaWZlKv3+uiuc0h4iaGgwoORtA==}
@@ -2254,24 +2176,6 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@atlaskit/pragmatic-drag-and-drop-auto-scroll@1.4.0':
-    dependencies:
-      '@atlaskit/pragmatic-drag-and-drop': 1.8.1
-      '@babel/runtime': 7.29.2
-
-  '@atlaskit/pragmatic-drag-and-drop-hitbox@1.1.0':
-    dependencies:
-      '@atlaskit/pragmatic-drag-and-drop': 1.8.1
-      '@babel/runtime': 7.29.2
-
-  '@atlaskit/pragmatic-drag-and-drop@1.8.1':
-    dependencies:
-      '@babel/runtime': 7.29.2
-      bind-event-listener: 3.0.0
-      raf-schd: 4.0.3
-
-  '@babel/runtime@7.29.2': {}
-
   '@esbuild/aix-ppc64@0.21.5':
     optional: true
 
@@ -2531,18 +2435,6 @@ snapshots:
       - babel-plugin-macros
 
   '@lix-js/server-protocol-schema@0.1.1': {}
-
-  '@maskito/core@3.11.1': {}
-
-  '@maskito/kit@3.11.1(@maskito/core@3.11.1)':
-    dependencies:
-      '@maskito/core': 3.11.1
-
-  '@maskito/phone@3.11.1(@maskito/core@3.11.1)(@maskito/kit@3.11.1(@maskito/core@3.11.1))(libphonenumber-js@1.12.42)':
-    dependencies:
-      '@maskito/core': 3.11.1
-      '@maskito/kit': 3.11.1(@maskito/core@3.11.1)
-      libphonenumber-js: 1.12.42
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -2925,8 +2817,6 @@ snapshots:
 
   binary-extensions@2.3.0: {}
 
-  bind-event-listener@3.0.0: {}
-
   brace-expansion@1.1.14:
     dependencies:
       balanced-match: 1.0.2
@@ -3001,17 +2891,7 @@ snapshots:
 
   color-name@1.1.4: {}
 
-  color-string@1.9.1:
-    dependencies:
-      color-name: 1.1.4
-      simple-swizzle: 0.2.4
-
   color2k@2.0.3: {}
-
-  color@4.2.3:
-    dependencies:
-      color-convert: 2.0.1
-      color-string: 1.9.1
 
   commander@11.1.0: {}
 
@@ -3040,15 +2920,11 @@ snapshots:
 
   cssesc@3.0.0: {}
 
-  date-fns@3.6.0: {}
-
   dayjs@1.11.20: {}
 
   debug@4.4.3:
     dependencies:
       ms: 2.1.3
-
-  dedent-js@1.0.1: {}
 
   dedent@1.5.1: {}
 
@@ -3392,8 +3268,6 @@ snapshots:
 
   intl-tel-input@24.8.2: {}
 
-  is-arrayish@0.3.4: {}
-
   is-binary-path@2.1.0:
     dependencies:
       binary-extensions: 2.3.0
@@ -3487,31 +3361,6 @@ snapshots:
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
-
-  maket@0.0.203(cobe@0.6.5)(color2k@2.0.3)(file-selector@0.6.0)(highlight.js@11.11.1)(svelte@5.33.1)(tailwind-merge@2.6.1)(tailwind-scrollbar@3.1.0(tailwindcss@3.4.19))(typescript@5.9.3):
-    dependencies:
-      '@atlaskit/pragmatic-drag-and-drop': 1.8.1
-      '@atlaskit/pragmatic-drag-and-drop-auto-scroll': 1.4.0
-      '@atlaskit/pragmatic-drag-and-drop-hitbox': 1.1.0
-      '@maskito/core': 3.11.1
-      '@maskito/kit': 3.11.1(@maskito/core@3.11.1)
-      '@maskito/phone': 3.11.1(@maskito/core@3.11.1)(@maskito/kit@3.11.1(@maskito/core@3.11.1))(libphonenumber-js@1.12.42)
-      cobe: 0.6.5
-      color: 4.2.3
-      color2k: 2.0.3
-      date-fns: 3.6.0
-      esm-env: 1.2.2
-      file-selector: 0.6.0
-      highlight.js: 11.11.1
-      libphonenumber-js: 1.12.42
-      mrmime: 2.0.1
-      svelte: 5.33.1
-      svelte-pragmatic-list: 0.0.1(svelte@5.33.1)
-      svelte2tsx: 0.7.53(svelte@5.33.1)(typescript@5.9.3)
-      tailwind-merge: 2.6.1
-      tailwind-scrollbar: 3.1.0(tailwindcss@3.4.19)
-    transitivePeerDependencies:
-      - typescript
 
   merge-stream@2.0.0: {}
 
@@ -3727,8 +3576,6 @@ snapshots:
 
   queue-microtask@1.2.3: {}
 
-  raf-schd@4.0.3: {}
-
   react-is@18.3.1: {}
 
   read-cache@1.0.0:
@@ -3804,8 +3651,6 @@ snapshots:
       mkdirp: 0.5.6
       rimraf: 2.7.1
 
-  scule@1.3.0: {}
-
   semver@7.7.4: {}
 
   set-cookie-parser@3.1.0: {}
@@ -3819,10 +3664,6 @@ snapshots:
   siginfo@2.0.0: {}
 
   signal-exit@4.1.0: {}
-
-  simple-swizzle@0.2.4:
-    dependencies:
-      is-arrayish: 0.3.4
 
   sirv@3.0.2:
     dependencies:
@@ -3912,13 +3753,6 @@ snapshots:
     optionalDependencies:
       svelte: 5.33.1
 
-  svelte-pragmatic-list@0.0.1(svelte@5.33.1):
-    dependencies:
-      '@atlaskit/pragmatic-drag-and-drop': 1.8.1
-      '@atlaskit/pragmatic-drag-and-drop-auto-scroll': 1.4.0
-      '@atlaskit/pragmatic-drag-and-drop-hitbox': 1.1.0
-      svelte: 5.33.1
-
   svelte-preprocess@5.1.4(postcss-load-config@3.1.4(postcss@8.5.12))(postcss@8.5.12)(svelte@5.33.1)(typescript@5.9.3):
     dependencies:
       '@types/pug': 2.0.10
@@ -3930,13 +3764,6 @@ snapshots:
     optionalDependencies:
       postcss: 8.5.12
       postcss-load-config: 3.1.4(postcss@8.5.12)
-      typescript: 5.9.3
-
-  svelte2tsx@0.7.53(svelte@5.33.1)(typescript@5.9.3):
-    dependencies:
-      dedent-js: 1.0.1
-      scule: 1.3.0
-      svelte: 5.33.1
       typescript: 5.9.3
 
   svelte@5.33.1:

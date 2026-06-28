@@ -128,6 +128,29 @@ export const GET = async (event: RequestEvent): Promise<Response> => {
         if (type === 'redirect' && typeof data === 'string') {
           window.location.href = data;
         }
+
+        // "Remember me" storage broker. A cross-site iframe's own localStorage
+        // is partitioned and non-persistent on iOS Safari (wiped when the
+        // backgrounded tab is discarded), so the widget delegates persistence
+        // to this FIRST-PARTY parent context, whose localStorage survives.
+        if (type === 'storage_get' && data && typeof data.key === 'string') {
+          var storedValue = null;
+          try { storedValue = window.localStorage.getItem(data.key); } catch (e) {}
+          // Reply only to the widget's own origin — never broadcast the
+          // contact PII back with '*'.
+          try {
+            iframe.contentWindow && iframe.contentWindow.postMessage(
+              { type: 'storage_value', data: { key: data.key, value: storedValue } },
+              new URL(iframe.src, window.location.href).origin
+            );
+          } catch (e) {}
+        }
+        if (type === 'storage_set' && data && typeof data.key === 'string' && typeof data.value === 'string') {
+          try { window.localStorage.setItem(data.key, data.value); } catch (e) {}
+        }
+        if (type === 'storage_remove' && data && typeof data.key === 'string') {
+          try { window.localStorage.removeItem(data.key); } catch (e) {}
+        }
       });
 
       iframe.src = iframeSrc;

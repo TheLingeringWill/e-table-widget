@@ -27,7 +27,7 @@ export function setGtmRestaurantId(restaurantId: string): void {
 /**
  * Detect if running in embedded mode (iframe)
  */
-function detectEmbeddedMode(): boolean {
+export function detectEmbeddedMode(): boolean {
 	if (!browser) return false;
 	if (isEmbeddedMode !== null) return isEmbeddedMode;
 

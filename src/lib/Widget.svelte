@@ -44,7 +44,7 @@
 	import { selection } from './states/selection.svelte';
 	import { gotoError, error as errorState } from './states/error.svelte';
 	import { pushEcommerceEvent, trackStep, trackError, setGtmRestaurantId } from './gtm.svelte';
-	import * as parentStorage from './parentStorage';
+	import { getCookie, setCookie, deleteCookie } from './utils/cookies';
 
 	let {
 		data: widget,
@@ -82,11 +82,6 @@
 
 	let loading = $state(!(!reservationId && !paymentIntentId));
 	let mounted = $state(!(!reservationId && !paymentIntentId));
-	// Gates the remember-me save $effect until the async restore from parent
-	// storage resolves. Without it the effect would fire on mount with
-	// rememberMe.checked still false and removeItem() the parent data before the
-	// `storage_value` reply arrives. See loadContactStorage().
-	let storageReady = $state(false);
 
 	let paymentIntentClientSecret = $state('');
 	let secretQuery = $page.url.searchParams.get('payment');
@@ -219,23 +214,13 @@
 
 	const getStorageKey = (restaurantId: string) => `etable-contact-${restaurantId}`;
 
-	const loadContactStorage = async () => {
+	const loadContactStorage = () => {
 		try {
 			const storageKey = getStorageKey(widget.restaurantId);
 
-			// Try to migrate from old key if new key doesn't exist. Reads/writes go
-			// through parentStorage so the value lands in the first-party parent
-			// store (persistent on iOS Safari) when embedded.
-			let contactItem = await parentStorage.getItem(storageKey);
-			if (!contactItem) {
-				const oldContactItem = await parentStorage.getItem('contact');
-				if (oldContactItem) {
-					// Migrate old data to new restaurant-scoped key
-					parentStorage.setItem(storageKey, oldContactItem);
-					parentStorage.removeItem('contact');
-					contactItem = oldContactItem;
-				}
-			}
+			// "Remember me" is persisted in a cookie (iframe-friendly SameSite=None;
+			// Secure), mirroring how Zenchef stores the booking contact.
+			const contactItem = getCookie(storageKey);
 
 			if (contactItem) {
 				const parsedContact = JSON.parse(contactItem);
@@ -259,7 +244,7 @@
 				}
 			}
 		} catch {
-			// Graceful degradation: silently ignore localStorage errors (private mode, disabled, etc.)
+			// Graceful degradation: silently ignore cookie errors (disabled, blocked, etc.)
 		}
 	};
 
@@ -313,24 +298,17 @@
 				builderListener();
 				loading = false;
 				mounted = true;
-				storageReady = true;
 			});
 		} else if (paymentIntentId) {
 			loadPaymentIntent().then(() => {
 				builderListener();
 				loading = false;
 				mounted = true;
-				storageReady = true;
 			});
 		} else {
+			loadContactStorage();
 			builderListener();
 			mounted = true;
-			// Restore is async (round-trips to the parent when embedded); only
-			// arm the save $effect once it resolves, so an empty rememberMe state
-			// can't clobber the stored contact first.
-			loadContactStorage().finally(() => {
-				storageReady = true;
-			});
 		}
 
 		// Force an immediate version check rather than waiting for the poll
@@ -343,7 +321,7 @@
 	});
 
 	$effect(() => {
-		if (!mounted || !storageReady || !browser || reservation?.id) return;
+		if (!mounted || !browser || reservation?.id) return;
 		try {
 			const storageKey = getStorageKey(widget.restaurantId);
 			if (rememberMe.checked) {
@@ -360,13 +338,13 @@
 				// country-selection) from overwriting a good save and silently breaking
 				// the next restore. Defensive backstop to the syncPhone fix.
 				if (isValidStoredContact(dataToStore)) {
-					parentStorage.setItem(storageKey, JSON.stringify(dataToStore));
+					setCookie(storageKey, JSON.stringify(dataToStore));
 				}
 			} else {
-				parentStorage.removeItem(storageKey);
+				deleteCookie(storageKey);
 			}
 		} catch {
-			// Graceful degradation: silently ignore localStorage errors
+			// Graceful degradation: silently ignore cookie errors
 		}
 	});
 

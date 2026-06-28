@@ -44,7 +44,7 @@
 	import { selection } from './states/selection.svelte';
 	import { gotoError, error as errorState } from './states/error.svelte';
 	import { pushEcommerceEvent, trackStep, trackError, setGtmRestaurantId } from './gtm.svelte';
-	import { getCookie, setCookie, deleteCookie } from './utils/cookies';
+	import { getCookie, setCookie, deleteCookie, CONTACT_COOKIE } from './utils/cookies';
 
 	let {
 		data: widget,
@@ -212,15 +212,12 @@
 		);
 	};
 
-	const getStorageKey = (restaurantId: string) => `etable-contact-${restaurantId}`;
-
 	const loadContactStorage = () => {
 		try {
-			const storageKey = getStorageKey(widget.restaurantId);
-
-			// "Remember me" is persisted in a cookie (iframe-friendly SameSite=None;
-			// Secure), mirroring how Zenchef stores the booking contact.
-			const contactItem = getCookie(storageKey);
+			// "Remember me" is persisted in a single shared `formDataFromCookies`
+			// cookie (iframe-friendly SameSite=None; Secure), mirroring how Zenchef
+			// stores the booking contact — one cookie across every restaurant.
+			const contactItem = getCookie(CONTACT_COOKIE);
 
 			if (contactItem) {
 				const parsedContact = JSON.parse(contactItem);
@@ -323,7 +320,6 @@
 	$effect(() => {
 		if (!mounted || !browser || reservation?.id) return;
 		try {
-			const storageKey = getStorageKey(widget.restaurantId);
 			if (rememberMe.checked) {
 				const dataToStore = {
 					civility: contact.civility,
@@ -338,10 +334,10 @@
 				// country-selection) from overwriting a good save and silently breaking
 				// the next restore. Defensive backstop to the syncPhone fix.
 				if (isValidStoredContact(dataToStore)) {
-					setCookie(storageKey, JSON.stringify(dataToStore));
+					setCookie(CONTACT_COOKIE, JSON.stringify(dataToStore));
 				}
 			} else {
-				deleteCookie(storageKey);
+				deleteCookie(CONTACT_COOKIE);
 			}
 		} catch {
 			// Graceful degradation: silently ignore cookie errors

@@ -6,11 +6,17 @@ import { browser } from '$app/environment';
  * The widget runs as a third-party iframe, so persisted state has to use
  * `SameSite=None; Secure` to be readable in that cross-site context — the same
  * attributes the `widget_lang` cookie already relies on (see
- * `src/lib/states/locale.svelte.ts`). This is the store behind "remember me"
- * (mirrors how Zenchef persists the booking contact in a cookie).
+ * `src/lib/states/locale.svelte.ts`). This is the store behind "remember me",
+ * mirroring how Zenchef persists the booking contact: a single shared
+ * `formDataFromCookies` cookie with no Max-Age (a session cookie).
  */
 
-const MAX_AGE = 60 * 60 * 24 * 400; // ~400 days (matches COOKIE_MAX_AGE in locale.svelte.ts)
+/**
+ * "Remember me" cookie name — matches Zenchef's. Host-only (no `domain`
+ * attribute), so it is one shared cookie across every restaurant served from
+ * this widget host, exactly like Zenchef's single bookings-domain cookie.
+ */
+export const CONTACT_COOKIE = 'formDataFromCookies';
 
 /** Read a cookie value (URL-decoded), or null if absent / unavailable. */
 export function getCookie(name: string): string | null {
@@ -28,13 +34,16 @@ export function getCookie(name: string): string | null {
 	return null;
 }
 
-/** Persist a cookie value (URL-encoded — the JSON payload contains `;`, `,`, `"`, spaces). */
+/**
+ * Persist a cookie value (URL-encoded — the JSON payload contains `;`, `,`, `"`,
+ * spaces). No Max-Age/Expires → a session cookie, matching Zenchef (Safari
+ * additionally caps it at ~7 days).
+ */
 export function setCookie(name: string, value: string): void {
 	if (!browser) return;
 	document.cookie = [
 		`${name}=${encodeURIComponent(value)}`,
 		'path=/',
-		`max-age=${MAX_AGE}`,
 		'SameSite=None',
 		'Secure'
 	].join('; ');

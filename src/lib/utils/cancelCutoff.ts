@@ -45,9 +45,14 @@ export function computeCutoff(args: ComputeCutoffArgs): CutoffStatus {
 	const refTime = ref === 'service' ? shift.startTime : booking.time;
 	const refInstant = dayjs.tz(`${booking.date}T${refTime}`, restaurantTimezone);
 	const cutoffInstant = refInstant.subtract(minutes, 'minute');
+	// `in_past` means the reservation itself has already started — judged from the
+	// booking's reservation time, never from the cutoff anchor. With a `service`
+	// reference the anchor is the (earlier) service start, so checking it here
+	// wrongly blocked still-future bookings the moment the service opened.
+	const bookingInstant = dayjs.tz(`${booking.date}T${booking.time}`, restaurantTimezone);
 	const nowInstant = dayjs(args.now ?? new Date()).tz(restaurantTimezone);
 
-	if (refInstant.isBefore(nowInstant)) {
+	if (bookingInstant.isBefore(nowInstant)) {
 		return { allowed: false, reason: 'in_past', cutoff: null };
 	}
 

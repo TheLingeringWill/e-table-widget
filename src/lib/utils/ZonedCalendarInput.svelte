@@ -71,9 +71,9 @@
 		const observer = new MutationObserver(() => {
 			observer.disconnect();
 			patchLocale();
-			observer.observe(container, { childList: true, subtree: true });
+			observer.observe(container, { childList: true, subtree: true, characterData: true });
 		});
-		observer.observe(container, { childList: true, subtree: true });
+		observer.observe(container, { childList: true, subtree: true, characterData: true });
 		return () => observer.disconnect();
 	});
 

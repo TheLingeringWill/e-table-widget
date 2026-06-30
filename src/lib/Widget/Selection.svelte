@@ -65,6 +65,11 @@
 	let experiences = $state<NonNullable<typeof selection.experience>[]>([]);
 	let disabledDates = $state<Date[]>([]);
 	let maxCalendarDate = $state<Date | undefined>(undefined);
+	// Month the calendar should open on: the first bookable day. The maket grid
+	// otherwise always starts on the current month, stranding the guest on an
+	// empty grid when this month has no availability. Set in applyAvailableDates
+	// so the SSR-preload and client-fetch paths stay consistent.
+	let firstAvailableDate = $state<Date | undefined>(undefined);
 
 	const isModifying = $derived(!!reservation.id);
 
@@ -252,6 +257,11 @@
 		}
 		disabledDates = disabled;
 		maxCalendarDate = end;
+		// Earliest bookable day → the month the calendar opens on. 'YYYY-MM-DD'
+		// strings sort chronologically; empty availability leaves it undefined so
+		// the calendar just stays on the current month.
+		const earliest = available.length ? [...available].sort()[0] : undefined;
+		firstAvailableDate = earliest ? parseSlotDateAsCalendarDate(earliest) : undefined;
 	};
 
 	const fetchDisabledDates = async () => {
@@ -736,6 +746,7 @@
 							containerClass="w-full gap-3"
 							value={selection.date}
 							{disabledDates}
+							defaultMonth={firstAvailableDate}
 							minDate={new Date(new Date().setDate(new Date().getDate() - 1))}
 							maxDate={maxCalendarDate}
 							onChange={(date: Date | null) => {
